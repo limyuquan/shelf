@@ -1,5 +1,5 @@
 import { basename, join, relative } from "node:path";
-import type { RevisionHash } from "../domain/types.ts";
+import type { RevisionHash, Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { copyDirectory, pathExists, replaceDirectory } from "../library/fs.ts";
 import { hashDirectory, listFiles } from "../library/hash.ts";
@@ -22,17 +22,23 @@ import { diffDirectories, type FileDiff } from "./diff.ts";
 import { refreshLibrary, requireSkill } from "./library.ts";
 
 /**
- * `review`: nothing changed; pass `yes` to import after reading the findings.
+ * `review`: nothing changed; pass `yes` to import (or link) after reading the findings.
  * `blocked`: high-severity findings; pass `force` as well to import anyway.
+ * `linked`: the library already had the skill; the source was recorded so that
+ * `shelf pull` can fetch its updates. The library's content is unchanged.
  */
-export type ImportStatus = "review" | "blocked" | "imported";
+export type ImportStatus = "review" | "blocked" | "imported" | "linked";
 
 export interface AddResult {
   readonly skill: string;
   readonly status: ImportStatus;
   readonly source: string;
+  /** The library already has this skill: `yes` links it to the source instead of importing. */
+  readonly existing: boolean;
   readonly files: string[];
   readonly findings: Finding[];
+  /** For an existing skill: how the source differs from the library's latest revision. */
+  readonly diff: FileDiff[];
   readonly revision: RevisionHash | null;
 }
 
@@ -51,7 +57,9 @@ export interface ImportOptions {
 /**
  * Imports skills from outside the library. Two-step by design: the first call
  * fetches and audits; nothing enters the library until the caller passes `yes`
- * (and `force` for high-severity findings). Agents may not import from remote
+ * (and `force` for high-severity findings). A skill the library already has
+ * (e.g. adopted from a project) is linked to the source instead, so `shelf pull`
+ * can update it. Agents may review and link, but may not import from remote
  * sources unless the user enables `allowAgentImports`.
  */
 export async function addSkill(
@@ -64,16 +72,25 @@ export async function addSkill(
     ...(options.ref ? { ref: options.ref } : {}),
     ...(options.path ? { path: options.path } : {}),
   });
-  assertImportAllowed(ctx, spec);
   await refreshLibrary(ctx);
 
   const fetched = await fetchSource(spec);
   try {
     const base = spec.path ? join(fetched.root, spec.path) : fetched.root;
     const candidates = await findSkillDirectories(base);
-    const chosen = chooseSkills(candidates, options);
+    const plans = await Promise.all(
+      chooseSkills(candidates, options).map((dir) => planImport(ctx, dir)),
+    );
+    // Refuse before changing anything, so a mixed batch is not half-applied.
+    if (options.yes && plans.some((plan) => !plan.existing)) assertImportAllowed(ctx, spec);
     const results: AddResult[] = [];
-    for (const dir of chosen) results.push(await importOne(ctx, spec, fetched, dir, options));
+    for (const plan of plans) {
+      results.push(
+        plan.existing
+          ? await linkOne(ctx, spec, fetched, plan.dir, plan.existing, options)
+          : await importOne(ctx, spec, fetched, plan.dir, plan.name, options),
+      );
+    }
     return results;
   } finally {
     await fetched.cleanup();
@@ -111,33 +128,49 @@ function chooseSkills(candidates: string[], options: ImportOptions): string[] {
   return candidates;
 }
 
+interface ImportPlan {
+  readonly dir: string;
+  readonly name: string;
+  /** The library skill this source would be linked to, if it already exists. */
+  readonly existing: Skill | null;
+}
+
+async function planImport(ctx: Context, dir: string): Promise<ImportPlan> {
+  const { name } = await readSkillMetadata(dir);
+  const existing = findSkillByName(ctx.db, name);
+  if (existing && findSkillSource(ctx.db, existing.id)) {
+    throw new ShelfError(
+      "SKILL_EXISTS",
+      `The library's "${name}" is already linked to a source`,
+      `Update it from its source with \`shelf pull ${name}\``,
+    );
+  }
+  if (!existing && (await pathExists(librarySkillPath(ctx.paths, name)))) {
+    throw new ShelfError(
+      "SKILL_EXISTS",
+      `The library has a directory named "${name}" that is not a valid skill`,
+      "Fix or remove it first (see `shelf doctor`)",
+    );
+  }
+  return { dir, name, existing: existing && !existing.archivedAt ? existing : null };
+}
+
 async function importOne(
   ctx: Context,
   spec: SkillSourceSpec,
   fetched: FetchedSource,
   dir: string,
+  name: string,
   options: ImportOptions,
 ): Promise<AddResult> {
-  const { name } = await readSkillMetadata(dir);
-  const sourceUrl = spec.kind === "git" ? spec.url : spec.dir;
-  const existing = findSkillByName(ctx.db, name);
-  if (existing || (await pathExists(librarySkillPath(ctx.paths, name)))) {
-    const imported = existing && findSkillSource(ctx.db, existing.id);
-    throw new ShelfError(
-      "SKILL_EXISTS",
-      `The library already has a skill named "${name}"`,
-      imported
-        ? `Update it from its source with \`shelf pull ${name}\``
-        : "Rename or archive the library copy first",
-    );
-  }
-
   const findings = await auditDirectory(dir);
   const base = {
     skill: name,
-    source: sourceUrl,
+    source: sourceUrl(spec),
+    existing: false,
     files: await listFiles(dir),
     findings,
+    diff: [],
   };
   if (!options.yes) return { ...base, status: "review", revision: null };
   if (hasBlockingFindings(findings) && !options.force)
@@ -158,7 +191,7 @@ async function importOne(
     });
     upsertSkillSource(ctx.db, {
       skillId: skill.id,
-      url: sourceUrl,
+      url: base.source,
       ref: spec.kind === "git" ? spec.ref : null,
       path: relative(fetched.root, dir) || null,
       commit: fetched.commit,
@@ -170,15 +203,63 @@ async function importOne(
       actor: ctx.actor,
       at: now,
       skillId: skill.id,
-      detail: { revision, source: sourceUrl, commit: fetched.commit, findings: findings.length },
+      detail: { revision, source: base.source, commit: fetched.commit, findings: findings.length },
     });
   });
   return { ...base, status: "imported", revision };
 }
 
+/**
+ * Records where an existing library skill comes from, without changing it. The
+ * library's current revision counts as the last import, so the next `shelf pull`
+ * offers the source's version as an update (with a diff and a fresh audit).
+ */
+async function linkOne(
+  ctx: Context,
+  spec: SkillSourceSpec,
+  fetched: FetchedSource,
+  dir: string,
+  skill: Skill,
+  options: ImportOptions,
+): Promise<AddResult> {
+  const base = {
+    skill: skill.name,
+    source: sourceUrl(spec),
+    existing: true,
+    files: await listFiles(dir),
+    findings: await auditDirectory(dir),
+    diff: await diffDirectories(revisionPath(ctx.paths, skill.latestRevision), dir),
+    revision: skill.latestRevision,
+  };
+  if (!options.yes) return { ...base, status: "review" };
+
+  const now = ctx.clock.now();
+  writeTransaction(ctx.db, () => {
+    upsertSkillSource(ctx.db, {
+      skillId: skill.id,
+      url: base.source,
+      ref: spec.kind === "git" ? spec.ref : null,
+      path: relative(fetched.root, dir) || null,
+      commit: fetched.commit,
+      revision: skill.latestRevision,
+      importedAt: now,
+    });
+    recordEvent(ctx.db, {
+      type: "skill.linked",
+      actor: ctx.actor,
+      at: now,
+      skillId: skill.id,
+      detail: { source: base.source, commit: fetched.commit },
+    });
+  });
+  return { ...base, status: "linked" };
+}
+
+const sourceUrl = (spec: SkillSourceSpec) => (spec.kind === "git" ? spec.url : spec.dir);
+
 export interface PullResult {
   readonly skill: string;
-  readonly status: ImportStatus | "current";
+  readonly status: Exclude<ImportStatus, "linked"> | "current";
   readonly source: string;
   readonly commit: string | null;
   readonly diff: FileDiff[];
@@ -207,7 +288,6 @@ export async function pullSkill(
   const spec: SkillSourceSpec = (await pathExists(source.url))
     ? { kind: "local", dir: source.url, path: source.path }
     : { kind: "git", url: source.url, ref: source.ref, path: source.path };
-  assertImportAllowed(ctx, spec);
 
   const fetched = await fetchSource(spec);
   try {
@@ -229,6 +309,7 @@ export async function pullSkill(
     const review = { ...base, diff, findings, revision: skill.latestRevision };
     if (!options.yes) return { ...review, status: "review" };
     if (hasBlockingFindings(findings) && !options.force) return { ...review, status: "blocked" };
+    assertImportAllowed(ctx, spec);
 
     await replaceDirectory(dir, librarySkillPath(ctx.paths, name));
     const revision = await snapshotSkill(ctx.paths, name);
@@ -262,8 +343,8 @@ function assertImportAllowed(ctx: Context, spec: SkillSourceSpec): void {
   if (spec.kind === "git" && ctx.actor.startsWith("agent:") && !ctx.config.allowAgentImports) {
     throw new ShelfError(
       "NOT_ALLOWED",
-      "Agents may not import skills from remote sources",
-      "Ask the user to run this command, or to set allowAgentImports in ~/.shelf/config.json",
+      "Agents may review skills from remote sources but not import them",
+      "Show the user the review and ask them to run the command with --yes themselves, or to set allowAgentImports in ~/.shelf/config.json",
     );
   }
 }

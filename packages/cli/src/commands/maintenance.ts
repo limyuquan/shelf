@@ -2,6 +2,7 @@ import { doctor, sweep } from "@shelf/core";
 import bundledSkill from "@shelf/skill/SKILL.md" with { type: "text" };
 import { shelfCommand } from "../command.ts";
 import { lines } from "../format.ts";
+import { resolveHookCommand } from "../hook-command.ts";
 
 export const sweepCommand = shelfCommand({
   name: "sweep",
@@ -38,7 +39,11 @@ export const doctorCommand = shelfCommand({
   description: "Check shelf's state for problems; --fix repairs what it safely can",
   args: { fix: { type: "boolean", description: "Repair fixable problems" } },
   async run(ctx, args) {
-    const report = await doctor(ctx, { bundledSkill, fix: Boolean(args.fix) });
+    const report = await doctor(ctx, {
+      bundledSkill,
+      hookCommand: resolveHookCommand(),
+      fix: Boolean(args.fix),
+    });
     return {
       data: report,
       text: lines(

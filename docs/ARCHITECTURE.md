@@ -59,6 +59,35 @@ A loan's content state is computed, never stored, from three hashes:
 overwrite local edits. Any operation that would discard edits (`return`,
 `update`, expiry) refuses unless forced.
 
+`adopt` sets a loan's base to the copy's own revision when the copy matches an
+earlier revision of the library skill, or when `--unedited` declares it one
+(the copy is then stored as a revision with source `adopt`). Such loans are
+`behind`, not `modified`, so an agent is never invited to promote stale content.
+
+## Renew on use
+
+A loan's due date slides to `loanDays` from now whenever the skill is used
+(`recordUse` in `services/usage.ts`), so expiry means "unused for a loan
+period". Uses are written at most once an hour per loan (`last_used_at`) and
+logged as `loan.used` at most once a day.
+
+Uses come from harness hooks that `shelf setup` installs (`services/hooks.ts`)
+in Claude Code's `settings.json` and Codex's `hooks.json`:
+
+- `shelf hook skill-use` (PostToolUse, UserPromptSubmit) matches the payload
+  against the project's lockfile: the Skill tool naming a borrowed skill, a
+  path inside a borrowed copy, or a prompt invoking one. A string pre-check
+  rejects ordinary tool calls before any file or database is opened.
+- `shelf hook session-start` syncs the project and prints one line only when
+  something needs attention (`services/session.ts`). Output is the only thing
+  hooks add to an agent's context, so a healthy project costs nothing.
+
+Hooks never fail the agent's turn: errors go to stderr and the exit code is 0.
+Hook entries are recognised by their command (`shelf hook …`), so re-running
+setup replaces them (e.g. after the binary moved) and `--no-hooks` removes only
+them. The hook command is the binary's absolute path, because hooks may run
+without the user's shell PATH.
+
 ## Invariants
 
 - shelf never writes into a skill directory it does not manage. Unmanaged
@@ -90,6 +119,12 @@ A loan's `mode` is `copy` (every target holds a copy) or `link` (the first
 target holds the copy; the others are relative symlinks, junctions on Windows).
 Hashing and copying follow symlinks, so content states work the same either way.
 
+Projects sometimes symlink one harness directory to another (e.g.
+`.claude/skills` → `.agents/skills`). Targets are compared by real path
+(`distinctTargets`): aliases are dropped from new loans, never written twice,
+never turned into a link to themselves, and removing one name never deletes
+the copy behind another.
+
 ## Importing and auditing
 
 `shelf add` fetches a source (shallow `git clone` with prompts disabled, or a
@@ -97,8 +132,12 @@ local directory), audits it with `core/src/security/audit.ts`, and returns a
 review. Nothing enters the library without `yes`; high-severity findings also
 need `force`. The source (URL, ref, path, commit, resulting revision) is kept in
 `skill_sources`, so `shelf pull` can re-fetch, diff, re-audit, and refuse to
-clobber library edits made since the import. Agents (actor `agent:*`) are
-refused remote imports unless `allowAgentImports` is set.
+clobber library edits made since the import. When the library already has the
+skill (e.g. adopted from projects), `add --yes` only records the source, taking
+the current revision as the last import, so the next `pull` offers the
+upstream version as a reviewed update. Agents (actor `agent:*`) may review and
+link, but changing library content from a remote source (`add --yes` of a new
+skill, `pull --yes`) is refused unless `allowAgentImports` is set.
 
 The audit is a tripwire for human review, not a sandbox: pattern rules
 (pipe-to-shell, decode-and-run, prompt-injection phrasing, file uploads,

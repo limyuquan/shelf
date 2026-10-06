@@ -24,10 +24,22 @@ interface Envelope {
 let home: string;
 let project: string;
 
+/** Every location shelf writes to points into the temp home, never the real one. */
+function isolatedEnv(): Record<string, string | undefined> {
+  return {
+    ...process.env,
+    HOME: home,
+    SHELF_HOME: join(home, ".shelf"),
+    CLAUDE_CONFIG_DIR: join(home, ".claude"),
+    CODEX_HOME: join(home, ".codex"),
+    SHELF_ACTOR: "e2e",
+  };
+}
+
 async function shelf(...args: string[]): Promise<{ exitCode: number; json: Envelope }> {
   const proc = Bun.spawn([...COMMAND, ...args, "--json"], {
     cwd: project,
-    env: { ...process.env, HOME: home, SHELF_HOME: join(home, ".shelf"), SHELF_ACTOR: "e2e" },
+    env: isolatedEnv(),
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -111,11 +123,65 @@ describe("usage errors with --json", () => {
   });
 });
 
+/** Runs a hook the way a harness does: payload on stdin, plain stdout. */
+async function hook(event: string, payload: object): Promise<{ exitCode: number; stdout: string }> {
+  const proc = Bun.spawn([...COMMAND, "hook", event, "--harness", "claude-code"], {
+    cwd: project,
+    env: isolatedEnv(),
+    stdin: new Blob([JSON.stringify(payload)]),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+  return { exitCode, stdout };
+}
+
+describe("harness hooks", () => {
+  test("setup installs them and --no-hooks removes them", async () => {
+    const settings = join(home, ".claude/settings.json");
+    const installed = JSON.parse(await Bun.file(settings).text());
+    expect(installed.hooks.SessionStart[0].hooks[0].command).toContain(
+      "hook session-start --harness claude-code",
+    );
+    await shelf("setup", "--no-hooks");
+    expect(JSON.parse(await Bun.file(settings).text())).toEqual({});
+  });
+
+  test("using a skill renews it; session start stays silent until something is due", async () => {
+    await shelf("init");
+    await shelf("new", "pdf-tools", "-d", "Work with PDFs");
+    await shelf("borrow", "pdf-tools", "--days", "3");
+
+    const start = await hook("session-start", { cwd: project, source: "startup" });
+    expect(start).toMatchObject({ exitCode: 0 });
+    expect(start.stdout).toStartWith("shelf: due soon unless used: pdf-tools (3d)");
+
+    const use = await hook("skill-use", {
+      cwd: project,
+      tool_name: "Skill",
+      tool_input: { skill: "pdf-tools" },
+    });
+    expect(use).toEqual({ exitCode: 0, stdout: "" });
+    expect((await shelf("status")).json.data?.loans).toMatchObject([
+      { skill: "pdf-tools", due: "active", daysLeft: 30 },
+    ]);
+    expect((await hook("session-start", { cwd: project })).stdout).toBe("");
+  });
+
+  test("a hook never fails the agent's turn", async () => {
+    expect(await hook("skill-use", { cwd: "/nonexistent", tool_name: "Skill" })).toEqual({
+      exitCode: 0,
+      stdout: "",
+    });
+    expect((await hook("bogus-event", {})).exitCode).toBe(0);
+  });
+});
+
 describe("shelf ui", () => {
   test("serves the embedded dashboard and its API", async () => {
     const proc = Bun.spawn([...COMMAND, "ui", "--no-open", "--json"], {
       cwd: project,
-      env: { ...process.env, HOME: home, SHELF_HOME: join(home, ".shelf") },
+      env: isolatedEnv(),
       stdout: "pipe",
       stderr: "pipe",
     });

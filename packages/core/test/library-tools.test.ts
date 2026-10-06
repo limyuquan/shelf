@@ -7,7 +7,8 @@ import { adopt } from "../src/services/adopt.ts";
 import { diffSkill } from "../src/services/diff.ts";
 import { doctor } from "../src/services/doctor.ts";
 import { skillHistory } from "../src/services/history.ts";
-import { borrow, promote } from "../src/services/loans.ts";
+import { refreshLibrary } from "../src/services/library.ts";
+import { borrow, promote, update } from "../src/services/loans.ts";
 import { initProject } from "../src/services/project.ts";
 import { propagate } from "../src/services/propagate.ts";
 import { scan } from "../src/services/scan.ts";
@@ -31,6 +32,54 @@ async function makeProject(env: TestEnv, name: string): Promise<string> {
 }
 
 describe("scan and adopt", () => {
+  test("a copy matching an earlier library revision is adopted as behind, not edited", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    const app = await makeProject(env, "app");
+    const copy = await handWrittenSkill(join(app, ".agents/skills"), "review", "v1");
+    await adopt(ctx, [copy]);
+    await rm(join(app, ".agents/shelf.lock.json"));
+    await appendToFile(join(env.shelfHome, "library/review/SKILL.md"), "v2");
+    await refreshLibrary(ctx);
+
+    const other = await makeProject(env, "other");
+    const old = await handWrittenSkill(join(other, ".agents/skills"), "review", "v1");
+    const [result] = await adopt(ctx, [old]);
+
+    expect(result).toMatchObject({ library: "older", loan: { content: "behind" } });
+  });
+
+  test("--unedited records differing copies as older versions", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    const newer = await handWrittenSkill(
+      join(await makeProject(env, "a"), ".agents/skills"),
+      "review",
+      "v2",
+    );
+    const older = await handWrittenSkill(
+      join(await makeProject(env, "b"), ".agents/skills"),
+      "review",
+      "v1",
+    );
+    const edited = await handWrittenSkill(
+      join(await makeProject(env, "c"), ".agents/skills"),
+      "review",
+      "mine",
+    );
+
+    await adopt(ctx, [newer]);
+    const [asOlder] = await adopt(ctx, [older], { unedited: true });
+    const [asEdited] = await adopt(ctx, [edited]);
+
+    expect(asOlder).toMatchObject({ library: "older", loan: { content: "behind" } });
+    expect(asEdited).toMatchObject({ library: "differs", loan: { content: "modified" } });
+    // A behind loan updates without --force; nothing is discarded.
+    const [updated] = await update(await env.context(join(env.root, "code/b")), ["review"]);
+    expect(updated?.status).toBe("updated");
+    expect((await skillHistory(ctx, "review")).revisions.map((r) => r.source)).toContain("adopt");
+  });
+
   test("scan groups copies by name and content across projects", async () => {
     const env = await createTestEnv();
     const ctx = await env.context();
@@ -202,15 +251,15 @@ describe("sweep and doctor", () => {
     );
     await mkdir(staging, { recursive: true });
 
-    const before = await doctor(ctx, { bundledSkill: "skill" });
+    const before = await doctor(ctx, { bundledSkill: "skill", hookCommand: "shelf" });
     const warned = before.checks
       .filter((check) => check.status === "warn")
       .map((check) => check.id);
     expect(warned).toEqual(["bundled-skill", "projects", "staging"]);
 
-    const fixed = await doctor(ctx, { bundledSkill: "skill", fix: true });
+    const fixed = await doctor(ctx, { bundledSkill: "skill", hookCommand: "shelf", fix: true });
     expect(fixed.checks.every((check) => check.problems.length === check.fixed.length)).toBe(true);
-    const after = await doctor(ctx, { bundledSkill: "skill" });
+    const after = await doctor(ctx, { bundledSkill: "skill", hookCommand: "shelf" });
     expect(after.checks.every((check) => check.status === "ok")).toBe(true);
     expect(await readdir(join(env.projectDir, ".claude/skills"))).toEqual(["pdf"]);
   });

@@ -5,6 +5,7 @@ import { auditText } from "../src/security/audit.ts";
 import { createContext } from "../src/services/context.ts";
 import { skillHistory } from "../src/services/history.ts";
 import { addSkill, pullSkill } from "../src/services/import.ts";
+import { createSkill } from "../src/services/library.ts";
 import { createTestEnv, type TestEnv } from "./helpers.ts";
 
 // These tests spawn real git processes, which can exceed 5 s on a busy machine.
@@ -115,7 +116,7 @@ describe("shelf add", () => {
     expect(result?.status).toBe("imported");
   });
 
-  test("agents may not import from remote sources unless allowed", async () => {
+  test("agents may review remote sources but not import from them unless allowed", async () => {
     const env = await createTestEnv();
     const repo = await makeRepo(env, { review: "Check tests." });
     const agent = await createContext({
@@ -124,9 +125,36 @@ describe("shelf add", () => {
       actor: "agent:claude-code",
     });
 
+    const [review] = await addSkill(agent, `file://${repo}`);
+    expect(review?.status).toBe("review");
     await expect(addSkill(agent, `file://${repo}`, { yes: true })).rejects.toMatchObject({
       code: "NOT_ALLOWED",
     });
+  });
+
+  test("a skill already in the library is linked to the source, not replaced", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    await createSkill(ctx, "review", "review");
+    const repo = await makeRepo(env, { review: "Upstream guidance." });
+
+    const [review] = await addSkill(ctx, `file://${repo}`);
+    expect(review).toMatchObject({ status: "review", existing: true });
+    expect(review?.diff[0]?.patch).toContain("+Upstream guidance.");
+
+    // Linking changes no content, so agents may do it.
+    const agent = await createContext({ cwd: env.projectDir, env: env.env, actor: "agent:x" });
+    const [linked] = await addSkill(agent, `file://${repo}`, { yes: true });
+    expect(linked?.status).toBe("linked");
+    expect((await skillHistory(ctx, "review")).revisions).toHaveLength(1);
+
+    // The upstream version now arrives through pull, which agents may only review.
+    expect((await pullSkill(agent, "review")).status).toBe("review");
+    await expect(pullSkill(agent, "review", { yes: true })).rejects.toMatchObject({
+      code: "NOT_ALLOWED",
+    });
+    expect((await pullSkill(ctx, "review", { yes: true })).status).toBe("imported");
+    await expect(addSkill(ctx, `file://${repo}`)).rejects.toMatchObject({ code: "SKILL_EXISTS" });
   });
 });
 

@@ -7,6 +7,7 @@ import {
   ErrorBanner,
   formatDate,
   Loading,
+  lastUsedLabel,
   Section,
   shortHash,
 } from "../components.tsx";
@@ -101,6 +102,7 @@ export function ProjectView({ id }: { id: string }) {
                 <th>Content</th>
                 <th>Due</th>
                 <th>Due date</th>
+                <th>Last used</th>
                 <th>Revision</th>
                 <th />
               </tr>
@@ -128,6 +130,7 @@ export function ProjectView({ id }: { id: string }) {
                       }
                     />
                   </td>
+                  <td class="muted">{lastUsedLabel(loan.lastUsedAt)}</td>
                   <td>
                     <code>{shortHash(loan.revision)}</code>
                   </td>

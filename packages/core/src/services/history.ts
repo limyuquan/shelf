@@ -25,7 +25,7 @@ export interface SkillHistory {
   }[];
 }
 
-/** A skill's revisions, newest first, and which projects borrow which revision. */
+/** A skill's revisions, most recently recorded first, and which projects borrow which revision. */
 export async function skillHistory(ctx: Context, name: string): Promise<SkillHistory> {
   await refreshLibrary(ctx);
   const skill = requireSkill(ctx, name);

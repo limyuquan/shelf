@@ -15,6 +15,11 @@ export const ConfigSchema = z.object({
    * the library is the trust boundary, and only the user should widen it.
    */
   allowAgentImports: z.boolean().default(false),
+  /**
+   * Install harness hooks (Claude Code, Codex) that renew loans when a skill is
+   * used and report loans needing attention at session start. Set by `shelf setup`.
+   */
+  hooks: z.boolean().default(true),
   /** `copy`: a copy per target. `link`: one copy, other targets symlink to it. */
   mode: z.enum(["copy", "link"]).default("copy"),
   /** Project-relative directories that borrowed skills are written into. */

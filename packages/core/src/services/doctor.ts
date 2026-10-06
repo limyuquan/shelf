@@ -10,6 +10,7 @@ import { listActiveLoanRevisions, listActiveLoans } from "../store/loans.ts";
 import { deleteProject, listProjects } from "../store/projects.ts";
 import { listAllRevisionHashes } from "../store/skills.ts";
 import type { Context } from "./context.ts";
+import { installHooks, staleHooks } from "./hooks.ts";
 import { refreshLibrary } from "./library.ts";
 import { bundledSkillFiles } from "./setup.ts";
 
@@ -28,12 +29,13 @@ const STAGING = /\.shelf-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 /** Checks shelf's state for problems and, with `fix`, repairs what it safely can. */
 export async function doctor(
   ctx: Context,
-  options: { bundledSkill: string; fix?: boolean },
+  options: { bundledSkill: string; hookCommand: string; fix?: boolean },
 ): Promise<{ checks: DoctorCheck[] }> {
   const fix = Boolean(options.fix);
   const checks = [
     await checkLibrary(ctx),
     await checkBundledSkill(ctx, options.bundledSkill, fix),
+    await checkHooks(ctx, options.hookCommand, fix),
     await checkProjects(ctx, fix),
     await checkStaging(ctx, fix),
     await checkBaseRevisions(ctx),
@@ -82,6 +84,27 @@ async function checkBundledSkill(
     }
   }
   return check("bundled-skill", "The shelf skill is installed for every harness", problems, fixed);
+}
+
+async function checkHooks(ctx: Context, command: string, fix: boolean): Promise<DoctorCheck> {
+  if (!ctx.config.hooks) {
+    return check("hooks", "Hooks are turned off; loans renew only with `shelf renew`", []);
+  }
+  const stale = await staleHooks(ctx, command);
+  const problems = stale.map((hook) =>
+    hook.problem
+      ? `${hook.label}: ${hook.problem}`
+      : `${hook.label}: shelf's hooks are missing or outdated in ${hook.file}`,
+  );
+  const fixed: string[] = [];
+  if (fix && stale.length > 0) {
+    const changes = await installHooks(ctx, command);
+    stale.forEach((hook, index) => {
+      const after = changes.find((change) => change.harness === hook.harness);
+      if (after && after.status !== "skipped") fixed.push(problems[index] as string);
+    });
+  }
+  return check("hooks", "Hooks renew loans on use in every installed harness", problems, fixed);
 }
 
 async function checkProjects(ctx: Context, fix: boolean): Promise<DoctorCheck> {

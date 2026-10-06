@@ -101,7 +101,8 @@ export async function sweep(ctx: Context): Promise<SweepReport> {
   return { synced, missing };
 }
 
-async function syncProject(
+/** `sync` for one project; shared with `sweep` and the session-start hook. */
+export async function syncProject(
   ctx: Context,
   project: Project,
   warnings: string[],

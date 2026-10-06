@@ -1,6 +1,6 @@
 import { listProjectOverviews, shortHash, status, sync } from "@shelf/core";
 import { shelfCommand } from "../command.ts";
-import { formatDate, formatDaysLeft, lines, table } from "../format.ts";
+import { formatDate, formatDaysLeft, formatLastUsed, lines, table } from "../format.ts";
 
 export const statusCommand = shelfCommand({
   name: "status",
@@ -17,12 +17,13 @@ export const statusCommand = shelfCommand({
       report.loans.length === 0
         ? "No skills borrowed. Find some with `shelf catalog`."
         : table([
-            ["SKILL", "CONTENT", "DUE", "", "POLICY", "REVISION"],
+            ["SKILL", "CONTENT", "DUE", "", "USED", "POLICY", "REVISION"],
             ...report.loans.map((loan) => [
               loan.skill,
               loan.content,
               formatDate(loan.dueAt),
               formatDaysLeft(loan.daysLeft),
+              formatLastUsed(loan.lastUsedAt, new Date()),
               loan.policy,
               shortHash(loan.revision),
             ]),

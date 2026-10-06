@@ -52,6 +52,8 @@ function describe(event: Event): string {
     const to = String(detail.to ?? "").slice(0, 10);
     return detail.reason ? `due ${to}: ${String(detail.reason)}` : `due ${to}`;
   }
+  if (event.type === "loan.used") return `used; due ${String(detail.dueAt ?? "").slice(0, 10)}`;
+  if (event.type === "skill.linked") return `linked to ${String(detail.source ?? "")}`;
   if (typeof detail.reason === "string") return detail.reason;
   if (typeof detail.source === "string") return `from ${detail.source}`;
   return "";

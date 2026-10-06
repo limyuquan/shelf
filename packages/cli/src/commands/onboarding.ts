@@ -42,13 +42,20 @@ export const adoptCommand = shelfCommand({
   description: "Import existing skill directories into the library and manage them as loans",
   args: {
     path: { type: "positional", required: true, description: "One or more skill directories" },
+    unedited: {
+      type: "boolean",
+      description:
+        "The copies have no local edits: treat differing ones as older versions (list the newest first)",
+    },
   },
   async run(ctx, args) {
-    const results = await adopt(ctx, positionals(args));
+    const results = await adopt(ctx, positionals(args), { unedited: Boolean(args.unedited) });
     const describe = {
       imported: "imported into the library",
       matched: "matches the library",
-      differs: "differs from the library (kept as local edits)",
+      older: "an older version of the library's (`shelf update` brings it up to date)",
+      differs:
+        "differs from the library (kept as local edits; if it is only an older version, `shelf update --force` replaces it)",
     } as const;
     return {
       data: { skills: results },

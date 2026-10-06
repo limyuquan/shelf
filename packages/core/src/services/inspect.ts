@@ -21,6 +21,8 @@ export interface LoanReport {
   readonly due: DueState;
   readonly dueAt: Date;
   readonly daysLeft: number;
+  /** Last recorded use in this project; null if never seen (e.g. no harness hooks). */
+  readonly lastUsedAt: Date | null;
   readonly policy: LoanPolicy;
   readonly revision: RevisionHash;
   readonly latestRevision: RevisionHash;
@@ -51,6 +53,7 @@ async function inspectLoan(ctx: Context, project: Project, loan: Loan): Promise<
       due: dueState(loan.dueAt, now, ctx.config.dueSoonDays),
       dueAt: loan.dueAt,
       daysLeft: daysUntil(loan.dueAt, now),
+      lastUsedAt: loan.lastUsedAt,
       policy: loan.policy,
       revision: loan.revision,
       latestRevision: skill.latestRevision,

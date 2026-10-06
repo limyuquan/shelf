@@ -12,6 +12,7 @@ import {
   readLockfileSync,
   writeLockfileSync,
 } from "../projection/lockfile.ts";
+import { distinctTargets } from "../projection/materialize.ts";
 import { type Db, writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { insertLoan, listActiveLoans } from "../store/loans.ts";
@@ -119,7 +120,8 @@ export async function requireProject(ctx: Context): Promise<OpenProject> {
 
 /** Where this project's borrowed skills go: its lockfile's targets, else the user default. */
 export async function projectTargets(ctx: Context, project: Project): Promise<readonly string[]> {
-  return (await readLockfile(project.path))?.targets ?? ctx.config.targets;
+  const targets = (await readLockfile(project.path))?.targets ?? ctx.config.targets;
+  return distinctTargets(project.path, targets);
 }
 
 /** A registered project by id, name or path, wherever the caller is. */

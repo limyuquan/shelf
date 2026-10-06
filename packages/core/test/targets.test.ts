@@ -1,9 +1,10 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { lstat, mkdir, readlink, rm } from "node:fs/promises";
+import { lstat, mkdir, readlink, rm, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { pathExists } from "../src/library/fs.ts";
 import { readLockfile } from "../src/projection/lockfile.ts";
+import { removeSkillCopies, writeSkillCopies } from "../src/projection/materialize.ts";
 import { borrow, promote, returnSkill } from "../src/services/loans.ts";
 import { status, sync } from "../src/services/status.ts";
 import { changeTargets, describeTargets } from "../src/services/targets.ts";
@@ -107,6 +108,49 @@ describe("project targets", () => {
   });
 });
 
+describe("symlinked harness directories", () => {
+  /** `.claude/skills` → `.agents/skills`, a common hand-made setup. */
+  async function linkClaudeToAgents(projectDir: string): Promise<void> {
+    await mkdir(join(projectDir, ".agents/skills"), { recursive: true });
+    await mkdir(join(projectDir, ".claude"));
+    await symlink("../.agents/skills", join(projectDir, ".claude/skills"));
+  }
+
+  test("count as one target and are not suggested again", async () => {
+    const env = await createTestEnv();
+    const ctx = await setupProject(env, ["pdf"]);
+    await linkClaudeToAgents(env.projectDir);
+
+    const report = await describeTargets(ctx);
+    expect(report.targets).toEqual([".agents/skills"]);
+    expect(report.harnesses.find((h) => h.id === "claude")).toMatchObject({
+      enabled: false,
+      detected: true,
+      sharedWith: ".agents/skills",
+    });
+
+    await borrow(ctx, ["pdf"]);
+    expect((await readLockfile(env.projectDir))?.skills.pdf?.targets).toEqual([".agents/skills"]);
+    const borrowed = await status(ctx);
+    expect(borrowed.initialized && borrowed.loans[0]?.content).toBe("current");
+  });
+
+  test("removing one name never deletes the copy behind the other", async () => {
+    const env = await createTestEnv();
+    await setupProject(env, ["pdf"]);
+    await linkClaudeToAgents(env.projectDir);
+    const source = join(env.shelfHome, "library/pdf");
+    const targets = [".agents/skills", ".claude/skills"];
+
+    // Link mode must not turn the only real copy into a link to itself.
+    await writeSkillCopies(env.projectDir, { targets, mode: "link" }, "pdf", source);
+    expect((await lstat(join(env.projectDir, ".agents/skills/pdf"))).isDirectory()).toBe(true);
+
+    await removeSkillCopies(env.projectDir, [".claude/skills"], "pdf", [".agents/skills"]);
+    expect(await pathExists(join(env.projectDir, ".agents/skills/pdf/SKILL.md"))).toBe(true);
+  });
+});
+
 describe("schema migrations", () => {
   test("a version-1 database is upgraded in place", async () => {
     const env = await createTestEnv();
@@ -123,11 +167,19 @@ describe("schema migrations", () => {
     v1.close();
 
     const db = openDatabase(file);
-    expect(db.query("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(db.query("PRAGMA user_version").get()).toEqual({ user_version: MIGRATIONS.length });
     expect(db.query("SELECT COUNT(*) AS n FROM revisions").get()).toEqual({ n: 1 });
     db.run(
       "INSERT INTO revisions (skill_id, hash, source, created_at) VALUES (1, 'sha256:y', 'import', 'now')",
     );
+    db.run(
+      "INSERT INTO revisions (skill_id, hash, source, created_at) VALUES (1, 'sha256:z', 'adopt', 'now')",
+    );
+    expect(
+      db
+        .query("SELECT COUNT(*) AS n FROM pragma_table_info('loans') WHERE name = 'last_used_at'")
+        .get(),
+    ).toEqual({ n: 1 });
     db.close();
   });
 });

@@ -33,14 +33,19 @@ export async function listLibrarySkills(paths: ShelfPaths): Promise<string[]> {
   return names.sort();
 }
 
+/** Records the library copy of a skill in the object store. */
+export function snapshotSkill(paths: ShelfPaths, name: string): Promise<RevisionHash> {
+  return snapshotDirectory(paths, librarySkillPath(paths, name));
+}
+
 /**
- * Records the library copy of a skill in the object store. The copy is hashed after
- * it is staged, so the stored snapshot always matches its hash even if the library
- * copy is edited concurrently.
+ * Records a skill directory in the object store. The copy is hashed after it is
+ * staged, so the stored snapshot always matches its hash even if the source is
+ * edited concurrently.
  */
-export async function snapshotSkill(paths: ShelfPaths, name: string): Promise<RevisionHash> {
+export async function snapshotDirectory(paths: ShelfPaths, dir: string): Promise<RevisionHash> {
   const staging = stagingPath(join(paths.objects, "snapshot"));
-  await copyDirectory(librarySkillPath(paths, name), staging);
+  await copyDirectory(dir, staging);
   const hash = await hashDirectory(staging);
   const target = revisionPath(paths, hash);
   if (await pathExists(target)) {

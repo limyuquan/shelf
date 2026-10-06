@@ -13,7 +13,7 @@ export { LOCKFILE_PATH } from "./projection/lockfile.ts";
 export type { Finding, Severity } from "./security/audit.ts";
 export type { Action } from "./services/actions.ts";
 export { activity } from "./services/activity.ts";
-export { type AdoptResult, adopt } from "./services/adopt.ts";
+export { type AdoptOptions, type AdoptResult, adopt } from "./services/adopt.ts";
 export { audit, type SkillAudit } from "./services/audit.ts";
 export {
   type Context,
@@ -25,6 +25,7 @@ export {
 export { type DiffResult, diffSkill, type FileDiff } from "./services/diff.ts";
 export { type DoctorCheck, doctor } from "./services/doctor.ts";
 export { type SkillHistory, skillHistory } from "./services/history.ts";
+export type { HookChange, HookHarness } from "./services/hooks.ts";
 export {
   type AddResult,
   addSkill,
@@ -60,7 +61,8 @@ export { listProjectOverviews, type ProjectOverview } from "./services/overview.
 export { initProject, requireRegisteredProject } from "./services/project.ts";
 export { type PropagateResult, type PropagationStatus, propagate } from "./services/propagate.ts";
 export { type ScanGroup, type ScanReport, scan } from "./services/scan.ts";
-export { type SetupResult, setup } from "./services/setup.ts";
+export { sessionNotice } from "./services/session.ts";
+export { type SetupOptions, type SetupResult, setup } from "./services/setup.ts";
 export {
   type ProjectReport,
   projectReport,
@@ -77,4 +79,11 @@ export {
   type TargetsChange,
   type TargetsReport,
 } from "./services/targets.ts";
+export {
+  type HookPayload,
+  mayUseSkill,
+  recordUseFromHook,
+  type UseResult,
+  used,
+} from "./services/usage.ts";
 export type { EventRecord } from "./store/events.ts";

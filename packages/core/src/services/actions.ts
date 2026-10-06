@@ -49,7 +49,7 @@ export function suggestActions(loans: readonly LoanReport[]): Action[] {
     } else if (loan.due === "due-soon") {
       add({
         command: `shelf renew ${skill} --reason "<why>"`,
-        reason: `${skill} is due in ${loan.daysLeft} day(s). Renew it if it is still useful, otherwise \`shelf return ${skill}\``,
+        reason: `${skill} has gone unused and is due in ${loan.daysLeft} day(s). Renew it if the project still needs it, otherwise \`shelf return ${skill}\``,
       });
     }
   }

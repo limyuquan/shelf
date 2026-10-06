@@ -14,7 +14,17 @@ const STATUS_TEXT: Record<AddResult["status"], string> = {
   review: "review only — nothing imported. Re-run with --yes to import",
   blocked: "blocked by high-severity findings. Review them; --yes --force imports anyway",
   imported: "imported into the library",
+  linked: "linked to this source (library unchanged). `shelf pull` now fetches its updates",
 };
+
+function headline(result: AddResult): string {
+  if (result.existing && result.status === "review") {
+    return result.diff.length === 0
+      ? "already in the library and identical to the source. Re-run with --yes to link them, so `shelf pull` fetches updates"
+      : `already in the library; the source differs in ${result.diff.length} file(s). Re-run with --yes to link them (nothing changes until \`shelf pull\`)`;
+  }
+  return STATUS_TEXT[result.status];
+}
 
 export const addCommand = shelfCommand({
   name: "add",
@@ -48,7 +58,7 @@ export const addCommand = shelfCommand({
       data: { skills: results },
       text: lines(
         ...results.flatMap((result) => [
-          `${result.skill} (${result.files.length} file${result.files.length === 1 ? "" : "s"}): ${STATUS_TEXT[result.status]}`,
+          `${result.skill} (${result.files.length} file${result.files.length === 1 ? "" : "s"}): ${headline(result)}`,
           ...renderFindings(result.findings),
         ]),
       ),

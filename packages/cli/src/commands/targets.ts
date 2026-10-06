@@ -33,7 +33,9 @@ export const targetsCommand = shelfCommand({
 });
 
 function render(report: TargetsReport): string {
-  const suggestions = report.harnesses.filter((h) => h.detected && !h.enabled && !h.readsAgentsDir);
+  const suggestions = report.harnesses.filter(
+    (h) => h.detected && !h.enabled && !h.readsAgentsDir && !h.sharedWith,
+  );
   return lines(
     `Skills are written to: ${report.targets.join(", ")}${report.custom ? "" : " (your default)"}`,
     "",
@@ -43,7 +45,11 @@ function render(report: TargetsReport): string {
         h.id,
         h.dir,
         h.enabled ? "on" : "",
-        [h.readsAgentsDir && !h.enabled ? "reads .agents/skills" : "", h.detected ? "detected" : ""]
+        [
+          h.sharedWith ? `same directory as ${h.sharedWith} (symlink)` : "",
+          h.readsAgentsDir && !h.enabled && !h.sharedWith ? "reads .agents/skills" : "",
+          h.detected ? "detected" : "",
+        ]
           .filter(Boolean)
           .join(", "),
       ]),

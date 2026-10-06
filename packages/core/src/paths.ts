@@ -12,6 +12,9 @@ export interface ShelfPaths {
   readonly config: string;
   /** The user's home directory, where harness-wide skill dirs live. */
   readonly userHome: string;
+  /** Harness config directories that shelf installs hooks into. */
+  readonly claudeConfig: string;
+  readonly codexHome: string;
 }
 
 export function resolvePaths(env: Record<string, string | undefined> = process.env): ShelfPaths {
@@ -24,5 +27,7 @@ export function resolvePaths(env: Record<string, string | undefined> = process.e
     database: join(home, "shelf.db"),
     config: join(home, "config.json"),
     userHome,
+    claudeConfig: env.CLAUDE_CONFIG_DIR ?? join(userHome, ".claude"),
+    codexHome: env.CODEX_HOME ?? join(userHome, ".codex"),
   };
 }

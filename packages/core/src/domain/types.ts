@@ -38,7 +38,8 @@ export interface Skill {
   readonly archivedAt: Date | null;
 }
 
-export type RevisionSource = "library" | "promote" | "import";
+/** `adopt`: an older, unedited version of a library skill found in a project. */
+export type RevisionSource = "library" | "promote" | "import" | "adopt";
 
 export interface Loan {
   readonly id: number;
@@ -51,6 +52,8 @@ export interface Loan {
   readonly mode: LoanMode;
   readonly borrowedAt: Date;
   readonly dueAt: Date;
+  /** Last time an agent was seen using the skill in this project (see `recordUse`). */
+  readonly lastUsedAt: Date | null;
   readonly returnedAt: Date | null;
 }
 
@@ -58,12 +61,14 @@ export type EventType =
   | "skill.created"
   | "skill.revised"
   | "skill.archived"
+  | "skill.linked"
   | "project.registered"
   | "project.forgotten"
   | "loan.borrowed"
   | "loan.adopted"
   | "loan.due-changed"
   | "loan.updated"
+  | "loan.used"
   | "loan.restored"
   | "loan.returned"
   | "loan.expired"

@@ -12,6 +12,7 @@ interface LoanRow {
   mode: LoanMode;
   borrowed_at: string;
   due_at: string;
+  last_used_at: string | null;
   returned_at: string | null;
 }
 
@@ -30,6 +31,7 @@ const toLoan = (row: LoanRow): Loan => ({
   mode: row.mode,
   borrowedAt: new Date(row.borrowed_at),
   dueAt: new Date(row.due_at),
+  lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
   returnedAt: row.returned_at ? new Date(row.returned_at) : null,
 });
 
@@ -89,6 +91,15 @@ export function setLoanTargets(db: Db, loanId: number, targets: readonly string[
 
 export function setLoanDue(db: Db, loanId: number, dueAt: Date): void {
   db.query("UPDATE loans SET due_at = ? WHERE id = ?").run(dueAt.toISOString(), loanId);
+}
+
+/** Records a use of the skill and, when it moves, the slid due date. */
+export function setLoanUsed(db: Db, loanId: number, usedAt: Date, dueAt: Date): void {
+  db.query("UPDATE loans SET last_used_at = ?, due_at = ? WHERE id = ?").run(
+    usedAt.toISOString(),
+    dueAt.toISOString(),
+    loanId,
+  );
 }
 
 export function closeLoan(db: Db, loanId: number, at: Date): void {

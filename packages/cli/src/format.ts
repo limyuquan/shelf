@@ -10,6 +10,12 @@ export function formatDaysLeft(days: number): string {
   return `${days}d left`;
 }
 
+export function formatLastUsed(usedAt: Date | null, now: Date): string {
+  if (!usedAt) return "never";
+  const days = Math.floor((now.getTime() - usedAt.getTime()) / 86_400_000);
+  return days <= 0 ? "today" : `${days}d ago`;
+}
+
 export function truncate(text: string, max: number): string {
   const line = text.replace(/\s+/g, " ").trim();
   return line.length <= max ? line : `${line.slice(0, max - 1)}…`;

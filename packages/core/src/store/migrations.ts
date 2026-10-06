@@ -85,6 +85,24 @@ export const MIGRATIONS: readonly string[] = [
     imported_at TEXT NOT NULL
   );
   `,
+
+  /* 3: usage tracking, adopted older revisions */ `
+  ALTER TABLE loans ADD COLUMN last_used_at TEXT;
+
+  -- Allow 'adopt': an older, unedited version found in a project during adoption.
+  CREATE TABLE revisions_v3 (
+    skill_id   INTEGER NOT NULL REFERENCES skills(id),
+    hash       TEXT NOT NULL,
+    parent     TEXT,
+    source     TEXT NOT NULL CHECK (source IN ('library', 'promote', 'import', 'adopt')),
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (skill_id, hash)
+  );
+  INSERT INTO revisions_v3 (skill_id, hash, parent, source, created_at)
+    SELECT skill_id, hash, parent, source, created_at FROM revisions;
+  DROP TABLE revisions;
+  ALTER TABLE revisions_v3 RENAME TO revisions;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

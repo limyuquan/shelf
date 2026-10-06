@@ -2,6 +2,7 @@
 import { defineCommand, runCommand, runMain } from "citty";
 import pkg from "../package.json" with { type: "json" };
 import { guideCommand } from "./commands/guide.ts";
+import { hookCommand, usedCommand } from "./commands/hooks.ts";
 import {
   catalogCommand,
   diffCommand,
@@ -51,6 +52,7 @@ const main = defineCommand({
     // Loans in the current project
     borrow: borrowCommand,
     renew: renewCommand,
+    used: usedCommand,
     due: dueCommand,
     return: returnCommand,
     update: updateCommand,
@@ -69,6 +71,8 @@ const main = defineCommand({
     sweep: sweepCommand,
     doctor: doctorCommand,
     ui: uiCommand,
+    // Called by harness hooks, not people
+    hook: hookCommand,
   },
 });
 

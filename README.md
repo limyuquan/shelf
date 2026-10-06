@@ -2,8 +2,8 @@
 
 A personal skill library for coding agents. Keep your [Agent Skills](https://agentskills.io)
 in one library, **borrow** them into the projects that need them, and let loans
-**expire** so stale skills don't pile up. Agents renew what they use and return
-what they don't.
+**expire** so stale skills don't pile up. Using a skill renews it; skills nobody
+uses are returned.
 
 ```console
 $ shelf borrow pdf-tools git-hygiene
@@ -13,15 +13,15 @@ Borrowed git-hygiene until 2026-11-05 → .agents/skills, .claude/skills
 $ shelf status
 my-app  /home/me/code/my-app
 
-SKILL        CONTENT  DUE                   POLICY  REVISION
-git-hygiene  current  2026-11-05  30d left  pinned  cc0ff536b8
-pdf-tools    behind   2026-10-09   3d left  pinned  ae40770b0e
+SKILL        CONTENT  DUE                   USED     POLICY  REVISION
+git-hygiene  current  2026-11-05  30d left  today    pinned  cc0ff536b8
+pdf-tools    behind   2026-10-09   3d left  27d ago  pinned  ae40770b0e
 
 Next steps:
   shelf update pdf-tools
       The library has a newer revision of pdf-tools
   shelf renew pdf-tools --reason "<why>"
-      pdf-tools is due in 3 day(s). Renew it if it is still useful, otherwise `shelf return pdf-tools`
+      pdf-tools has gone unused and is due in 3 day(s). Renew it if the project still needs it, otherwise `shelf return pdf-tools`
 ```
 
 ## Why
@@ -46,9 +46,11 @@ borrow only from it.
   Copilot, OpenCode, Amp, Goose, Cline, …) and `.claude/skills/` (Claude Code).
 - **Lockfile**: `.agents/shelf.lock.json` records which skills shelf manages and
   at which revision. It has no timestamps, so commit it without merge churn.
-- **Expiry**: overdue loans are returned automatically the next time `shelf
-  status` or `shelf sync` runs — unless the project copy has local edits, which
-  shelf never deletes.
+- **Renew on use**: each time an agent uses a borrowed skill, its due date moves
+  to 30 days out. A loan only comes due after going unused (see [Hooks](#hooks)).
+- **Expiry**: overdue loans are returned automatically at the next session
+  start, `shelf status` or `shelf sync` — unless the project copy has local
+  edits, which shelf never deletes.
 - **Propagation is explicit**: edits flow from project to library with
   `shelf promote` and from library to projects with `shelf update` (or
   automatically for loans borrowed with `--follow`).
@@ -67,10 +69,35 @@ shelf adopt ~/code/app/.claude/skills/review ~/code/api/.claude/skills/review
 The first copy adopted becomes the library version. Copies that differ are
 adopted as loans with local edits (`modified`), so nothing is overwritten:
 `shelf diff`, then `shelf promote --propagate` the best one or
-`shelf update --force` to take the library's.
+`shelf update --force` to take the library's. If the copies were never edited
+and only differ because they were installed at different times, adopt the
+newest first with `--unedited`: the others become `behind` and a plain
+`shelf update` brings them up to date.
+
+Skills that came from a public repository can then be linked to it, so you can
+pull their updates later: `shelf add gh:owner/repo --skill <name> --yes` on a
+skill the library already has records the source without changing it.
 
 To return overdue loans everywhere without visiting each project, run
 `shelf sweep` daily (cron, systemd timer, launchd).
+
+## Hooks
+
+`shelf setup` installs hooks in Claude Code (`~/.claude/settings.json`) and
+Codex (`~/.codex/hooks.json`), next to your existing settings:
+
+- **Session start**: syncs the project (returns overdue skills, restores
+  missing copies) and adds one `shelf: …` line to the agent's context *only*
+  when something needs attention — a skill due soon, local edits, library
+  updates. A healthy project costs no tokens.
+- **Skill use**: after tool calls and prompts, recognises a borrowed skill
+  being used (the Skill tool, reading its files, `/skill-name`) and renews it.
+  It prints nothing, and exits before opening any state for ordinary tool calls.
+
+Codex runs new hooks only after you trust them once in its `/hooks` view.
+`shelf setup --no-hooks` removes them; `shelf doctor` reports hooks that are
+missing or point at a moved binary. In harnesses without hooks, loans keep
+their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 
 ## Dashboard
 
@@ -110,14 +137,15 @@ shelf audit                             # scan your whole library, including you
 or a local directory. Every import and pull is audited locally (pipe-to-shell,
 prompt-injection phrasing, hidden Unicode, file uploads, credential access,
 binaries, scripts…). High-severity findings block the import unless you add
-`--force`. Agents cannot import from remote sources unless you set
-`allowAgentImports`: your library stays the trust boundary.
+`--force`. Agents may run the review step, but cannot import from remote
+sources unless you set `allowAgentImports`: your library stays the trust
+boundary.
 
 ## Commands
 
 | Command | |
 |---|---|
-| `shelf setup` | Create `~/.shelf` and install the bundled `shelf` skill for your agents |
+| `shelf setup [--no-hooks]` | Create `~/.shelf`, install the bundled `shelf` skill and the [hooks](#hooks) |
 | `shelf init` | Register the current project |
 | `shelf status` | Loans, their states and suggested next steps. Returns overdue skills |
 | `shelf guide` | The full guide for agents |
@@ -128,12 +156,13 @@ binaries, scripts…). High-severity findings block the import unless you add
 | `shelf log <name>` | A skill's revisions and which projects borrow each |
 | `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
-| `shelf add <source> [--yes] [--force]` | Import skills from git or a directory, after a local audit |
+| `shelf add <source> [--yes] [--force]` | Import skills from git or a directory after a local audit, or link existing ones to it |
 | `shelf pull <name> [--yes]` | Update an imported skill from its source |
 | `shelf audit [name…]` | Scan library skills for risky content |
 | **This project** | |
 | `shelf borrow <name…> [--days N] [--follow] [--link]` | Borrow skills into this project |
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
+| `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
 | `shelf return <name> [--force]` | Remove a borrowed skill |
 | `shelf update [name…] [--force]` | Update borrowed skills to the library's latest revision |
@@ -143,7 +172,7 @@ binaries, scripts…). High-severity findings block the import unless you add
 | `shelf targets [--add ids] [--remove ids] [--reset]` | Which harness skill directories this project uses |
 | **Everywhere** | |
 | `shelf scan [dir]` | Find skill copies under a directory, grouped by name and version |
-| `shelf adopt <path…>` | Import existing skills into the library and manage their copies as loans |
+| `shelf adopt <path…> [--unedited]` | Import existing skills into the library and manage their copies as loans |
 | `shelf projects` | Every project using shelf, with loan counts |
 | `shelf sweep` | `sync` every registered project (cron-friendly) |
 | `shelf doctor [--fix]` | Check and repair shelf's state |
@@ -172,8 +201,9 @@ Every command accepts `--json` and prints exactly one line:
 
 Commands never prompt, are safe to retry, and exit non-zero with a distinct
 code per error class. `shelf status --json` returns `data.actions`: runnable
-next steps, so one call at session start is enough. The bundled skill is about
-ten lines; the details live in `shelf guide`.
+next steps. With the hooks installed agents don't even need that call: the
+session-start note tells them when to act. The bundled skill is about ten
+lines; the details live in `shelf guide`.
 
 ## Configuration
 
@@ -181,12 +211,13 @@ ten lines; the details live in `shelf guide`.
 
 | Key | Default | |
 |---|---|---|
-| `loanDays` | `30` | Loan length and default renewal |
+| `loanDays` | `30` | Loan length, and how far a use or renewal moves the due date |
 | `maxLoanDays` | `90` | Due dates can't be set further out than this |
 | `dueSoonDays` | `7` | When a loan counts as `due-soon` |
 | `targets` | `[".agents/skills", ".claude/skills"]` | Where borrowed skills are written (a project can override with `shelf targets`) |
 | `mode` | `"copy"` | `"link"`: one copy per project, other targets symlink to it |
 | `allowAgentImports` | `false` | Let agents run `shelf add` / `shelf pull` from remote sources |
+| `hooks` | `true` | Whether `shelf setup` installs the [hooks](#hooks) (set by `--no-hooks`) |
 
 Set `SHELF_HOME` to keep shelf's state elsewhere.
 

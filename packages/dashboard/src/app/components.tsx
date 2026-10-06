@@ -23,6 +23,13 @@ export function daysLeftLabel(days: number): string {
   return `${days}d left`;
 }
 
+/** When an agent last used a borrowed skill (recorded by harness hooks). */
+export function lastUsedLabel(iso: string | null): string {
+  if (!iso) return "never";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return days <= 0 ? "today" : `${days}d ago`;
+}
+
 /** A state such as `current`, `behind` or `overdue`, coloured by its CSS class. */
 export function Badge({ value }: { value: string }) {
   return <span class={`badge badge-${value}`}>{value}</span>;

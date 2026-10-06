@@ -4,7 +4,13 @@ import { copyDirectory, pathExists } from "../library/fs.ts";
 import { revisionPath } from "../library/library.ts";
 import { findHarness, HARNESSES } from "../projection/harnesses.ts";
 import { readLockfileSync, writeLockfileSync } from "../projection/lockfile.ts";
-import { removeSkillCopies, skillCopyPath, writeSkillCopies } from "../projection/materialize.ts";
+import {
+  distinctTargets,
+  realTargetPath,
+  removeSkillCopies,
+  skillCopyPath,
+  writeSkillCopies,
+} from "../projection/materialize.ts";
 import { writeTransaction } from "../store/database.ts";
 import { setLoanTargets } from "../store/loans.ts";
 import type { Context } from "./context.ts";
@@ -24,6 +30,8 @@ export interface TargetsReport {
     readonly readsAgentsDir: boolean;
     /** The harness's config directory exists in this project (e.g. `.kiro/`). */
     readonly detected: boolean;
+    /** An enabled target that is the same directory (via a symlink), so it is covered. */
+    readonly sharedWith: string | null;
   }[];
 }
 
@@ -32,15 +40,22 @@ export async function describeTargets(ctx: Context): Promise<TargetsReport> {
   const { project } = await requireProject(ctx);
   const targets = [...(await projectTargets(ctx, project))];
   const custom = Boolean(readLockfileSync(project.path)?.targets);
+  const realTargets = await Promise.all(targets.map((t) => realTargetPath(project.path, t)));
   const harnesses = await Promise.all(
-    HARNESSES.map(async (harness) => ({
-      id: harness.id,
-      label: harness.label,
-      dir: harness.projectDir,
-      enabled: targets.includes(harness.projectDir),
-      readsAgentsDir: harness.readsAgentsDir,
-      detected: await pathExists(join(project.path, dirname(harness.projectDir))),
-    })),
+    HARNESSES.map(async (harness) => {
+      const enabled = targets.includes(harness.projectDir);
+      const real = await realTargetPath(project.path, harness.projectDir);
+      const shared = enabled ? -1 : realTargets.indexOf(real);
+      return {
+        id: harness.id,
+        label: harness.label,
+        dir: harness.projectDir,
+        enabled,
+        readsAgentsDir: harness.readsAgentsDir,
+        detected: await pathExists(join(project.path, dirname(harness.projectDir))),
+        sharedWith: shared >= 0 ? (targets[shared] as string) : null,
+      };
+    }),
   );
   return { targets, custom, harnesses };
 }
@@ -66,9 +81,12 @@ export async function changeTargets(
   const current = [...(await projectTargets(ctx, project))];
   const add = (change.add ?? []).map(resolveTarget);
   const remove = new Set((change.remove ?? []).map(resolveTarget));
-  const next = change.reset
-    ? [...ctx.config.targets]
-    : [...current.filter((t) => !remove.has(t)), ...add.filter((t) => !current.includes(t))];
+  const next = await distinctTargets(
+    project.path,
+    change.reset
+      ? ctx.config.targets
+      : [...current.filter((t) => !remove.has(t)), ...add.filter((t) => !current.includes(t))],
+  );
   if (next.length === 0) {
     throw new ShelfError("INVALID_ARGUMENT", "A project needs at least one skill directory");
   }
@@ -82,7 +100,7 @@ export async function changeTargets(
   for (const { inspection, targets, dropped, added } of plans) {
     const { loan } = inspection;
     const source = await cleanSource(ctx, project.path, inspection);
-    await removeSkillCopies(project.path, dropped, loan.skillName);
+    await removeSkillCopies(project.path, dropped, loan.skillName, targets);
     // In link mode the primary copy may have changed, so rewrite every target.
     const only = loan.mode === "link" ? targets : added;
     if (source && only.length > 0) {

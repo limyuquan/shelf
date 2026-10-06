@@ -3,14 +3,20 @@
 shelf lends skills from the user's personal library (`~/.shelf/library`) to
 projects. Each borrowed skill is copied into `.agents/skills/<name>` and
 `.claude/skills/<name>`, tracked by content hash in `.agents/shelf.lock.json`,
-and has a due date. Overdue skills are returned automatically so stale skills
-do not linger.
+and has a due date. Using a skill renews it; skills that go unused until their
+due date are returned automatically, so stale skills do not linger.
 
 ## Session start
 
-Run `shelf status --json`. If `data.initialized` is false, run `shelf init`.
-Otherwise read `data.loans` and act on `data.actions` — each has a runnable
-`command` and a `reason`.
+In Claude Code and Codex, shelf's hooks sync the project when a session starts
+and add a one-line `shelf: …` note only when something needs attention (a skill
+due soon, local edits, library updates, skills just returned). No note means
+nothing to do.
+
+For details, or in harnesses without hooks, run `shelf status --json`. If
+`data.initialized` is false, the project does not use shelf. Otherwise read
+`data.loans` and act on `data.actions` — each has a runnable `command` and a
+`reason`.
 
 ## Loan states
 
@@ -35,11 +41,14 @@ Otherwise read `data.loans` and act on `data.actions` — each has a runnable
 
 ## Due dates
 
-- `shelf renew <name> [--days N] --reason "<why>"` extends from the due date.
-- `shelf due <name> <+14d|-7d|+2w|2026-12-01>` moves it either way.
+- Using a borrowed skill (the Skill tool, reading its files, or the user
+  invoking it) moves its due date to 30 days from now. The hooks record this;
+  in harnesses without hooks, run `shelf used <name>` after using a skill.
+- A `due-soon` skill has gone unused for a while. `shelf renew <name> [--days N]
+  --reason "<why>"` keeps it if the project still needs it; otherwise
+  `shelf return <name>`. Give a reason: the user reviews it in the activity log.
+- `shelf due <name> <+14d|-7d|+2w|2026-12-01>` moves a due date either way.
 - Loans cannot extend past the configured limit (90 days by default).
-- Renew skills you actually used; return the ones you did not. Give a reason:
-  the user reviews it in the activity log.
 
 ## Changing skills everywhere
 
@@ -54,15 +63,24 @@ Otherwise read `data.loans` and act on `data.actions` — each has a runnable
 
 `shelf scan <dir>` finds skill copies not yet managed by shelf; `shelf adopt
 <path>` imports one into the library and manages its project's copies.
-Only adopt when the user asks — it changes the library.
+Only adopt when the user asks — it changes the library. Copies that differ from
+the library are kept as local edits (`modified`), unless they match an earlier
+revision or you pass `--unedited` (they are older versions, e.g. installed from
+upstream at different times): those loans are `behind`. Adopt the newest copy
+first.
 
 ## Skills from outside the library
 
-`shelf add <source>` and `shelf pull <name>` fetch and audit; they import only
-with `--yes`. Agents cannot import from remote sources unless the user enabled
-it — if refused, tell the user the exact command to run. Never pass `--force`
-on high-severity findings without the user's explicit approval. `shelf audit`
-scans library skills.
+`shelf add <source>` and `shelf pull <name>` fetch and audit; they change the
+library only with `--yes`. You may run the review step, but importing from a
+remote source with `--yes` is refused unless the user enabled it — show them
+the review and the exact command to run. Never pass `--force` on high-severity
+findings without the user's explicit approval. `shelf audit` scans library
+skills.
+
+If the library already has the skill (e.g. it was adopted), `shelf add
+<source> --yes` only links it to the source, which you may do: the content is
+unchanged until a `shelf pull`.
 
 ## Harness directories
 
