@@ -45,6 +45,8 @@ export function useListNavigation<T>(
   options: {
     onOpen?: (item: T) => void;
     keys?: Record<string, (item: T) => void>;
+    /** Escape goes here first; return true when it handled it (e.g. cleared a selection). */
+    onEscape?: () => boolean;
   } = {},
 ) {
   const [active, setActive] = useState<number | null>(null);
@@ -68,7 +70,9 @@ export function useListNavigation<T>(
     k: () => move(-1),
     ArrowUp: () => move(-1),
     Enter: withActive(options.onOpen),
-    Escape: () => setActive(null),
+    Escape: () => {
+      if (!options.onEscape?.()) setActive(null);
+    },
     ...Object.fromEntries(
       Object.entries(options.keys ?? {}).map(([key, fn]) => [key, withActive(fn)]),
     ),

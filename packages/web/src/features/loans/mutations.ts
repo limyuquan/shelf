@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { api, unwrap } from "../../api/client.ts";
+import { ApiError, api, unwrap } from "../../api/client.ts";
+import { type BulkKind, type BulkOutcome, runPool, summarizeBulk } from "./bulk.ts";
 
 export type LoanAction =
   | { kind: "renew"; reason?: string }
@@ -59,6 +60,75 @@ export function useLoanAction() {
     onSuccess: (_result, { target, action }) => {
       void queryClient.invalidateQueries();
       toast.success(done(target.skill, action));
+    },
+  });
+}
+
+/** One loan in a bulk action. */
+export interface BulkTarget extends Target {
+  /** The selection key, so rows whose action failed can stay selected. */
+  readonly key: string;
+  /** How the loan is named in the summary toast. */
+  readonly label: string;
+  /** Return: also delete local edits. */
+  readonly force?: boolean;
+}
+
+/** Enough at once to be quick, few enough not to pile writes onto one project. */
+const BULK_CONCURRENCY = 4;
+
+function bulkAction(kind: BulkKind, target: BulkTarget): LoanAction {
+  switch (kind) {
+    case "renew":
+      return { kind: "renew" };
+    case "update":
+      return { kind: "update" };
+    case "keep":
+      return { kind: "keep", keep: true };
+    case "unkeep":
+      return { kind: "keep", keep: false };
+    case "return":
+      return { kind: "return", force: target.force ?? false };
+  }
+}
+
+/**
+ * Renews, updates, keeps or returns several loans: a few requests at a time,
+ * one refresh and one toast summarising what worked and what didn't. Resolves
+ * with each loan's outcome; never rejects for a failed loan.
+ */
+export function useBulkLoanAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ kind, targets }: { kind: BulkKind; targets: readonly BulkTarget[] }) => {
+      const settled = await runPool(targets, BULK_CONCURRENCY, (target) =>
+        run(target, bulkAction(kind, target)),
+      );
+      return settled.map((result, index): BulkOutcome => {
+        const target = targets[index] as BulkTarget;
+        if (result.status === "fulfilled")
+          return { key: target.key, label: target.label, error: null };
+        const error = result.reason;
+        return {
+          key: target.key,
+          label: target.label,
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            hint: error instanceof ApiError ? error.hint : null,
+          },
+        };
+      });
+    },
+    onSuccess: (outcomes, { kind }) => {
+      void queryClient.invalidateQueries();
+      const summary = summarizeBulk(kind, outcomes);
+      toast[summary.tone](summary.title, {
+        ...(summary.description ? { description: summary.description } : {}),
+        // One failure per line, shown long enough to read them.
+        ...(summary.tone === "success"
+          ? {}
+          : { duration: 10_000, classNames: { description: "whitespace-pre-line" } }),
+      });
     },
   });
 }

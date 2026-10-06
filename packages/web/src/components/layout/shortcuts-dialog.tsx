@@ -24,6 +24,8 @@ const GROUPS: { title: string; keys: [string[], string][] }[] = [
       [["R"], "Renew"],
       [["U"], "Update to latest"],
       [["C"], "Review changes"],
+      [["X"], "Select row"],
+      [["Esc"], "Clear selection"],
       [["B"], "Borrow skills (project page)"],
       [["/"], "Filter (library)"],
     ],

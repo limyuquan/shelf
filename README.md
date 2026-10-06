@@ -120,7 +120,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 - **Attention**: every loan across your projects that needs you — due soon,
   edited, behind the library, overdue — with one-click renew, update, and a
   diff to review edits before promoting or discarding them.
-- **Projects**: borrow skills, see each loan's state and last use.
+- **Projects**: borrow skills, see each loan's state and last use. Here and on
+  Attention, select several loans to renew, update, keep or return them together.
 - **Suggestions**: each project page lists library skills that match what the
   project uses (its `package.json`, `pyproject.toml`, `Cargo.toml` or `go.mod`
   dependencies, and files like `convex/` or `playwright.config.ts`), with the

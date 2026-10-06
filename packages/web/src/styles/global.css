@@ -79,3 +79,14 @@
     font-size: 16px;
   }
 }
+
+/* While loans are selected, toasts sit above the bulk action bar instead of covering it. */
+body:has([data-bulk-bar]) [data-sonner-toaster][data-y-position="bottom"] {
+  bottom: 72px;
+}
+
+@media (width < 48rem) {
+  body:has([data-bulk-bar]) [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: calc(env(safe-area-inset-bottom) + 168px);
+  }
+}

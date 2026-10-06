@@ -23,10 +23,12 @@ import { toneText } from "../components/ui/status.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { describeAttention } from "../features/attention/describe.ts";
 import { attentionQuery } from "../features/attention/queries.ts";
+import { BulkBar, SelectAllBox, SelectBox } from "../features/loans/bulk-bar.tsx";
 import { ChangesDialog } from "../features/loans/changes-dialog.tsx";
 import { LoanMenu } from "../features/loans/loan-menu.tsx";
 import { useLoanAction, useSync } from "../features/loans/mutations.ts";
 import { REASON } from "../features/loans/states.ts";
+import { useSelection } from "../features/loans/use-selection.ts";
 import { brokenHooks } from "../features/system/hook-label.ts";
 import { systemQuery } from "../features/system/queries.ts";
 import { cn } from "../lib/cn.ts";
@@ -49,6 +51,8 @@ const ICONS: Record<AttentionReason, ReactNode> = {
   behind: <ArrowUpCircle />,
 };
 
+/** Rows span projects, so a skill alone doesn't identify one. */
+const keyOf = (item: AttentionItem) => `${item.project.id}/${item.skill}`;
 const reasonOf = (item: AttentionItem) => item.reasons[0] as AttentionReason;
 const hasChanges = (item: AttentionItem) =>
   item.content === "modified" || item.content === "diverged" || item.content === "behind";
@@ -61,6 +65,7 @@ function AttentionPage() {
   const groups = groupByReason(items);
   const ordered = groups.flatMap(([, group]) => group);
   const target = (item: AttentionItem) => ({ projectId: item.project.id, skill: item.skill });
+  const selection = useSelection(ordered, keyOf);
 
   const { rowProps } = useListNavigation(ordered, {
     onOpen: (item) =>
@@ -71,6 +76,12 @@ function AttentionPage() {
         item.content === "behind" &&
         action.mutate({ target: target(item), action: { kind: "update" } }),
       c: (item) => hasChanges(item) && setReviewing(item),
+      x: (item) => selection.toggle(item),
+    },
+    onEscape: () => {
+      if (selection.size === 0) return false;
+      selection.clear();
+      return true;
     },
   });
 
@@ -91,16 +102,27 @@ function AttentionPage() {
               title={REASON[reason].title}
               count={group.length}
               icon={
-                <span className={cn("[&_svg]:size-3.5", toneText(REASON[reason].tone))}>
-                  {ICONS[reason]}
-                </span>
+                <>
+                  <SelectAllBox
+                    label={`Select every ${REASON[reason].title.toLowerCase()} item`}
+                    selection={selection}
+                    items={group}
+                    className="-mr-0.5 pointer-coarse:mr-1"
+                  />
+                  <span className={cn("[&_svg]:size-3.5", toneText(REASON[reason].tone))}>
+                    {ICONS[reason]}
+                  </span>
+                </>
               }
             >
               {group.map((item) => (
                 <AttentionRow
-                  key={`${item.project.id}/${item.skill}`}
+                  key={keyOf(item)}
                   item={item}
                   onReview={() => setReviewing(item)}
+                  selected={selection.has(item)}
+                  selecting={selection.size > 0}
+                  onSelect={(range) => selection.toggle(item, range)}
                   {...rowProps(ordered.indexOf(item))}
                 />
               ))}
@@ -108,6 +130,16 @@ function AttentionPage() {
           ))
         )}
       </PageBody>
+      {selection.size > 0 && (
+        <BulkBar
+          selection={selection}
+          target={(item) => ({
+            ...target(item),
+            key: keyOf(item),
+            label: `${item.skill} in ${item.project.name}`,
+          })}
+        />
+      )}
       {reviewing && (
         <ChangesDialog
           open
@@ -125,20 +157,33 @@ function AttentionPage() {
 function AttentionRow({
   item,
   onReview,
+  selected,
+  selecting,
+  onSelect,
   ...nav
 }: {
   item: AttentionItem;
   onReview: () => void;
+  selected: boolean;
+  selecting: boolean;
+  onSelect: (range: boolean) => void;
 } & ReturnType<ReturnType<typeof useListNavigation>["rowProps"]>) {
   const reason = reasonOf(item);
   return (
     <div
       {...nav}
+      data-selected={selected}
       className={cn(
-        "group flex items-center gap-3 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover md:h-11 md:px-5 md:py-0",
+        "group flex items-center gap-3 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover data-[selected=true]:bg-accent-soft md:h-11 md:px-5 md:py-0",
         navigableRow,
       )}
     >
+      <SelectBox
+        label={`Select ${item.skill} in ${item.project.name}`}
+        checked={selected}
+        selecting={selecting}
+        onToggle={onSelect}
+      />
       <span
         className={cn(
           "self-start pt-0.5 [&_svg]:size-4 md:self-auto md:pt-0",

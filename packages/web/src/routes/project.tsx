@@ -16,10 +16,12 @@ import { StatusPill, toneText } from "../components/ui/status.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { Timeline } from "../features/activity/timeline.tsx";
 import { BorrowDialog } from "../features/loans/borrow-dialog.tsx";
+import { BulkBar, SelectAllBox, SelectBox } from "../features/loans/bulk-bar.tsx";
 import { ChangesDialog } from "../features/loans/changes-dialog.tsx";
 import { LoanMenu } from "../features/loans/loan-menu.tsx";
 import { useLoanAction } from "../features/loans/mutations.ts";
 import { CONTENT, DUE } from "../features/loans/states.ts";
+import { useSelection } from "../features/loans/use-selection.ts";
 import { projectQuery } from "../features/projects/queries.ts";
 import { ProjectSuggestions } from "../features/projects/suggestions.tsx";
 import { cn } from "../lib/cn.ts";
@@ -50,6 +52,7 @@ function ProjectPage() {
   const setBorrowing = (open: boolean) =>
     void navigate({ search: open ? { borrow: true } : {}, replace: true });
   const target = (loan: Loan) => ({ projectId: project.id, skill: loan.skill });
+  const selection = useSelection(loans, (loan) => loan.skill);
 
   useHotkeys({ b: () => setBorrowing(true) });
   const { rowProps } = useListNavigation(loans, {
@@ -61,6 +64,12 @@ function ProjectPage() {
         loan.content === "behind" &&
         action.mutate({ target: target(loan), action: { kind: "update" } }),
       c: (loan) => hasChanges(loan) && setReviewing(loan),
+      x: (loan) => selection.toggle(loan),
+    },
+    onEscape: () => {
+      if (selection.size === 0) return false;
+      selection.clear();
+      return true;
     },
   });
 
@@ -101,7 +110,20 @@ function ProjectPage() {
                 </p>
               </div>
             </div>
-            <Section title="Borrowed skills" count={loans.length}>
+            <Section
+              title="Borrowed skills"
+              count={loans.length}
+              icon={
+                loans.length > 0 && (
+                  <SelectAllBox
+                    label="Select all borrowed skills"
+                    className="mr-0.5 pointer-coarse:mr-2"
+                    selection={selection}
+                    items={loans}
+                  />
+                )
+              }
+            >
               {loans.length === 0 ? (
                 <EmptyState icon={<BookOpen />} title="No skills borrowed">
                   Borrow skills from your library, or let agents borrow them with `shelf borrow`.
@@ -114,6 +136,9 @@ function ProjectPage() {
                     projectId={project.id}
                     projectName={project.name}
                     onReview={() => setReviewing(loan)}
+                    selected={selection.has(loan)}
+                    selecting={selection.size > 0}
+                    onSelect={(range) => selection.toggle(loan, range)}
                     {...rowProps(index)}
                   />
                 ))
@@ -139,6 +164,15 @@ function ProjectPage() {
               <Timeline events={data.events.slice(0, 30)} showProject={false} compact />
             </PropertyGroup>
           </PropertiesPanel>
+        }
+        footer={
+          selection.size > 0 && (
+            <BulkBar
+              selection={selection}
+              where={project.name}
+              target={(loan) => ({ ...target(loan), key: loan.skill, label: loan.skill })}
+            />
+          )
         }
       />
       <BorrowDialog
@@ -167,12 +201,18 @@ function LoanRow({
   projectId,
   projectName,
   onReview,
+  selected,
+  selecting,
+  onSelect,
   ...nav
 }: {
   loan: Loan;
   projectId: string;
   projectName: string;
   onReview: () => void;
+  selected: boolean;
+  selecting: boolean;
+  onSelect: (range: boolean) => void;
 } & ReturnType<ReturnType<typeof useListNavigation>["rowProps"]>) {
   const content = CONTENT[loan.content];
   const due = DUE[loan.due];
@@ -180,11 +220,18 @@ function LoanRow({
   return (
     <div
       {...nav}
+      data-selected={selected}
       className={cn(
-        "flex items-center gap-4 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover md:h-11 md:px-5 md:py-0",
+        "group flex items-center gap-4 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover data-[selected=true]:bg-accent-soft md:h-11 md:px-5 md:py-0",
         navigableRow,
       )}
     >
+      <SelectBox
+        label={`Select ${loan.skill}`}
+        checked={selected}
+        selecting={selecting}
+        onToggle={onSelect}
+      />
       {/* One line on wide screens; name above state, due date and last use on phones. */}
       <div className="min-w-0 flex-1 md:flex md:items-center md:gap-4">
         <Link

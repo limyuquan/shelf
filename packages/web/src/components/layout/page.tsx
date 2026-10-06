@@ -83,12 +83,33 @@ export function PageBody({ children, className }: { children: ReactNode; classNa
 /**
  * A detail page: the main content plus a properties panel. Side by side from the
  * `xl` breakpoint; below it the panel follows the content in one scrolling column.
+ * A `footer` (e.g. a bulk action bar) sits under the main content from `xl` up,
+ * and below it stays pinned to the bottom of the column, clearing the home indicator.
  */
-export function SplitView({ main, aside }: { main: ReactNode; aside: ReactNode }) {
+export function SplitView({
+  main,
+  aside,
+  footer,
+}: {
+  main: ReactNode;
+  aside: ReactNode;
+  footer?: ReactNode;
+}) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] xl:flex xl:overflow-hidden xl:pb-0">
-      <div className="relative xl:min-w-0 xl:flex-1 xl:overflow-y-auto">{main}</div>
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col overflow-y-auto xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:grid-rows-[minmax(0,1fr)_auto] xl:overflow-hidden xl:pb-0 xl:[&>aside]:row-span-2",
+        // The footer clears the home indicator itself.
+        !footer && "pb-[env(safe-area-inset-bottom)]",
+      )}
+    >
+      <div className="relative shrink-0 xl:min-h-0 xl:overflow-y-auto">{main}</div>
       {aside}
+      {footer && (
+        <div className="sticky bottom-0 z-20 mt-auto xl:static xl:col-start-1 xl:row-start-2">
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
