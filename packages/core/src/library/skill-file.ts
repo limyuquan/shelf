@@ -4,8 +4,9 @@ import { ShelfError } from "../errors.ts";
 
 export const SKILL_FILE = "SKILL.md";
 
-const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
-const MAX_DESCRIPTION = 1024;
+/** The YAML frontmatter block at the top of a SKILL.md; group 1 is its body. */
+export const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
+export const MAX_DESCRIPTION = 1024;
 
 export interface SkillMetadata {
   readonly name: string;
@@ -61,4 +62,38 @@ description: ${JSON.stringify(description)}
 
 Describe when and how an agent should apply this skill.
 `;
+}
+
+/**
+ * Changes the frontmatter `name:` value from `from` to `to`, leaving every other
+ * byte as it was (quoting style included), so a rename is the smallest possible edit.
+ */
+export function setFrontmatterName(source: string, from: string, to: string, file: string): string {
+  const match = FRONTMATTER.exec(source);
+  if (!match?.[1]) throw new ShelfError("INVALID_SKILL", `${file} has no YAML frontmatter`);
+  const start = match[0].indexOf(match[1]);
+  const line = new RegExp(`^(name[ \\t]*:[ \\t]*)(["']?)${from}\\2([ \\t]*(?:#.*)?)$`, "m");
+  const found = line.exec(match[1]);
+  if (!found) {
+    throw new ShelfError(
+      "INVALID_SKILL",
+      `${file}: can't find "name: ${from}" in the frontmatter`,
+      "Edit the name by hand, then rename the directory to match",
+    );
+  }
+  // A bare 123 or true would be read back as a number or boolean, not a name.
+  const quote = found[2] || (plainYamlString(to) ? "" : '"');
+  const block = match[1].replace(
+    line,
+    (_, key: string, _quote: string, rest: string) => `${key}${quote}${to}${quote}${rest}`,
+  );
+  return source.slice(0, start) + block + source.slice(start + match[1].length);
+}
+
+function plainYamlString(value: string): boolean {
+  try {
+    return (Bun.YAML.parse(`v: ${value}`) as { v: unknown }).v === value;
+  } catch {
+    return false;
+  }
 }

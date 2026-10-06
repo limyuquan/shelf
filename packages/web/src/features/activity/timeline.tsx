@@ -31,6 +31,7 @@ const ICONS: Partial<Record<ActivityEvent["type"], ReactNode>> = {
   "loan.expired": <Undo2 />,
   "skill.created": <BookPlus />,
   "skill.revised": <PenLine />,
+  "skill.renamed": <PenLine />,
   "skill.linked": <Link2 />,
   "project.registered": <FolderPlus />,
   "set.saved": <Layers />,

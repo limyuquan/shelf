@@ -85,6 +85,8 @@ the library; change it only when asked.
 - `shelf log <name>` lists revisions and who borrows which.
 - `shelf restore <name> <revision>` makes an earlier revision the library's
   latest again. Only when the user asks; borrowers change only on `propagate`.
+- `shelf lint [name...]` checks SKILL.md files. `shelf rename`, `duplicate` and
+  `archive` reshape the library: only when the user asks.
 
 ## Existing skills
 

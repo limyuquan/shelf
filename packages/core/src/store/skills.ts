@@ -59,6 +59,11 @@ export function setSkillLoanDays(db: Db, id: number, days: number | null): void 
   db.query("UPDATE skills SET loan_days = ? WHERE id = ?").run(days, id);
 }
 
+/** History, loans and events reference the id, so they follow the new name. */
+export function renameSkillRow(db: Db, id: number, name: string): void {
+  db.query("UPDATE skills SET name = ? WHERE id = ?").run(name, id);
+}
+
 export function archiveSkill(db: Db, id: number, at: Date): void {
   db.query("UPDATE skills SET archived_at = ? WHERE id = ?").run(at.toISOString(), id);
 }

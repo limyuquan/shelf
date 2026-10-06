@@ -8,6 +8,7 @@ export { parseDays, parsePositiveInt } from "./domain/due.ts";
 export type * from "./domain/types.ts";
 export { type ErrorCode, ShelfError } from "./errors.ts";
 export { shortHash } from "./library/hash.ts";
+export { type LintIssue, type LintResult, lintSkill } from "./library/lint.ts";
 export { findHarness, HARNESSES, type Harness } from "./projection/harnesses.ts";
 export { LOCKFILE_PATH } from "./projection/lockfile.ts";
 export type { Finding, Severity } from "./security/audit.ts";
@@ -20,6 +21,14 @@ export {
   listAttention,
 } from "./services/attention.ts";
 export { audit, type SkillAudit } from "./services/audit.ts";
+export {
+  type ArchiveResult,
+  archiveLibrarySkill,
+  duplicateSkill,
+  lintLibrary,
+  renameSkill,
+  type SkillLint,
+} from "./services/authoring.ts";
 export {
   type Context,
   type ContextOptions,

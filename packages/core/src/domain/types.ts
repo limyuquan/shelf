@@ -65,6 +65,7 @@ export type EventType =
   | "skill.created"
   | "skill.revised"
   | "skill.archived"
+  | "skill.renamed"
   | "skill.linked"
   | "project.registered"
   | "project.forgotten"

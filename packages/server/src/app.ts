@@ -6,6 +6,7 @@ import type { AppEnv } from "./env.ts";
 import { errorBody, handleError } from "./errors.ts";
 import { activityRoutes, maintenanceRoutes } from "./routes/activity.ts";
 import { attentionRoutes } from "./routes/attention.ts";
+import { authoringRoutes } from "./routes/authoring.ts";
 import { eventRoutes } from "./routes/events.ts";
 import { insightsRoutes } from "./routes/insights.ts";
 import { projectRoutes } from "./routes/projects.ts";
@@ -52,6 +53,7 @@ export function createApi(
     .route("/skills", skillRoutes)
     .route("/search", searchRoutes)
     .route("/sets", setRoutes)
+    .route("/skills", authoringRoutes)
     .route("/activity", activityRoutes)
     .route("/insights", insightsRoutes)
     .route("/system", systemRoutes)

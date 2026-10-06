@@ -46,6 +46,14 @@ export const saveSetBody = z.object({
   /** Skill names; `@set` includes another set's skills. */
   skills: z.array(z.string().min(1)).min(1),
 });
+export const createSkillBody = z.object({
+  name: z.string().min(1),
+  description: z.string().trim().min(1).max(1024),
+});
+/** A new name, for renaming or duplicating a skill. */
+export const skillNameBody = z.object({ to: z.string().min(1) });
+/** A SKILL.md draft to lint; `name` is the skill's directory. */
+export const lintBody = z.object({ name: z.string().optional(), content: z.string() });
 
 export const catalogQuery = z.object({ q: z.string().optional() });
 export const searchQuery = z.object({

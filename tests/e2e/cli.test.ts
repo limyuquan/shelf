@@ -189,6 +189,26 @@ describe("shelf CLI", () => {
     const log = await shelf("log", "pdf-tools");
     expect(log.json.data?.revisions).toHaveLength(2);
   });
+
+  test("lint, rename, duplicate and archive library skills", async () => {
+    await shelf("new", "pdf", "-d", "Work with PDFs");
+    const lint = await shelf("lint", "pdf");
+    expect(lint.exitCode).toBe(0);
+    expect(lint.json.data).toMatchObject({ errors: 0, skills: [{ skill: "pdf" }] });
+
+    expect((await shelf("rename", "pdf", "pdf-tools")).json.data).toMatchObject({
+      from: "pdf",
+      skill: "pdf-tools",
+    });
+    expect((await shelf("duplicate", "pdf-tools", "pdf-copy")).exitCode).toBe(0);
+    const archived = await shelf("archive", "pdf-copy");
+    expect(archived.json.data?.path).toStartWith(join(home, ".shelf/archive/pdf-copy-"));
+
+    await Bun.write(join(home, ".shelf/library/pdf-tools/SKILL.md"), "no frontmatter");
+    const broken = await shelf("lint", "pdf-tools");
+    expect(broken.exitCode).toBe(1);
+    expect(broken.json.data).toMatchObject({ errors: 1 });
+  });
 });
 
 describe("usage errors with --json", () => {

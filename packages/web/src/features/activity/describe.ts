@@ -21,6 +21,7 @@ const WINDOW_MS = 60_000;
 /** Events of one type that read differently, e.g. keeping and stopping keeping. */
 const variant = (event: ActivityEvent) => {
   if (event.type === "loan.kept") return String(event.detail?.keep);
+  if (event.type === "skill.renamed") return String(event.detail?.from);
   // Set events name no skill or project, so only the same set may group.
   if (event.type === "set.saved" || event.type === "set.deleted") return String(event.detail?.set);
   return "";
@@ -105,7 +106,15 @@ export function describeGroup(group: EventGroup): {
     case "loan.detached":
       return { ...base, verb: "detached", preposition: "in" };
     case "skill.created":
-      return { ...base, verb: "added", preposition: null, detail: "to the library" };
+      return {
+        ...base,
+        verb: "added",
+        preposition: null,
+        detail:
+          typeof detail.duplicatedFrom === "string"
+            ? `copied from ${detail.duplicatedFrom}`
+            : "to the library",
+      };
     case "skill.revised":
       return typeof detail.restoredFrom === "string"
         ? {
@@ -117,6 +126,13 @@ export function describeGroup(group: EventGroup): {
         : { ...base, verb: "revised", preposition: null };
     case "skill.archived":
       return { ...base, verb: "archived", preposition: null };
+    case "skill.renamed":
+      // The skill link shows its current name, which is `to` unless renamed again.
+      return {
+        ...base,
+        verb: typeof detail.from === "string" ? `renamed ${detail.from} to` : "renamed",
+        preposition: null,
+      };
     case "skill.linked":
       return {
         ...base,

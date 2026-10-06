@@ -14,6 +14,7 @@ import { Kbd } from "../components/ui/kbd.tsx";
 import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { Borrowers } from "../features/skills/borrowers.tsx";
+import { LintStrip } from "../features/skills/lint-strip.tsx";
 import { LoanLength } from "../features/skills/loan-length.tsx";
 import { PullDialog } from "../features/skills/pull-dialog.tsx";
 import {
@@ -23,6 +24,7 @@ import {
   useSaveSkill,
 } from "../features/skills/queries.ts";
 import { RevisionHistory } from "../features/skills/revision-history.tsx";
+import { SkillActionsMenu } from "../features/skills/skill-actions-menu.tsx";
 import { languageFor, SkillEditor } from "../features/skills/skill-editor.tsx";
 import { systemQuery } from "../features/system/queries.ts";
 import { cn } from "../lib/cn.ts";
@@ -73,6 +75,7 @@ function SkillPage() {
                 <span className="max-sm:hidden">Check for updates</span>
               </Button>
             )}
+            <SkillActionsMenu page={page} />
           </>
         }
       />
@@ -178,6 +181,7 @@ function FileEditor({ skill, path, content }: { skill: string; path: string; con
 
   return (
     <>
+      {path === SKILL_FILE && <LintStrip skill={skill} content={draft} />}
       <div className="-mx-2 mt-1">
         <SkillEditor
           value={draft}

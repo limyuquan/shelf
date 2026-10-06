@@ -775,3 +775,73 @@ describe("live updates", () => {
     expect(ended).toBe(true);
   });
 });
+
+describe("writing and managing skills", () => {
+  test("creates a skill and returns its page", async () => {
+    const { client } = await setup([]);
+    const page = await ok(
+      client.skills.$post({ json: { name: "pdf-tools", description: "Use when reading PDFs" } }),
+    );
+    expect(page.detail).toMatchObject({ name: "pdf-tools", description: "Use when reading PDFs" });
+    expect(page.history.revisions).toHaveLength(1);
+
+    const taken = await client.skills.$post({ json: { name: "pdf-tools", description: "Again" } });
+    expect(taken.status).toBe(409);
+    const invalid = await client.skills.$post({ json: { name: "PDF", description: "x" } });
+    expect(await invalid.json()).toMatchObject({ error: { code: "INVALID_ARGUMENT" } });
+  });
+
+  test("lints an unsaved draft", async () => {
+    const { client } = await setup([]);
+    const result = await ok(
+      client.skills.lint.$post({
+        json: { name: "pdf", content: "---\nname: other\ndescription: PDF tools\n---\nBody\n" },
+      }),
+    );
+    expect(result.issues.map((issue) => issue.level)).toEqual(["error", "warning"]);
+    expect(result).toMatchObject({ descriptionTokens: 3, bodyTokens: 1 });
+  });
+
+  test("renames and duplicates, returning the new page", async () => {
+    const { client } = await setup(["git"]);
+    await ok(client.skills.$post({ json: { name: "pdf", description: "Use when reading PDFs" } }));
+    const skill = client.skills[":name"];
+
+    const renamed = await ok(skill.rename.$post({ param: { name: "pdf" }, json: { to: "pdfs" } }));
+    expect(renamed.detail.name).toBe("pdfs");
+    expect(renamed.history.revisions).toHaveLength(2);
+    const gone = await skill.$get({ param: { name: "pdf" } });
+    expect(gone.status).toBe(404);
+
+    const copy = await ok(skill.duplicate.$post({ param: { name: "pdfs" }, json: { to: "pdf2" } }));
+    expect(copy.detail).toMatchObject({ name: "pdf2", revisions: 1 });
+
+    const taken = await skill.rename.$post({ param: { name: "pdfs" }, json: { to: "git" } });
+    expect(taken.status).toBe(409);
+    expect(await taken.json()).toMatchObject({ error: { code: "SKILL_EXISTS" } });
+  });
+
+  test("archives a skill, or refuses with the borrowers and a hint", async () => {
+    const { env, ctx, client } = await setup(["pdf", "git"]);
+    await borrow(ctx, ["pdf"]);
+    const skill = client.skills[":name"];
+
+    const refused = await skill.archive.$post({ param: { name: "pdf" } });
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toMatchObject({
+      error: { code: "CONFLICT", hint: expect.stringContaining("Return it from project first") },
+    });
+    const renameRefused = await skill.rename.$post({ param: { name: "pdf" }, json: { to: "x" } });
+    expect(renameRefused.status).toBe(409);
+
+    const archived = await ok(skill.archive.$post({ param: { name: "git" } }));
+    expect(archived.path.startsWith(join(env.shelfHome, "archive", "git-"))).toBe(true);
+    const names = (await ok(client.skills.$get({ query: {} }))).map((entry) => entry.name);
+    expect(names).toEqual(["pdf"]);
+    const events = await ok(client.activity.$get({ query: { skill: "git" } }));
+    expect(events[0]).toMatchObject({
+      type: "skill.archived",
+      detail: { reason: "archived from the dashboard" },
+    });
+  });
+});

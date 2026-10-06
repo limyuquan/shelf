@@ -1,6 +1,12 @@
 #!/usr/bin/env bun
 import { defineCommand, runCommand, runMain } from "citty";
 import pkg from "../package.json" with { type: "json" };
+import {
+  archiveCommand,
+  duplicateCommand,
+  lintCommand,
+  renameCommand,
+} from "./commands/authoring.ts";
 import { guideCommand } from "./commands/guide.ts";
 import { hookCommand, usedCommand } from "./commands/hooks.ts";
 import {
@@ -59,6 +65,10 @@ const main = defineCommand({
     restore: restoreCommand,
     "loan-days": loanDaysCommand,
     set: setCommand,
+    rename: renameCommand,
+    duplicate: duplicateCommand,
+    archive: archiveCommand,
+    lint: lintCommand,
     // Loans in the current project
     suggest: suggestCommand,
     borrow: borrowCommand,

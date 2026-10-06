@@ -130,6 +130,10 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   upstream source. The filter searches inside skills too (SKILL.md and reference
   files) and shows the matching lines; click one to open that file. Group skills into sets
   and borrow a whole set at once.
+- **Writing skills**: create a skill from the Library page, rename, duplicate
+  or archive it from its page, and see a lint strip above the SKILL.md editor
+  (description and body tokens, format errors, descriptions that are too long
+  or don't say when to use the skill) as you type.
 - **Revisions**: open any revision of a skill to read its files, compare it with
   another revision or the latest, and restore it.
 - **Find existing skills**: scan for skills copied into projects by hand, see
@@ -203,6 +207,10 @@ boundary.
 | `shelf set list` | Your skill sets and their skills |
 | `shelf set save <name> <skill…> [-d description]` | Create a set, or replace its skills (`@other` includes another set) |
 | `shelf set delete <name>` | Delete a set (loans are unaffected) |
+| `shelf rename <from> <to>` | Rename a skill (directory and frontmatter `name`), keeping its history; refused while borrowed |
+| `shelf duplicate <from> <to>` | Copy a skill to a new name, as a new skill with its own history |
+| `shelf archive <name>` | Move a skill to `~/.shelf/archive/` (revisions are kept; move it back to restore); refused while borrowed |
+| `shelf lint [name…]` | Check SKILL.md files against the Agent Skills format; exits 1 on errors |
 | `shelf loan-days <name> [days] [--reset]` | Show or set a skill's loan length (default: `loanDays`) |
 | `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |

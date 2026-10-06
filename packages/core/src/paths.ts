@@ -8,6 +8,8 @@ export interface ShelfPaths {
   readonly library: string;
   /** Immutable, content-addressed snapshots of every revision. */
   readonly objects: string;
+  /** Skills archived from the library, kept as `<name>-<timestamp>/`. */
+  readonly archive: string;
   readonly database: string;
   readonly config: string;
   /** The user's home directory, where harness-wide skill dirs live. */
@@ -24,6 +26,7 @@ export function resolvePaths(env: Record<string, string | undefined> = process.e
     home,
     library: join(home, "library"),
     objects: join(home, "objects"),
+    archive: join(home, "archive"),
     database: join(home, "shelf.db"),
     config: join(home, "config.json"),
     userHome,

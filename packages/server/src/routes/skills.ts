@@ -33,7 +33,7 @@ import { atHome } from "../scope.ts";
 import { validate } from "../validate.ts";
 
 /** Everything the skill page shows: the skill, its history, and who an update would reach. */
-async function skillPage(ctx: Context, name: string) {
+export async function skillPage(ctx: Context, name: string) {
   const home = atHome(ctx);
   return {
     detail: await showSkill(home, name),

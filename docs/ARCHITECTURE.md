@@ -115,6 +115,7 @@ overdue loans are shown rather than returned.
 |---|---|---|
 | Skill content (editable) | `~/.shelf/library/<name>/` | The user edits it with any tool. |
 | Skill revisions | `~/.shelf/objects/<sha256>/` | Immutable snapshots. Projects are always copied from here. |
+| Archived skills | `~/.shelf/archive/<name>-<timestamp>/` | Moved out of the library by `archive`, never deleted. |
 | Projects, loans, due dates, events | `~/.shelf/shelf.db` | Per machine. Source of truth for loan state. |
 | Skill sets (named groups of skills) | `~/.shelf/shelf.db` | Per machine, like the library. Only a way to name skills: borrowing `@set` creates ordinary per-skill loans, and nothing about the set reaches a project or its lockfile. |
 | What a project has borrowed | `<project>/.agents/shelf.lock.json` | Derived from the database on every change. Carries the project id, so a moved directory or a clone on another machine is recognised. |
@@ -126,6 +127,18 @@ the dashboard watches the library only to tell open pages to refetch.
 Revisions are never deleted. `restore` records any unrecorded library edits as a
 revision, then copies an earlier snapshot back over the library copy, making it
 the head again; borrowers keep their revision until they update.
+
+Authoring (`services/authoring.ts`) reshapes the library. `rename` moves the
+directory, rewrites only the frontmatter `name:` value and renames the skill's
+row, so revisions, loans and events (keyed by skill id) stay attached; the
+changed SKILL.md becomes a new revision. `duplicate` copies the working copy
+into a new skill with its own history. `archive` moves the directory to
+`archive/` and marks the skill archived; its revisions stay in `objects/`, and
+moving the directory back into the library restores it with its history.
+Rename and archive are refused while any project borrows the skill, since
+project copies and lockfiles carry its name. `library/lint.ts` checks a
+SKILL.md (or an unsaved draft, from the editor) against the Agent Skills format
+and shelf's conventions, and estimates description and body tokens.
 
 ## Content states
 
@@ -185,7 +198,9 @@ without the user's shell PATH.
 - shelf never writes into a skill directory it does not manage. Unmanaged
   directories with the same name cause a `CONFLICT`.
 - shelf never modifies SKILL.md frontmatter, so hashes match the library and
-  strict validators keep accepting the skill.
+  strict validators keep accepting the skill. The one exception is the
+  library copy's `name:` on `rename`/`duplicate`, a new revision that existing
+  copies never see (rename is refused while the skill is borrowed).
 - Skill copies are written to a staging directory and renamed into place.
 - The lockfile has no timestamps, so renewing a loan never changes it.
 - Lockfile entries for skills this machine's library does not have are kept.

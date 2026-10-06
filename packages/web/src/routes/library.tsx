@@ -12,6 +12,7 @@ import { Tooltip } from "../components/ui/tooltip.tsx";
 import { useContentSearch } from "../features/search/queries.ts";
 import { SearchResults } from "../features/search/search-results.tsx";
 import { SetsSection } from "../features/sets/sets-section.tsx";
+import { NewSkillButton } from "../features/skills/new-skill-dialog.tsx";
 import { skillsQuery } from "../features/skills/queries.ts";
 import { cn } from "../lib/cn.ts";
 import { sourceLabel } from "../lib/format.ts";
@@ -48,10 +49,13 @@ function LibraryPage() {
       <PageHeader
         crumbs={[{ label: "Library" }]}
         actions={
-          <Link to="/find-skills" aria-label="Find existing skills" className={buttonStyles()}>
-            <FolderSearch />
-            <span className="max-sm:hidden">Find existing skills</span>
-          </Link>
+          <>
+            <Link to="/find-skills" aria-label="Find existing skills" className={buttonStyles()}>
+              <FolderSearch />
+              <span className="max-sm:hidden">Find existing skills</span>
+            </Link>
+            <NewSkillButton />
+          </>
         }
       />
       <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-4 md:px-5 pointer-coarse:h-12">

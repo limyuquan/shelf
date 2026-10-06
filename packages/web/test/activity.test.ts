@@ -74,6 +74,20 @@ describe("activity grouping", () => {
     });
   });
 
+  test("a rename reads as renamed X to Y, one entry per rename", () => {
+    const renamed = (skill: string, from: string) =>
+      event({ type: "skill.renamed", skill, projectId: null, project: null, detail: { from } });
+    const groups = groupEvents([renamed("pdf-tools", "pdf"), renamed("git-tools", "git")]);
+    expect(groups.map((group) => [describeGroup(group).verb, group.skills])).toEqual([
+      ["renamed pdf to", ["pdf-tools"]],
+      ["renamed git to", ["git-tools"]],
+    ]);
+    const [copy] = groupEvents([
+      event({ type: "skill.created", skill: "pdf-copy", detail: { duplicatedFrom: "pdf" } }),
+    ]);
+    expect(describeGroup(copy as never).detail).toBe("copied from pdf");
+  });
+
   test("keeping a loan, on and off", () => {
     const kept = (detail: ActivityEvent["detail"]) =>
       describeGroup(groupEvents([event({ type: "loan.kept", actor: "user", detail })])[0] as never);
