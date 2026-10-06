@@ -116,6 +116,27 @@ describe("shelf CLI", () => {
     expect(json.error?.hint).toContain("shelf catalog");
   });
 
+  test("search finds a skill by its content; a quoted argument is a phrase", async () => {
+    await shelf("new", "api-design", "-d", "Design HTTP APIs");
+    await shelf("new", "pdf-tools", "-d", "Work with PDFs");
+    const file = join(home, ".shelf/library/api-design/SKILL.md");
+    await Bun.write(file, `${await Bun.file(file).text()}\nWrap failures in an error envelope.\n`);
+
+    const { exitCode, json } = await shelf("search", "error envelope");
+    expect(exitCode).toBe(0);
+    expect(json.data).toMatchObject({
+      query: '"error envelope"',
+      results: [
+        {
+          name: "api-design",
+          matches: [{ file: "SKILL.md", snippet: "Wrap failures in an error envelope." }],
+        },
+      ],
+    });
+    expect((await shelf("search", "envelope", "error")).json.data?.results).toHaveLength(1);
+    expect((await shelf("search", "nothing-like-this")).json.data?.results).toEqual([]);
+  });
+
   test("parallel agents borrowing into one project do not lose lockfile entries", async () => {
     await shelf("init");
     const names = Array.from({ length: 6 }, (_, index) => `skill-${index}`);

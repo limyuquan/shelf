@@ -123,7 +123,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   reason and session cost, to borrow in one click.
 - **Library**: edit SKILL.md and reference files, see revisions and borrowers,
   push updates to chosen projects, and pull reviewed updates from a skill's
-  upstream source.
+  upstream source. The filter searches inside skills too (SKILL.md and reference
+  files) and shows the matching lines; click one to open that file.
 - **Revisions**: open any revision of a skill to read its files, compare it with
   another revision or the latest, and restore it.
 - **Find existing skills**: scan for skills copied into projects by hand, see
@@ -137,8 +138,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   Token counts are estimates (characters / 4): a skill's name and description
   load at every session start, its full SKILL.md only when it is used.
 - **Settings**: hook status per harness, health checks with one-click repair.
-- ⌘K to jump anywhere, keyboard navigation (`?` lists shortcuts), dark and
-  light themes.
+- ⌘K to jump anywhere (including skills whose content mentions what you
+  type), keyboard navigation (`?` lists shortcuts), dark and light themes.
 
 It listens on 127.0.0.1 only and requires the token in the URL it prints (kept
 in `~/.shelf/ui-token`, so bookmarks survive restarts; `--rotate-token` signs
@@ -189,7 +190,8 @@ boundary.
 | `shelf guide` | The full guide for agents |
 | **Library** | |
 | `shelf new <name> -d <description>` | Create a library skill |
-| `shelf catalog [terms]` | List library skills with a token estimate |
+| `shelf catalog [terms]` | List library skills with a token estimate (terms match name and description) |
+| `shelf search <terms…> [--limit N]` | Find skills by what they say: matching lines from SKILL.md and reference files (quote a phrase) |
 | `shelf show <name> [--revision X]` | Print a library skill, or one of its revisions |
 | `shelf log <name>` | A skill's revisions and which projects borrow each |
 | `shelf restore <name> <revision>` | Make an earlier revision the library's latest again (borrowers update with `propagate`) |

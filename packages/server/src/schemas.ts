@@ -40,6 +40,10 @@ export const saveFileBody = z.object({ path: z.string().min(1), content: z.strin
 export const propagateBody = z.object({ projects: z.array(z.string()).optional() });
 
 export const catalogQuery = z.object({ q: z.string().optional() });
+export const searchQuery = z.object({
+  q: z.string().optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
 export const diffQuery = z.object({ from: z.string().optional(), to: z.string().optional() });
 
 export const activityQuery = z.object({

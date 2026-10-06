@@ -96,6 +96,13 @@ export {
   type ScanVariant,
   scan,
 } from "./services/scan.ts";
+export {
+  type MatchRange,
+  type SearchMatch,
+  type SearchOptions,
+  type SearchResult,
+  searchLibrary,
+} from "./services/search.ts";
 export { sessionNotice } from "./services/session.ts";
 export { type SetupOptions, type SetupResult, setup } from "./services/setup.ts";
 export {

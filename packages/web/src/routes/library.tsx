@@ -9,6 +9,8 @@ import { buttonStyles } from "../components/ui/button.tsx";
 import { EmptyState } from "../components/ui/empty-state.tsx";
 import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
+import { useContentSearch } from "../features/search/queries.ts";
+import { SearchResults } from "../features/search/search-results.tsx";
 import { skillsQuery } from "../features/skills/queries.ts";
 import { cn } from "../lib/cn.ts";
 import { sourceLabel } from "../lib/format.ts";
@@ -18,21 +20,27 @@ export const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/library",
   validateSearch: z.object({ q: z.string().optional() }),
-  loaderDeps: ({ search }) => ({ q: search.q ?? "" }),
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(skillsQuery(deps.q)),
+  // Filtering searches skill content (debounced, in the component), not the catalog.
+  loader: ({ context }) => context.queryClient.ensureQueryData(skillsQuery()),
   component: LibraryPage,
 });
 
 function LibraryPage() {
   const { q = "" } = libraryRoute.useSearch();
   const navigate = useNavigate({ from: libraryRoute.fullPath });
-  const skills = useQuery({ ...skillsQuery(q), placeholderData: (previous) => previous });
+  const skills = useQuery(skillsQuery());
+  // With a filter, the list shows content search results once the first ones arrive.
+  const { results } = useContentSearch(q);
+  const searching = q.trim() !== "" && results !== undefined;
   const filter = useRef<HTMLInputElement>(null);
   useHotkeys({ "/": () => filter.current?.focus() });
-  const { rowProps } = useListNavigation(skills.data ?? [], {
-    onOpen: (skill) =>
-      void navigate({ to: "/library/$skillName", params: { skillName: skill.name } }),
-  });
+  const { rowProps } = useListNavigation<{ name: string }>(
+    searching ? results : (skills.data ?? []),
+    {
+      onOpen: (skill) =>
+        void navigate({ to: "/library/$skillName", params: { skillName: skill.name } }),
+    },
+  );
 
   return (
     <>
@@ -57,15 +65,23 @@ function LibraryPage() {
               replace: true,
             })
           }
-          placeholder="Filter skills"
+          placeholder="Search skills and their content"
           className="h-full flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-fg-subtle"
         />
-        {skills.data && (
-          <span className="text-[12px] text-fg-subtle">{skills.data.length} skills</span>
+        {searching ? (
+          <span className="text-[12px] text-fg-subtle">
+            {results.length} match{results.length === 1 ? "" : "es"}
+          </span>
+        ) : (
+          skills.data && (
+            <span className="text-[12px] text-fg-subtle">{skills.data.length} skills</span>
+          )
         )}
       </div>
       <PageBody>
-        {!skills.data ? (
+        {searching ? (
+          <SearchResults results={results} rowProps={rowProps} />
+        ) : !skills.data ? (
           <div className="flex flex-col gap-2 p-5">
             <Skeleton className="h-10" />
             <Skeleton className="h-10" />

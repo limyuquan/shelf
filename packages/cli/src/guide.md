@@ -37,6 +37,9 @@ loans (`kept: true`) are always `active`: they never expire.
 
 - `shelf catalog <terms> --json` lists skills with descriptions and a token
   estimate. Borrow only what the project needs; every skill costs context.
+- `shelf search <terms> --json` finds skills by what they say (SKILL.md and
+  reference files), with the matching lines. Use it when the name and
+  description don't reveal the skill; quote a phrase: `"error envelope"`.
 - `shelf show <name>` prints the full skill before you borrow it.
 - `shelf suggest --json` lists library skills matching the project's
   dependencies and files. Run it when the user asks what skills would help;

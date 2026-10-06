@@ -573,3 +573,31 @@ describe("server", () => {
     expect(rebound.status).toBe(403);
   });
 });
+
+describe("search", () => {
+  test("finds skills by their content, with line snippets, best first", async () => {
+    const { env, client } = await setup(["pdf", "api"]);
+    const api = join(env.shelfHome, "library/api");
+    await appendToFile(join(api, "SKILL.md"), "\nWrap failures in an error envelope.\n");
+    await mkdir(join(api, "references"));
+    await writeFile(
+      join(api, "references/errors.md"),
+      "# Errors\n\nThe error envelope has a code.\n",
+    );
+
+    const results = await ok(client.search.$get({ query: { q: '"error envelope"' } }));
+    expect(results.map((result) => result.name)).toEqual(["api"]);
+    const [result] = results;
+    expect(result?.matches.map((match) => [match.file, match.snippet])).toEqual([
+      ["SKILL.md", "Wrap failures in an error envelope."],
+      ["references/errors.md", "The error envelope has a code."],
+    ]);
+    expect(result?.matches[1]).toMatchObject({ line: 3, ranges: [[4, 18]] });
+
+    const limited = await ok(client.search.$get({ query: { q: "skill", limit: "1" } }));
+    expect(limited).toHaveLength(1);
+    expect(await ok(client.search.$get({ query: {} }))).toEqual([]);
+    const invalid = await client.search.$get({ query: { q: "x", limit: "0" } });
+    expect(invalid.status).toBe(400);
+  });
+});

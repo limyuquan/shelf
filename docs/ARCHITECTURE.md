@@ -69,6 +69,9 @@ packages/web/src/
 - **Suggestions.** `services/suggest.ts` reads a project's manifests and well-known
   files (root, direct subdirectories and workspace packages; bounded, no network) and
   matches the terms against skill names (strong) and description words (weak).
+- **Search.** `services/search.ts` reads every skill's text files on each query
+  (no index: libraries are small and edited with any tool); the Library filter
+  and ⌘K call it through `GET /api/search`, debounced, keeping old results while loading.
 - **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
   navigation; both stand down while typing or while a dialog or menu is open.
 - **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,

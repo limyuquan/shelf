@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Command } from "cmdk";
+import { Command, defaultFilter, useCommandState } from "cmdk";
 import {
   Activity,
   BookOpen,
   ChartColumn,
+  FileText,
   FolderGit2,
   FolderSearch,
   Inbox,
@@ -16,6 +17,9 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { projectsQuery } from "../../features/projects/queries.ts";
+import { matchSearch, shortSnippet } from "../../features/search/describe.ts";
+import { useContentSearch } from "../../features/search/queries.ts";
+import { Highlighted } from "../../features/search/search-results.tsx";
 import { skillsQuery } from "../../features/skills/queries.ts";
 import { setThemePreference } from "../../lib/theme.ts";
 import { ProjectAvatar } from "../project-avatar.tsx";
@@ -40,7 +44,7 @@ export function CommandMenu({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} label="Command menu" placement="top">
-      <Command loop className="flex min-h-0 flex-1 flex-col">
+      <Command loop filter={filter} className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center gap-2.5 border-border border-b px-4">
           <Search className="size-4 text-fg-subtle" />
           <Command.Input
@@ -130,6 +134,7 @@ export function CommandMenu({
               ))}
             </Group>
           )}
+          <ContentHits go={go} />
           <Group heading="Theme">
             <Item icon={<Sun />} onSelect={go(() => setThemePreference("light"))}>
               Light theme
@@ -141,6 +146,47 @@ export function CommandMenu({
         </Command.List>
       </Command>
     </Dialog>
+  );
+}
+
+/** Content hits are matched by the server: keep them, ranked below name matches. */
+const CONTENT = "content:";
+const filter: typeof defaultFilter = (value, search, keywords) =>
+  value.startsWith(CONTENT) ? 0.001 : defaultFilter(value, search, keywords);
+
+/** The top skills whose content mentions the query, once it has 3+ characters. */
+function ContentHits({ go }: { go: (action: () => void) => () => void }) {
+  const navigate = useNavigate();
+  const search = useCommandState((state) => state.search);
+  const { results } = useContentSearch(search, { limit: 5, minLength: 3 });
+  if (!results?.length) return null;
+  return (
+    <Group heading="In skill content">
+      {results.map(({ name, matches: [match] }) => {
+        const short = match && shortSnippet(match.snippet, match.ranges);
+        return (
+          <Item
+            key={name}
+            value={`${CONTENT}${name}`}
+            icon={<FileText />}
+            onSelect={go(() =>
+              navigate({
+                to: "/library/$skillName",
+                params: { skillName: name },
+                search: match ? matchSearch(match) : {},
+              }),
+            )}
+          >
+            <span className="shrink-0">{name}</span>
+            {short && (
+              <span className="min-w-0 flex-1 truncate text-[12px] text-fg-muted">
+                <Highlighted text={short.snippet} ranges={short.ranges} />
+              </span>
+            )}
+          </Item>
+        );
+      })}
+    </Group>
   );
 }
 

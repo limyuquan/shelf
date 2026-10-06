@@ -8,6 +8,7 @@ import { attentionRoutes } from "./routes/attention.ts";
 import { insightsRoutes } from "./routes/insights.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { scanRoutes } from "./routes/scan.ts";
+import { searchRoutes } from "./routes/search.ts";
 import { skillRoutes } from "./routes/skills.ts";
 import { systemRoutes } from "./routes/system.ts";
 
@@ -40,6 +41,7 @@ export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
     .route("/attention", attentionRoutes)
     .route("/projects", projectRoutes)
     .route("/skills", skillRoutes)
+    .route("/search", searchRoutes)
     .route("/activity", activityRoutes)
     .route("/insights", insightsRoutes)
     .route("/system", systemRoutes)

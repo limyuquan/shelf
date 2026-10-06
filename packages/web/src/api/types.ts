@@ -47,3 +47,5 @@ export type AdoptResult = InferResponseType<typeof api.adopt.$post, 200>[number]
 export type SystemReport = InferResponseType<typeof api.system.$get, 200>;
 export type HookStatus = SystemReport["hooks"][number];
 export type DoctorCheck = SystemReport["checks"][number];
+export type SearchResult = InferResponseType<typeof api.search.$get, 200>[number];
+export type SearchMatch = SearchResult["matches"][number];

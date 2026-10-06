@@ -26,6 +26,7 @@ import {
 import { doctorCommand, sweepCommand } from "./commands/maintenance.ts";
 import { adoptCommand, scanCommand } from "./commands/onboarding.ts";
 import { projectsCommand, statusCommand, syncCommand } from "./commands/project.ts";
+import { searchCommand } from "./commands/search.ts";
 import { initCommand, setupCommand } from "./commands/setup.ts";
 import { addCommand, auditCommand, pullCommand } from "./commands/sources.ts";
 import { suggestCommand } from "./commands/suggest.ts";
@@ -49,6 +50,7 @@ const main = defineCommand({
     // Library
     new: newCommand,
     catalog: catalogCommand,
+    search: searchCommand,
     show: showCommand,
     log: logCommand,
     diff: diffCommand,
