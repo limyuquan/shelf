@@ -1,0 +1,14 @@
+{
+  "name": "@shelf/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "shelf": "./src/main.ts"
+  },
+  "dependencies": {
+    "@shelf/core": "workspace:*",
+    "@shelf/skill": "workspace:*",
+    "citty": "0.2.2"
+  }
+}
