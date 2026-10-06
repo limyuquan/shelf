@@ -1,0 +1,94 @@
+import { useQuery } from "@tanstack/react-query";
+import { createRoute, Link, useNavigate } from "@tanstack/react-router";
+import { BookOpen, Link2, Search } from "lucide-react";
+import { z } from "zod";
+import { rootRoute } from "../app/root-route.tsx";
+import { PageBody, PageHeader } from "../components/layout/page.tsx";
+import { EmptyState } from "../components/ui/empty-state.tsx";
+import { Skeleton } from "../components/ui/skeleton.tsx";
+import { Tooltip } from "../components/ui/tooltip.tsx";
+import { skillsQuery } from "../features/skills/queries.ts";
+import { sourceLabel } from "../lib/format.ts";
+
+export const libraryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/library",
+  validateSearch: z.object({ q: z.string().optional() }),
+  loaderDeps: ({ search }) => ({ q: search.q ?? "" }),
+  loader: ({ context, deps }) => context.queryClient.ensureQueryData(skillsQuery(deps.q)),
+  component: LibraryPage,
+});
+
+function LibraryPage() {
+  const { q = "" } = libraryRoute.useSearch();
+  const navigate = useNavigate({ from: libraryRoute.fullPath });
+  const skills = useQuery({ ...skillsQuery(q), placeholderData: (previous) => previous });
+
+  return (
+    <>
+      <PageHeader crumbs={[{ label: "Library" }]} />
+      <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-5">
+        <Search className="size-3.5 text-fg-subtle" />
+        <input
+          value={q}
+          onChange={(event) =>
+            void navigate({
+              search: event.target.value ? { q: event.target.value } : {},
+              replace: true,
+            })
+          }
+          placeholder="Filter skills by name or description"
+          className="h-full flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-fg-subtle"
+        />
+        {skills.data && (
+          <span className="text-[12px] text-fg-subtle">{skills.data.length} skills</span>
+        )}
+      </div>
+      <PageBody>
+        {!skills.data ? (
+          <div className="flex flex-col gap-2 p-5">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+        ) : skills.data.length === 0 ? (
+          <EmptyState
+            icon={<BookOpen />}
+            title={q ? "No matching skills" : "Your library is empty"}
+          >
+            {q
+              ? "Try another search."
+              : "Create one with `shelf new`, or bring existing ones in with `shelf adopt`."}
+          </EmptyState>
+        ) : (
+          skills.data.map((skill) => (
+            <Link
+              key={skill.name}
+              to="/library/$skillName"
+              params={{ skillName: skill.name }}
+              className="flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover"
+            >
+              <BookOpen className="size-4 shrink-0 text-fg-subtle" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-fg">{skill.name}</span>
+                  {skill.source && (
+                    <Tooltip label={`Linked to ${sourceLabel(skill.source)}`}>
+                      <Link2 className="size-3.5 text-fg-subtle" />
+                    </Tooltip>
+                  )}
+                </div>
+                <p className="truncate text-[12.5px] text-fg-muted">{skill.description}</p>
+              </div>
+              <span className="w-24 shrink-0 text-right text-[12px] text-fg-muted">
+                {skill.borrowers} project{skill.borrowers === 1 ? "" : "s"}
+              </span>
+              <span className="w-20 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums">
+                ~{skill.tokens.toLocaleString()} tok
+              </span>
+            </Link>
+          ))
+        )}
+      </PageBody>
+    </>
+  );
+}

@@ -29,9 +29,16 @@ export interface EventRecord {
   readonly at: Date;
   readonly actor: Actor;
   readonly type: EventType;
+  readonly projectId: string | null;
   readonly project: string | null;
   readonly skill: string | null;
   readonly detail: Record<string, unknown> | null;
+}
+
+export interface EventFilter {
+  readonly limit: number;
+  readonly projectId?: string;
+  readonly skill?: string;
 }
 
 interface EventRow {
@@ -39,24 +46,35 @@ interface EventRow {
   at: string;
   actor: string;
   type: EventType;
+  project_id: string | null;
   project: string | null;
   skill: string | null;
   detail: string | null;
 }
 
 /** The newest events first, with project and skill names resolved. */
-export function listEvents(db: Db, options: { limit: number; projectId?: string }): EventRecord[] {
-  const where = options.projectId ? "WHERE events.project_id = ?" : "";
-  const params = options.projectId ? [options.projectId, options.limit] : [options.limit];
+export function listEvents(db: Db, options: EventFilter): EventRecord[] {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+  if (options.projectId) {
+    conditions.push("events.project_id = ?");
+    params.push(options.projectId);
+  }
+  if (options.skill) {
+    conditions.push("skills.name = ?");
+    params.push(options.skill);
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  params.push(options.limit);
   return db
     .query<EventRow, (string | number)[]>(
       `SELECT events.id, events.at, events.actor, events.type, events.detail,
-              projects.name AS project, skills.name AS skill
+              events.project_id, projects.name AS project, skills.name AS skill
        FROM events
        LEFT JOIN projects ON projects.id = events.project_id
        LEFT JOIN skills ON skills.id = events.skill_id
        ${where}
-       ORDER BY events.id DESC LIMIT ?`,
+       ORDER BY events.at DESC, events.id DESC LIMIT ?`,
     )
     .all(...params)
     .map((row) => ({
@@ -64,6 +82,7 @@ export function listEvents(db: Db, options: { limit: number; projectId?: string 
       at: new Date(row.at),
       actor: row.actor,
       type: row.type,
+      projectId: row.project_id,
       project: row.project,
       skill: row.skill,
       detail: row.detail ? (JSON.parse(row.detail) as Record<string, unknown>) : null,

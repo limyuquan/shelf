@@ -5,6 +5,8 @@
 ```sh
 bun install          # Bun 1.4.2 (pinned in package.json)
 bun run shelf -- status   # run the CLI from source
+bun run dev          # the dashboard on demo data; reload to see changes
+bun run dev -- --real     # …on your real ~/.shelf instead
 ```
 
 Use a scratch state directory so you don't touch your real library:
@@ -32,6 +34,17 @@ SHELF_BIN=dist/shelf bun test tests/e2e   # e2e against the binary
 - Every failure a user or agent can act on is a `ShelfError` with a `hint`.
 - Plain SQL, no ORM. Schema changes are new entries in `migrations.ts`.
 - Comments explain *why*. Don't restate the code.
+
+### Dashboard
+
+- A new endpoint is a route in `packages/server/src/routes/` calling a core
+  service, with zod schemas for its inputs. Its response type flows to the web
+  app through `type Api`; don't declare response types by hand.
+- Pages live in `packages/web/src/routes/`; domain logic shared by pages lives
+  in `features/<domain>/`; generic UI in `components/ui/`.
+- Use the semantic colour tokens (`bg-surface`, `text-fg-muted`, …), never raw
+  colours, so both themes keep working. Check both themes before submitting.
+- Pure helpers go in `lib/` or a feature's `describe.ts` and get unit tests.
 
 ## Releasing
 

@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createContext, parsePositiveInt } from "@shelf/core";
-import { startDashboard } from "@shelf/dashboard";
+import { startServer } from "@shelf/server";
+import page from "@shelf/web/index.html";
 import { defineCommand } from "citty";
 import { printFailure, printSuccess } from "../output.ts";
 
@@ -17,7 +18,7 @@ export const uiCommand = defineCommand({
     try {
       const ctx = await createContext({ actor: "user:dashboard" });
       const port = args.port === undefined ? 0 : parsePositiveInt(args.port, 0, "--port");
-      const dashboard = startDashboard(ctx, { port });
+      const dashboard = startServer(ctx, { page, port });
       printSuccess(
         {
           data: { url: dashboard.url },

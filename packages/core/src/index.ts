@@ -14,6 +14,11 @@ export type { Finding, Severity } from "./security/audit.ts";
 export type { Action } from "./services/actions.ts";
 export { activity } from "./services/activity.ts";
 export { type AdoptOptions, type AdoptResult, adopt } from "./services/adopt.ts";
+export {
+  type AttentionItem,
+  type AttentionReason,
+  listAttention,
+} from "./services/attention.ts";
 export { audit, type SkillAudit } from "./services/audit.ts";
 export {
   type Context,

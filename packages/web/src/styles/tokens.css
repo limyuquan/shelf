@@ -1,0 +1,68 @@
+/*
+ * Design tokens. Components never use raw colours: they use the semantic names
+ * below (exposed to Tailwind in global.css), so both themes stay consistent.
+ */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces, from the window background up to floating popups. */
+  --bg: #0a0a0b;
+  --surface: #0f0f11;
+  --surface-raised: #151518;
+  --surface-hover: #1a1a1e;
+  --surface-overlay: #1c1c20;
+
+  --border: #222226;
+  --border-subtle: #19191c;
+  --border-strong: #2e2e34;
+
+  --fg: #ececee;
+  --fg-muted: #a0a0a8;
+  --fg-subtle: #6c6c75;
+
+  --accent: #7b7ef0;
+  --accent-fg: #ffffff;
+  --accent-soft: rgb(123 126 240 / 0.14);
+
+  --green: #4cb782;
+  --yellow: #f2c94c;
+  --orange: #f2994a;
+  --red: #eb5757;
+  --blue: #4ea7fc;
+  --violet: #a78bfa;
+
+  --shadow-popup: 0 8px 30px rgb(0 0 0 / 0.5), 0 0 0 1px var(--border-strong);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --surface-raised: #fafafa;
+  --surface-hover: #f2f2f3;
+  --surface-overlay: #ffffff;
+
+  --border: #e6e6e9;
+  --border-subtle: #efeff1;
+  --border-strong: #d6d6db;
+
+  --fg: #17171a;
+  --fg-muted: #5f5f68;
+  --fg-subtle: #94949c;
+
+  --accent: #5e6ad2;
+  --accent-fg: #ffffff;
+  --accent-soft: rgb(94 106 210 / 0.1);
+
+  --green: #2f9e6a;
+  --yellow: #c9a227;
+  --orange: #d9822b;
+  --red: #d9483b;
+  --blue: #2f86e0;
+  --violet: #7c5cdb;
+
+  --shadow-popup: 0 8px 30px rgb(0 0 0 / 0.12), 0 0 0 1px var(--border);
+}

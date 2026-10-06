@@ -14,6 +14,7 @@ import {
 } from "../library/skill-file.ts";
 import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
+import { listActiveLoansForSkill } from "../store/loans.ts";
 import {
   archiveSkill,
   countRevisions,
@@ -23,6 +24,7 @@ import {
   listSkills,
   updateSkillHead,
 } from "../store/skills.ts";
+import { findSkillSource } from "../store/sources.ts";
 import type { Context } from "./context.ts";
 
 /**
@@ -150,6 +152,10 @@ export interface CatalogEntry {
   readonly revisions: number;
   /** Rough size of SKILL.md in tokens (chars / 4), i.e. its cost when loaded. */
   readonly tokens: number;
+  /** Projects currently borrowing the skill. */
+  readonly borrowers: number;
+  /** Where `shelf pull` fetches updates from, if the skill is linked to a source. */
+  readonly source: string | null;
 }
 
 /** Library skills, optionally filtered: every whitespace-separated term must match. */
@@ -161,14 +167,20 @@ export async function catalog(ctx: Context, query = ""): Promise<CatalogEntry[]>
     return terms.every((term) => haystack.includes(term));
   });
   return Promise.all(
-    matches.map(async (skill) => ({
-      name: skill.name,
-      description: skill.description,
-      revision: skill.latestRevision,
-      revisions: countRevisions(ctx.db, skill.id),
-      tokens: Math.ceil((await readSkillFile(ctx, skill.name)).length / 4),
-    })),
+    matches.map(async (skill) => catalogEntry(ctx, skill, await readSkillFile(ctx, skill.name))),
   );
+}
+
+function catalogEntry(ctx: Context, skill: Skill, content: string): CatalogEntry {
+  return {
+    name: skill.name,
+    description: skill.description,
+    revision: skill.latestRevision,
+    revisions: countRevisions(ctx.db, skill.id),
+    tokens: Math.ceil(content.length / 4),
+    borrowers: listActiveLoansForSkill(ctx.db, skill.id).length,
+    source: findSkillSource(ctx.db, skill.id)?.url ?? null,
+  };
 }
 
 export interface SkillDetail extends CatalogEntry {
@@ -187,11 +199,7 @@ export async function showSkill(ctx: Context, name: string): Promise<SkillDetail
     .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1))
     .sort();
   return {
-    name: skill.name,
-    description: skill.description,
-    revision: skill.latestRevision,
-    revisions: countRevisions(ctx.db, skill.id),
-    tokens: Math.ceil(content.length / 4),
+    ...catalogEntry(ctx, skill, content),
     path: dir,
     files,
     content,

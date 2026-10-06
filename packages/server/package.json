@@ -1,0 +1,16 @@
+{
+  "name": "@shelf/server",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./contract": "./src/contract.ts"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "0.9.1",
+    "@shelf/core": "workspace:*",
+    "hono": "4.13.13",
+    "zod": "4.6.5"
+  }
+}

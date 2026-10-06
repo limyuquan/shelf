@@ -1,4 +1,4 @@
-import { describe, expect, setDefaultTimeout, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auditText } from "../src/security/audit.ts";
@@ -7,9 +7,6 @@ import { skillHistory } from "../src/services/history.ts";
 import { addSkill, pullSkill } from "../src/services/import.ts";
 import { createSkill } from "../src/services/library.ts";
 import { createTestEnv, type TestEnv } from "./helpers.ts";
-
-// These tests spawn real git processes, which can exceed 5 s on a busy machine.
-setDefaultTimeout(60_000);
 
 async function writeSkill(dir: string, name: string, body: string): Promise<string> {
   const skillDir = join(dir, name);

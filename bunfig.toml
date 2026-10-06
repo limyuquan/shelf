@@ -1,0 +1,7 @@
+# Tailwind for the web app when Bun's dev server bundles it (`bun run dev`).
+# Release builds pass the plugin explicitly (scripts/build.ts).
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+
+[test]
+preload = ["./tests/preload.ts"]

@@ -11,28 +11,68 @@ packages/
     src/store/       SQLite: connection, migrations, one module per table.
     src/services/    Use cases (borrow, renew, promote, status, …). Take a Context.
   cli/       Thin adapter: parses args, calls one service, renders text or JSON.
-  dashboard/ `shelf ui`: Bun.serve JSON API (src/api.ts) over core + Preact app (src/app/).
-             The HTML import is bundled and embedded into the compiled binary.
+  server/    `shelf ui`'s HTTP layer: a Hono JSON API over core, plus Bun.serve.
+    src/routes/      One module per resource; each route is a thin call into core.
+    src/schemas.ts   zod request schemas (the inputs half of the contract).
+    src/contract.ts  Browser-safe exports: the `Api` type and the token header.
+  web/       The dashboard: a React single-page app (see Web app).
   skill/     The bundled SKILL.md installed by `shelf setup`.
-scripts/     Cross-compilation and npm packaging (see Distribution).
+scripts/     Build, cross-compilation, npm packaging, the dev server and demo data.
 npm/         The npm launcher script.
 tests/e2e/   Runs the real CLI (or the compiled binary via SHELF_BIN) as a subprocess.
 ```
 
-Dependencies point one way: `cli → (dashboard →) core/index.ts → services →
-(domain, library, projection, store)`. `domain` imports nothing but itself. The
-dashboard is another thin adapter over the same services, so its behaviour
-cannot drift from the CLI. Its response shapes live in `dashboard/src/contract.ts`,
-shared by server and browser code (type-only imports from core).
+Dependencies point one way: `cli → server → core/index.ts → services →
+(domain, library, projection, store)`, and `web → server/contract` (types only).
+`domain` imports nothing but itself. The server is another thin adapter over
+the same services, so the dashboard's behaviour cannot drift from the CLI. The
+CLI composes the two: it imports the web app's `index.html` and hands it to the
+server, so the server package never depends on the web package.
+
+## Web app
+
+```
+packages/web/src/
+  app/                 Router (code-based route tree), query client, providers.
+  api/                 Typed Hono client, `unwrap`, response types derived from `Api`.
+  routes/              One file per page; each exports its route (loader + component).
+  features/<domain>/   attention, projects, skills, loans, activity: queries,
+                       mutations, and the components only that domain uses.
+  components/ui/       Design-system primitives (Button, Menu, Dialog, Tooltip, …)
+                       on Base UI, styled with Tailwind.
+  components/layout/   App shell, sidebar, page header, properties panel, ⌘K menu.
+  lib/                 Pure helpers (formatting, theme), unit-tested in test/.
+  styles/              tokens.css (semantic colours for both themes) and global.css.
+```
+
+- **Contract.** `server/src/app.ts` builds the API by chaining Hono routes, so
+  `type Api` carries every path, input and response. The web app's client is
+  `hc<Api>()`; response types are derived with `InferResponseType`. Responses
+  are typed by the core services' return types, so a change in core, server or
+  web that breaks the contract fails `tsc`. Server tests use the same client.
+- **Data.** TanStack Router loaders warm TanStack Query's cache
+  (`ensureQueryData`); components read it with `useSuspenseQuery`. Mutations
+  invalidate everything: the data is local and cheap, and it keeps every view
+  consistent without per-mutation cache surgery.
+- **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,
+  `border-border`), never raw colours. `tokens.css` defines them per theme;
+  `data-theme` on `<html>` switches dark and light (default: follow the OS).
+- **Build.** Bun bundles `index.html` (React, Tailwind via `bun-plugin-tailwind`,
+  Inter, CodeMirror) into the compiled binary. `scripts/build.ts` passes the
+  Tailwind plugin to `Bun.build`; the dev server gets it from `bunfig.toml`.
+  `bun run dev` serves the app on demo data (`scripts/demo/seed.ts`) and rebuilds
+  on reload; hot module replacement is off because Bun's HMR runtime breaks on
+  TanStack Router's circular imports.
 
 ## Dashboard security
 
 The server binds 127.0.0.1 on a random port. Every API request must carry the
-per-process token (from the printed URL, kept in sessionStorage) in a custom
-header, and a Host header naming that loopback address — blocking other
-browsers' pages, CSRF (custom headers need CORS, which is never granted) and DNS
-rebinding. Viewing never mutates: project pages use `projectReport`, not
-`status`, so overdue loans are shown rather than returned.
+per-process token (from the printed URL; the app moves it to sessionStorage and
+strips it from the address bar) in a custom header, and a Host naming that
+loopback address — blocking other browsers' pages, CSRF (custom headers need
+CORS, which is never granted) and DNS rebinding. Viewing never mutates: project
+pages use `projectReport` and Attention uses `listAttention`, not `status`, so
+overdue loans are shown rather than returned.
 
 ## Who owns which data
 

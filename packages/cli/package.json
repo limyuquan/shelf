@@ -8,8 +8,9 @@
   },
   "dependencies": {
     "@shelf/core": "workspace:*",
-    "@shelf/dashboard": "workspace:*",
+    "@shelf/server": "workspace:*",
     "@shelf/skill": "workspace:*",
+    "@shelf/web": "workspace:*",
     "citty": "0.2.2"
   }
 }

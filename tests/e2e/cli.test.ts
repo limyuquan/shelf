@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -7,12 +7,13 @@ import { join, resolve } from "node:path";
  * Drives the real CLI as a subprocess. Set SHELF_BIN to test a compiled binary
  * (CI does); otherwise the TypeScript entry point runs under Bun.
  */
-// Each test spawns real CLI processes that create a fresh SQLite database; on a
-// busy disk those fsyncs alone can exceed the 5 s default.
-setDefaultTimeout(60_000);
-
 const ENTRY = resolve(import.meta.dir, "../../packages/cli/src/main.ts");
-const COMMAND = process.env.SHELF_BIN ? [process.env.SHELF_BIN] : [process.execPath, ENTRY];
+// Bun reads bunfig.toml (which enables Tailwind) from the working directory, and
+// the tests run the CLI from temporary projects, so point at it explicitly.
+const BUNFIG = resolve(import.meta.dir, "../../bunfig.toml");
+const COMMAND = process.env.SHELF_BIN
+  ? [process.env.SHELF_BIN]
+  : [process.execPath, `--config=${BUNFIG}`, ENTRY];
 
 interface Envelope {
   schemaVersion: number;
@@ -195,11 +196,15 @@ describe("shelf ui", () => {
       const html = await (await fetch(url)).text();
       const script = /src="([^"]+\.js)"/.exec(html)?.[1] ?? "";
       expect((await fetch(new URL(script, url))).status).toBe(200);
+      // Tailwind must have run: an unprocessed build ships a dashboard without styles.
+      const stylesheet = /href="([^"]+\.css)"/.exec(html)?.[1] ?? "";
+      expect(await (await fetch(new URL(stylesheet, url))).text()).toContain("bg-surface");
 
-      const api = await fetch(new URL("/api/overview", url), {
+      const api = await fetch(new URL("/api/projects", url), {
         headers: { "x-shelf-token": token },
       });
-      expect(((await api.json()) as Envelope).ok).toBe(true);
+      expect(api.status).toBe(200);
+      expect(await api.json()).toEqual([]);
     } finally {
       proc.kill();
     }
