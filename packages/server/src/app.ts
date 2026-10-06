@@ -1,10 +1,12 @@
 import type { Context, SystemOptions } from "@shelf/core";
 import { Hono } from "hono";
+import { type ChangeFeed, watchChanges } from "./changes.ts";
 import { TOKEN_HEADER } from "./contract.ts";
 import type { AppEnv } from "./env.ts";
 import { errorBody, handleError } from "./errors.ts";
 import { activityRoutes, maintenanceRoutes } from "./routes/activity.ts";
 import { attentionRoutes } from "./routes/attention.ts";
+import { eventRoutes } from "./routes/events.ts";
 import { insightsRoutes } from "./routes/insights.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { scanRoutes } from "./routes/scan.ts";
@@ -22,7 +24,12 @@ export interface Guard {
  * The JSON API. Every route is a thin call into @shelf/core, so the dashboard
  * can never behave differently from the CLI.
  */
-export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
+export function createApi(
+  ctx: Context,
+  guard: Guard,
+  system: SystemOptions,
+  changes: ChangeFeed = watchChanges(ctx),
+) {
   return new Hono<AppEnv>()
     .basePath("/api")
     .use(async (c, next) => {
@@ -36,6 +43,7 @@ export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
       }
       c.set("ctx", ctx);
       c.set("system", system);
+      c.set("changes", changes);
       await next();
     })
     .route("/attention", attentionRoutes)
@@ -45,6 +53,7 @@ export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
     .route("/activity", activityRoutes)
     .route("/insights", insightsRoutes)
     .route("/system", systemRoutes)
+    .route("/events", eventRoutes)
     .route("/", maintenanceRoutes)
     .route("/", scanRoutes)
     .notFound((c) => c.json(errorBody("NOT_FOUND", `No route ${c.req.method} ${c.req.path}`), 404))

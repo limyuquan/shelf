@@ -601,3 +601,127 @@ describe("search", () => {
     expect(invalid.status).toBe(400);
   });
 });
+
+describe("live updates", () => {
+  let server: DashboardServer | null = null;
+  let stream: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  afterEach(async () => {
+    await stream?.cancel().catch(() => {});
+    await server?.stop();
+    server = stream = null;
+  });
+
+  async function connect(skills: string[] = ["pdf"]) {
+    const env = await createTestEnv();
+    const ctx = await setupProject(env, skills);
+    const started = startServer(ctx, { page, system: SYSTEM, token: TOKEN });
+    server = started;
+    const response = await fetch(new URL("/api/events", started.url), {
+      headers: { [TOKEN_HEADER]: TOKEN },
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+    stream = reader;
+    const decoder = new TextDecoder();
+    let received = "";
+    /** Reads until `text` arrives and returns what follows it; throws on timeout. */
+    const waitFor = async (text: string, timeoutMs = 5000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (!received.includes(text)) {
+        const chunk = await Promise.race([
+          reader.read(),
+          Bun.sleep(Math.max(deadline - Date.now(), 0)).then(() => null),
+        ]);
+        if (!chunk) throw new Error(`No "${text}" within ${timeoutMs} ms; got ${received}`);
+        if (chunk.done) throw new Error(`Stream ended before "${text}"; got ${received}`);
+        received += decoder.decode(chunk.value, { stream: true });
+      }
+      received = received.slice(received.indexOf(text) + text.length);
+      return received;
+    };
+    const get = (path: string) =>
+      fetch(new URL(path, started.url), { headers: { [TOKEN_HEADER]: TOKEN } });
+    await waitFor(": connected\n\n");
+    return { env, ctx, waitFor, get };
+  }
+
+  test("a write from another connection reaches the stream as a change event", async () => {
+    const { env, waitFor } = await connect();
+    // Another process, e.g. an agent's hook, writes through its own connection.
+    const other = await env.context();
+    await borrow(other, ["pdf"]);
+    const rest = await waitFor("event: change\n");
+    const data = rest.match(/^data: (.*)\n\n/)?.[1] ?? "";
+    expect(JSON.parse(data)).toEqual({ at: expect.any(String) });
+  });
+
+  test("editing the library is a change", async () => {
+    const { env, waitFor } = await connect();
+    await appendToFile(join(env.shelfHome, "library", "pdf", "SKILL.md"), "\nMore.\n");
+    await waitFor("event: change\n");
+  });
+
+  test("the dashboard's own writes are changes, so other tabs follow", async () => {
+    const { get, waitFor } = await connect();
+    const [project] = (await (await get("/api/projects")).json()) as { id: string }[];
+    const response = await fetch(new URL(`/api/projects/${project?.id}/loans`, server?.url), {
+      method: "POST",
+      headers: { [TOKEN_HEADER]: TOKEN, "content-type": "application/json" },
+      body: JSON.stringify({ skills: ["pdf"] }),
+    });
+    expect(response.status).toBe(200);
+    await waitFor("event: change\n");
+  });
+
+  test("reading the dashboard is not a change", async () => {
+    const { get, waitFor } = await connect();
+    for (const path of ["/api/attention", "/api/projects", "/api/skills", "/api/activity"]) {
+      expect((await get(path)).status).toBe(200);
+    }
+    await expect(waitFor("event: change\n", 2000)).rejects.toThrow("within");
+  });
+
+  test("detail pages are not changes either (no refetch loop)", async () => {
+    const { env, get, waitFor } = await connect();
+    await borrow(await env.context(), ["pdf"]);
+    await waitFor("event: change\n");
+    const [project] = (await (await get("/api/projects")).json()) as { id: string }[];
+    const reads = [
+      `/api/projects/${project?.id}`,
+      `/api/projects/${project?.id}/loans/pdf/diff`,
+      `/api/projects/${project?.id}/suggestions`,
+      "/api/skills/pdf",
+      "/api/insights",
+      "/api/search?q=pdf",
+      "/api/system",
+    ];
+    // Twice: a read that writes would answer the first round with a change.
+    for (const path of [...reads, ...reads]) expect((await get(path)).status).toBe(200);
+    await expect(waitFor("event: change\n", 2500)).rejects.toThrow("within");
+  });
+
+  test("the stream needs the token and this server's Host", async () => {
+    const env = await createTestEnv();
+    server = startServer(await setupProject(env, []), { page, system: SYSTEM, token: TOKEN });
+    const url = new URL("/api/events", server.url);
+    expect((await fetch(url)).status).toBe(401);
+    expect((await fetch(url, { headers: { [TOKEN_HEADER]: "wrong" } })).status).toBe(401);
+    const rebound = await fetch(url, { headers: { [TOKEN_HEADER]: TOKEN, host: "evil.example" } });
+    expect(rebound.status).toBe(403);
+  });
+
+  test("stopping the server ends open streams", async () => {
+    await connect();
+    await server?.stop();
+    server = null;
+    const ended = await Promise.race([
+      stream?.read().then(
+        (chunk) => chunk.done,
+        () => true,
+      ),
+      Bun.sleep(3000).then(() => false),
+    ]);
+    expect(ended).toBe(true);
+  });
+});

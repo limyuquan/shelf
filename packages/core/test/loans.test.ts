@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { pathExists } from "../src/library/fs.ts";
 import { readLockfile, writeLockfileSync } from "../src/projection/lockfile.ts";
 import { createContext } from "../src/services/context.ts";
+import { diffSkill } from "../src/services/diff.ts";
 import { catalog, createSkill } from "../src/services/library.ts";
 import { borrow, promote, renew, returnSkill, setDue, update } from "../src/services/loans.ts";
 import { listProjectOverviews } from "../src/services/overview.ts";
@@ -258,5 +259,24 @@ describe("projects across machines and moves", () => {
       "foreign",
       "pdf",
     ]);
+  });
+});
+
+describe("reads do not write", () => {
+  test("opening a project again within minutes changes nothing in the database", async () => {
+    const env = await createTestEnv();
+    const ctx = await setupProject(env, ["pdf"]);
+    await borrow(ctx, ["pdf"]);
+    const changes = () => (ctx.db.query("SELECT total_changes() AS n").get() as { n: number }).n;
+
+    await diffSkill(ctx, "pdf");
+    const before = changes();
+    await diffSkill(ctx, "pdf");
+    await status(ctx);
+    expect(changes()).toBe(before);
+
+    env.clock.advanceDays(1);
+    await status(ctx);
+    expect(changes()).toBeGreaterThan(before); // last-seen refreshes when stale
   });
 });

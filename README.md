@@ -111,7 +111,7 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 
 ## Dashboard
 
-`shelf ui` opens a local dashboard:
+`shelf ui` opens a local dashboard that updates live as agents work:
 
 - **Attention**: every loan across your projects that needs you — due soon,
   edited, behind the library, overdue — with one-click renew, update, and a

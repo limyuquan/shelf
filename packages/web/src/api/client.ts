@@ -3,13 +3,14 @@ import { TOKEN_HEADER } from "@shelf/server/contract";
 import { type ClientResponse, hc } from "hono/client";
 import { readToken } from "./token.ts";
 
-const token = readToken();
+/** The token header every API request carries, including the live-update stream. */
+export const authHeaders = { [TOKEN_HEADER]: readToken() };
 
 /**
  * Typed client generated from the server's route definitions: a changed route or
  * response shape on the server is a compile error here.
  */
-export const api = hc<Api>(location.origin, { headers: { [TOKEN_HEADER]: token } }).api;
+export const api = hc<Api>(location.origin, { headers: authHeaders }).api;
 
 /** A failed API call, carrying the same error codes and hints as the CLI. */
 export class ApiError extends Error {

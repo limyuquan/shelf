@@ -23,6 +23,7 @@ import { IconButton } from "../ui/button.tsx";
 import { Kbd } from "../ui/kbd.tsx";
 import { Menu, MenuRadioGroup } from "../ui/menu.tsx";
 import { Tooltip } from "../ui/tooltip.tsx";
+import { LiveIndicator } from "./live-indicator.tsx";
 
 export function Sidebar({
   onSearch,
@@ -85,6 +86,7 @@ export function Sidebar({
             <Kbd>⌘K</Kbd> Commands
           </button>
           <div className="flex items-center">
+            <LiveIndicator />
             <Tooltip label="Keyboard shortcuts" shortcut="?" side="top">
               <IconButton
                 label="Keyboard shortcuts"

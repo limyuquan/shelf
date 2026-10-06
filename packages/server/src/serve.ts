@@ -1,6 +1,7 @@
 import type { Context, SystemOptions } from "@shelf/core";
 import type { HTMLBundle } from "bun";
 import { createApi } from "./app.ts";
+import { watchChanges } from "./changes.ts";
 
 export interface DashboardServer {
   readonly url: string;
@@ -32,13 +33,25 @@ const CHECKPOINT_INTERVAL_MS = 10 * 60 * 1000;
 export function startServer(ctx: Context, options: ServeOptions): DashboardServer {
   const { token } = options;
   let hosts: ReadonlySet<string> = new Set();
-  const api = createApi(ctx, { token, isAllowedHost: (host) => hosts.has(host) }, options.system);
+  const changes = watchChanges(ctx);
+  const api = createApi(
+    ctx,
+    { token, isAllowedHost: (host) => hosts.has(host) },
+    options.system,
+    changes,
+  );
 
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: options.port ?? 0,
     routes: {
       "/api/*": (request) => api.fetch(request),
+      // The live-update stream is quiet between changes and heartbeats; don't let
+      // the idle timeout (10 s by default) cut it.
+      "/api/events": (request, server) => {
+        server.timeout(request, 0);
+        return api.fetch(request);
+      },
       "/*": options.page,
     },
     // Bun rebuilds the app on reload in development. Hot module replacement stays
@@ -57,6 +70,7 @@ export function startServer(ctx: Context, options: ServeOptions): DashboardServe
     port,
     async stop() {
       clearInterval(checkpoint);
+      changes.close();
       await server.stop(true);
     },
   };

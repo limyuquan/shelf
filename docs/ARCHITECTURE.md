@@ -54,6 +54,17 @@ packages/web/src/
   (`ensureQueryData`); components read it with `useSuspenseQuery`. Mutations
   invalidate everything: the data is local and cheap, and it keeps every view
   consistent without per-mutation cache surgery.
+- **Live updates.** Agents' hooks and the CLI write the database from other
+  processes, so the server polls `PRAGMA data_version` (bumped by other
+  connections' commits) and `total_changes()` (its own) every second, and
+  watches the library with a recursive `fs.watch` where supported (polling
+  alone elsewhere). One shared feed (`server/src/changes.ts`), running only while
+  a client listens, fans out to `GET /api/events` as Server-Sent Events
+  (`event: change`, heartbeat every 25 s). The app reads the stream with `fetch`,
+  because `EventSource` can't send the token header (the token never goes in a
+  URL), and invalidates every query on a change, at most twice a second
+  (`api/live.ts`). It reconnects with backoff, disconnects while the tab is
+  hidden, and refetches on reconnect; the sidebar dot shows the state.
 - **Binary-provided values.** Core cannot know the running binary's version,
   bundled skill or hook command, so the CLI passes them to the server
   (`SystemOptions`) for the settings page and repairs.
@@ -108,8 +119,8 @@ overdue loans are shown rather than returned.
 | What a project has borrowed | `<project>/.agents/shelf.lock.json` | Derived from the database on every change. Carries the project id, so a moved directory or a clone on another machine is recognised. |
 
 The library is reconciled lazily: commands that read skills hash the library
-directory and record a revision for anything that changed. There is no daemon
-and no file watcher.
+directory and record a revision for anything that changed. There is no daemon;
+the dashboard watches the library only to tell open pages to refetch.
 
 Revisions are never deleted. `restore` records any unrecorded library edits as a
 revision, then copies an earlier snapshot back over the library copy, making it

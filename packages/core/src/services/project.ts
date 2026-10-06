@@ -21,6 +21,9 @@ import { findSkillByName } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { refreshLibrary } from "./library.ts";
 
+/** How often opening a project refreshes its last-seen time. */
+const LAST_SEEN_RESOLUTION_MS = 10 * 60 * 1000;
+
 export interface OpenProject {
   readonly project: Project;
   /** Library problems and lockfile entries naming skills this machine does not have. */
@@ -82,15 +85,19 @@ export async function openProject(ctx: Context): Promise<OpenProject | null> {
   const warnings = await refreshLibrary(ctx);
   const now = ctx.clock.now();
   const known = findProjectById(ctx.db, lockfile.project);
+  // Reads must not write: the dashboard refetches on every database change, so
+  // a read that always wrote would refetch forever. Last-seen is coarse anyway.
+  const moved = !known || known.path !== root || known.name !== basename(root);
+  const stale = moved || now.getTime() - known.lastSeenAt.getTime() >= LAST_SEEN_RESOLUTION_MS;
   const project: Project = {
     id: lockfile.project,
     path: root,
     name: basename(root),
     createdAt: known?.createdAt ?? now,
-    lastSeenAt: now,
+    lastSeenAt: stale ? now : known.lastSeenAt,
   };
   writeTransaction(ctx.db, () => {
-    upsertProject(ctx.db, project);
+    if (stale) upsertProject(ctx.db, project);
     if (!known) {
       recordEvent(ctx.db, {
         type: "project.registered",
