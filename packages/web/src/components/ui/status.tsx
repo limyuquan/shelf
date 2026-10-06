@@ -31,7 +31,7 @@ export function StatusDot({ tone, className }: { tone: Tone; className?: string 
 /** A compact label with a coloured dot, e.g. `● behind`. */
 export function StatusPill({ tone, children }: { tone: Tone; children: string }) {
   return (
-    <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full border border-border px-2 text-[12px] text-fg-muted">
+    <span className="inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-2 text-[12px] text-fg-muted">
       <StatusDot tone={tone} className="size-1.5" />
       {children}
     </span>
