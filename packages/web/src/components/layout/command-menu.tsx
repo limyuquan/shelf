@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChartColumn,
   FolderGit2,
+  FolderSearch,
   Inbox,
   Moon,
   Plus,
@@ -59,6 +60,13 @@ export function CommandMenu({
             </Item>
             <Item icon={<BookOpen />} onSelect={go(() => navigate({ to: "/library" }))}>
               Library
+            </Item>
+            <Item
+              value="find existing skills scan adopt"
+              icon={<FolderSearch />}
+              onSelect={go(() => navigate({ to: "/find-skills" }))}
+            >
+              Find existing skills
             </Item>
             <Item icon={<Activity />} onSelect={go(() => navigate({ to: "/activity" }))}>
               Activity

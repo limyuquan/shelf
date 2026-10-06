@@ -5,7 +5,7 @@
  *
  * Usage: bun scripts/demo/seed.ts [dir]   (default: $TMPDIR/shelf-demo)
  */
-import { appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -200,6 +200,43 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
     used(ctx, ["react-best-practices"]),
   );
   await as("agent:codex", 0.02, project("billing-api"), (ctx) => used(ctx, ["api-design"]));
+
+  // Projects that don't use shelf yet, with hand-copied skills for Find existing
+  // skills: two versions of brand-voice, and a copy identical to the library's.
+  const handCopy = async (dir: string, name: string, description: string, rules: string[]) => {
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "SKILL.md"),
+      `---\nname: ${name}\ndescription: ${description}\n---\n\n${rules.map((rule) => `- ${rule}`).join("\n")}\n`,
+    );
+  };
+  const brandVoice = "Write product copy in the house voice, plain and specific with no hype.";
+  for (const name of ["marketing-site", "analytics"]) {
+    await mkdir(join(project(name), ".git"), { recursive: true });
+  }
+  await handCopy(
+    join(project("marketing-site"), ".claude/skills/brand-voice"),
+    "brand-voice",
+    brandVoice,
+    ["Lead with what the reader can do", "Prefer numbers to adjectives", "No exclamation marks"],
+  );
+  for (const target of [".claude/skills", ".agents/skills"]) {
+    await handCopy(join(project("analytics"), target, "brand-voice"), "brand-voice", brandVoice, [
+      "Lead with what the reader can do",
+      "Prefer numbers to adjectives",
+    ]);
+  }
+  await handCopy(
+    join(project("marketing-site"), ".claude/skills/seo-checklist"),
+    "seo-checklist",
+    "Check titles, descriptions, headings and structured data before publishing a page.",
+    ["One h1 per page", "Titles under 60 characters", "Describe every image"],
+  );
+  await cp(
+    join(env.SHELF_HOME, "library/api-design"),
+    join(project("analytics"), ".claude/skills/api-design"),
+    { recursive: true },
+  );
 
   return { root, env };
 }

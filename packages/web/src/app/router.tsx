@@ -1,6 +1,7 @@
 import { createRouter } from "@tanstack/react-router";
 import { activityRoute } from "../routes/activity.tsx";
 import { attentionRoute } from "../routes/attention.tsx";
+import { findSkillsRoute } from "../routes/find-skills.tsx";
 import { insightsRoute } from "../routes/insights.tsx";
 import { libraryRoute } from "../routes/library.tsx";
 import { projectRoute } from "../routes/project.tsx";
@@ -16,6 +17,7 @@ const routeTree = rootRoute.addChildren([
   projectsRoute,
   projectRoute,
   libraryRoute,
+  findSkillsRoute,
   skillRoute,
   revisionRoute,
   activityRoute,

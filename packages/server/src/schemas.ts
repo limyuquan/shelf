@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import { z } from "zod";
 
 /**
@@ -39,6 +40,31 @@ export const activityQuery = z.object({
   limit: z.coerce.number().int().positive().max(1000).optional(),
   project: z.string().optional(),
   skill: z.string().optional(),
+});
+
+/** The server has no meaningful working directory, so paths must be absolute. */
+const absolutePath = z
+  .string()
+  .min(1)
+  .refine((path) => isAbsolute(path), "must be an absolute path");
+
+export const scanQuery = z.object({
+  /** Absolute, or under the home directory as typed: `~/code`. */
+  root: z
+    .string()
+    .min(1)
+    .refine(
+      (path) => isAbsolute(path) || /^~(\/|$)/.test(path),
+      "must be an absolute path or start with ~/",
+    )
+    .optional(),
+  depth: z.coerce.number().int().min(1).max(10).optional(),
+});
+
+export const adoptBody = z.object({
+  paths: z.array(absolutePath).min(1),
+  /** The copies have no local edits: differing ones are older versions (`behind`). */
+  unedited: z.boolean().optional(),
 });
 
 /** Drops undefined values, for core option bags under `exactOptionalPropertyTypes`. */

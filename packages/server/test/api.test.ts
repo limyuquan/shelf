@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type ClientResponse, hc } from "hono/client";
 import { addSkill } from "../../core/src/services/import.ts";
@@ -381,6 +381,73 @@ describe("pull", () => {
     expect(review.diff[0]?.patch).toContain("+v2");
     const applied = await ok(pull.$post({ param: { name: "notes" }, json: { yes: true } }));
     expect(applied.status).toBe("imported");
+  });
+});
+
+describe("scan and adopt", () => {
+  async function handCopied(dir: string, name: string, body: string): Promise<string> {
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "SKILL.md"),
+      `---\nname: ${name}\ndescription: ${name}\n---\n${body}`,
+    );
+    return dir;
+  }
+
+  test("scans the projects' folder by default and adopts the chosen copies", async () => {
+    const { env, client } = await setup(["pdf"]);
+    const code = join(env.root, "code");
+    for (const name of ["app", "api"]) await mkdir(join(code, name, ".git"), { recursive: true });
+    const newer = await handCopied(join(code, "app/.claude/skills/review"), "review", "v2");
+    const older = await handCopied(join(code, "api/.claude/skills/review"), "review", "v1");
+    await cp(join(env.shelfHome, "library/pdf"), join(code, "api/.claude/skills/pdf"), {
+      recursive: true,
+    });
+
+    // The only registered project sits directly in the home directory.
+    const scanned = await ok(client.scan.$get({ query: {} }));
+    expect(scanned).toMatchObject({ root: env.root, home: env.root });
+    const groups = Object.fromEntries(scanned.report.groups.map((g) => [g.name, g]));
+    expect(groups.review).toMatchObject({ copies: 2, inLibrary: false });
+    expect(groups.review?.variants).toHaveLength(2);
+    expect(groups.pdf?.variants[0]).toMatchObject({ isLibraryLatest: true });
+
+    const results = await ok(
+      client.adopt.$post({ json: { paths: [newer, older], unedited: true } }),
+    );
+    expect(results.map((r) => [r.skill, r.library, r.loan?.content])).toEqual([
+      ["review", "imported", "current"],
+      ["review", "older", "behind"],
+    ]);
+
+    // A root typed as `~/…` is under the home directory.
+    const rescanned = await ok(client.scan.$get({ query: { root: "~/code", depth: "3" } }));
+    expect(rescanned.root).toBe(code);
+    const review = rescanned.report.groups.find((g) => g.name === "review");
+    expect(review?.variants.flatMap((v) => v.copies.map((copy) => copy.managed))).not.toContain(
+      false,
+    );
+  });
+
+  test("refuses roots that are not absolute directories and bad depths or paths", async () => {
+    const { env, client } = await setup();
+    await writeFile(join(env.root, "notes.txt"), "not a directory");
+    for (const query of [
+      { root: "code" },
+      { root: join(env.root, "missing") },
+      { root: join(env.root, "notes.txt") },
+      { depth: "0" },
+      { depth: "11" },
+    ]) {
+      const response = await client.scan.$get({ query });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: { code: "INVALID_ARGUMENT" } });
+    }
+    for (const paths of [[], ["relative/skill"]]) {
+      const response = await client.adopt.$post({ json: { paths } });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: { code: "INVALID_ARGUMENT" } });
+    }
   });
 });
 

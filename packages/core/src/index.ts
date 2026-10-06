@@ -83,7 +83,14 @@ export {
   restoreRevision,
   showRevision,
 } from "./services/revisions.ts";
-export { type ScanGroup, type ScanReport, scan } from "./services/scan.ts";
+export {
+  defaultScanRoot,
+  type FoundCopy,
+  type ScanGroup,
+  type ScanReport,
+  type ScanVariant,
+  scan,
+} from "./services/scan.ts";
 export { sessionNotice } from "./services/session.ts";
 export { type SetupOptions, type SetupResult, setup } from "./services/setup.ts";
 export {

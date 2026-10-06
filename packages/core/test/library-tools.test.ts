@@ -11,7 +11,7 @@ import { refreshLibrary } from "../src/services/library.ts";
 import { borrow, promote, update } from "../src/services/loans.ts";
 import { initProject } from "../src/services/project.ts";
 import { propagate } from "../src/services/propagate.ts";
-import { scan } from "../src/services/scan.ts";
+import { defaultScanRoot, scan } from "../src/services/scan.ts";
 import { status, sweep } from "../src/services/status.ts";
 import { appendToFile, createTestEnv, setupProject, type TestEnv } from "./helpers.ts";
 
@@ -97,6 +97,30 @@ describe("scan and adopt", () => {
     expect(group?.inLibrary).toBe(false);
   });
 
+  test("scan skips dependencies, build output and the shelf home, and respects depth", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    const app = await makeProject(env, "app");
+    await handWrittenSkill(join(app, ".claude/skills"), "review", "v1");
+    await handWrittenSkill(join(app, "node_modules/pkg/.claude/skills"), "vendored", "v1");
+    await handWrittenSkill(join(app, "dist/.claude/skills"), "built", "v1");
+    await handWrittenSkill(join(app, ".git/hooks/skills"), "internal", "v1");
+    await handWrittenSkill(join(env.shelfHome, "skills"), "shelf-owned", "v1");
+    await handWrittenSkill(join(env.root, "code/a/b/c/d/.claude/skills"), "deep", "v1");
+
+    const names = (report: Awaited<ReturnType<typeof scan>>) => report.groups.map((g) => g.name);
+    expect(names(await scan(ctx, env.root))).toEqual(["deep", "review"]);
+    expect(names(await scan(ctx, env.root, { maxDepth: 3 }))).toEqual(["review"]);
+  });
+
+  test("scan refuses a path that is not a directory", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    await expect(scan(ctx, join(env.root, "missing"))).rejects.toMatchObject({
+      code: "INVALID_ARGUMENT",
+    });
+  });
+
   test("adopt imports a new skill and turns the copy into a loan", async () => {
     const env = await createTestEnv();
     const ctx = await env.context();
@@ -138,6 +162,45 @@ describe("scan and adopt", () => {
     const [result] = await adopt(ctx, [loose]);
 
     expect(result).toMatchObject({ library: "imported", loan: null });
+  });
+});
+
+describe("default scan root", () => {
+  async function register(env: TestEnv, ...dirs: string[]): Promise<void> {
+    for (const dir of dirs) {
+      await mkdir(join(env.root, dir, ".git"), { recursive: true });
+      await initProject(await env.context(join(env.root, dir)));
+    }
+  }
+
+  test("is the home directory when no project is registered", async () => {
+    const env = await createTestEnv();
+    expect(await defaultScanRoot(await env.context())).toBe(env.root);
+  });
+
+  test("is the directory holding every project's parent", async () => {
+    const env = await createTestEnv();
+    await register(env, "code/app");
+    expect(await defaultScanRoot(await env.context())).toBe(join(env.root, "code"));
+    await register(env, "code/api", "code/clients/web");
+    expect(await defaultScanRoot(await env.context())).toBe(join(env.root, "code"));
+  });
+
+  test("prefers the home's busiest child over the home itself", async () => {
+    const env = await createTestEnv();
+    await register(env, "work/billing", "code/app", "code/api");
+    expect(await defaultScanRoot(await env.context())).toBe(join(env.root, "code"));
+  });
+
+  test("falls back to the home for projects directly in it or deleted ones", async () => {
+    const env = await createTestEnv();
+    await register(env, "app", "api");
+    expect(await defaultScanRoot(await env.context())).toBe(env.root);
+
+    const other = await createTestEnv();
+    await register(other, "gone/app");
+    await rm(join(other.root, "gone"), { recursive: true });
+    expect(await defaultScanRoot(await other.context())).toBe(other.root);
   });
 });
 

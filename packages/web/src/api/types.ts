@@ -35,6 +35,11 @@ export type Revision = InferResponseType<
   (typeof api.skills)[":name"]["revisions"][":revision"]["$get"],
   200
 >;
+export type ScanResponse = InferResponseType<typeof api.scan.$get, 200>;
+export type ScanGroup = ScanResponse["report"]["groups"][number];
+export type ScanVariant = ScanGroup["variants"][number];
+export type FoundCopy = ScanVariant["copies"][number];
+export type AdoptResult = InferResponseType<typeof api.adopt.$post, 200>[number];
 export type SystemReport = InferResponseType<typeof api.system.$get, 200>;
 export type HookStatus = SystemReport["hooks"][number];
 export type DoctorCheck = SystemReport["checks"][number];

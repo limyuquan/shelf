@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { createRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, Link2, Search } from "lucide-react";
+import { BookOpen, FolderSearch, Link2, Search } from "lucide-react";
 import { useRef } from "react";
 import { z } from "zod";
 import { rootRoute } from "../app/root-route.tsx";
 import { PageBody, PageHeader } from "../components/layout/page.tsx";
+import { buttonStyles } from "../components/ui/button.tsx";
 import { EmptyState } from "../components/ui/empty-state.tsx";
 import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
@@ -35,7 +36,15 @@ function LibraryPage() {
 
   return (
     <>
-      <PageHeader crumbs={[{ label: "Library" }]} />
+      <PageHeader
+        crumbs={[{ label: "Library" }]}
+        actions={
+          <Link to="/find-skills" aria-label="Find existing skills" className={buttonStyles()}>
+            <FolderSearch />
+            <span className="max-sm:hidden">Find existing skills</span>
+          </Link>
+        }
+      />
       <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-4 md:px-5 pointer-coarse:h-12">
         <Search className="size-3.5 text-fg-subtle" />
         <input
@@ -66,9 +75,22 @@ function LibraryPage() {
             icon={<BookOpen />}
             title={q ? "No matching skills" : "Your library is empty"}
           >
-            {q
-              ? "Try another search."
-              : "Create one with `shelf new`, or bring existing ones in with `shelf adopt`."}
+            {q ? (
+              "Try another search."
+            ) : (
+              <>
+                <p>
+                  Create one with `shelf new`, or bring in skills already copied into your projects.
+                </p>
+                <Link
+                  to="/find-skills"
+                  className={cn(buttonStyles({ variant: "primary", size: "md" }), "mt-4")}
+                >
+                  <FolderSearch />
+                  Find existing skills
+                </Link>
+              </>
+            )}
           </EmptyState>
         ) : (
           skills.data.map((skill, index) => (

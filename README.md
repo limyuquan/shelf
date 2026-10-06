@@ -74,6 +74,11 @@ and only differ because they were installed at different times, adopt the
 newest first with `--unedited`: the others become `behind` and a plain
 `shelf update` brings them up to date.
 
+In the dashboard, **Library → Find existing skills** (or ⌘K) does the same: it
+scans the folder that holds your projects, groups the copies it finds by name
+and version, and adopts the ones you tick. It adopts each skill's library or
+most common version first.
+
 Skills that came from a public repository can then be linked to it, so you can
 pull their updates later: `shelf add gh:owner/repo --skill <name> --yes` on a
 skill the library already has records the source without changing it.
@@ -112,6 +117,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   upstream source.
 - **Revisions**: open any revision of a skill to read its files, compare it with
   another revision or the latest, and restore it.
+- **Find existing skills**: scan for skills copied into projects by hand, see
+  which have drifted, and adopt them into the library in one step.
 - **Activity**: what your agents did, as a timeline ("codex used api-design in
   billing-api · 2m ago").
 - **Insights**: what skills cost at session start per project (user-level

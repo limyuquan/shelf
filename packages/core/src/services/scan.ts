@@ -1,27 +1,51 @@
 import type { Dirent } from "node:fs";
-import { readdir } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { readdir, stat } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { RevisionHash } from "../domain/types.ts";
+import { ShelfError } from "../errors.ts";
 import { pathExists } from "../library/fs.ts";
 import { hashDirectory } from "../library/hash.ts";
 import { SKILL_FILE } from "../library/skill-file.ts";
 import { locateSkillCopy } from "../projection/locate.ts";
 import { type Lockfile, readLockfile } from "../projection/lockfile.ts";
+import { listProjects } from "../store/projects.ts";
 import { findSkillByName, listRevisions } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { refreshLibrary } from "./library.ts";
 
-/** Directories that never contain project skills and are expensive to walk. */
+/**
+ * Directories that never contain project skills and are expensive to walk:
+ * version-control internals, dependencies, build output and caches.
+ */
 const SKIPPED_DIRS = new Set([
   ".git",
+  ".hg",
+  ".svn",
   "node_modules",
+  ".pnpm-store",
+  ".yarn",
+  "bower_components",
+  "vendor",
+  "Pods",
   ".venv",
   "venv",
   "__pycache__",
+  ".tox",
+  ".mypy_cache",
+  ".pytest_cache",
+  "site-packages",
   "dist",
   "build",
+  "out",
   "target",
+  "coverage",
   ".next",
+  ".nuxt",
+  ".svelte-kit",
+  ".turbo",
+  ".parcel-cache",
+  ".gradle",
+  ".terraform",
   ".cache",
   ".npm",
   ".bun",
@@ -72,8 +96,15 @@ export async function scan(
   dir: string,
   options: { maxDepth?: number } = {},
 ): Promise<ScanReport> {
+  const root = resolve(ctx.cwd, dir);
+  if (!(await isDirectory(root))) {
+    throw new ShelfError(
+      "INVALID_ARGUMENT",
+      `${root} is not a directory`,
+      "Scan an existing directory, e.g. the one that holds your projects",
+    );
+  }
   await refreshLibrary(ctx);
-  const root = resolve(dir);
   const skillDirs = await findSkillDirs(root, options.maxDepth ?? 6, new Set([ctx.paths.home]));
   const lockfiles = new Map<string, Lockfile | null>();
 
@@ -142,4 +173,49 @@ async function findSkillDirs(dir: string, depth: number, excluded: Set<string>):
     found.push(...(await findSkillDirs(child, depth - 1, excluded)));
   }
   return found;
+}
+
+/**
+ * Where to look for existing skills when the user hasn't said: the deepest
+ * directory holding every registered project's parent (`~/code` for `~/code/a`
+ * and `~/code/b`). When that is the home directory or above it (projects spread
+ * over `~/code` and `~/work`), it is the home's direct child holding the most
+ * projects instead. Without projects, it is the home directory.
+ */
+export async function defaultScanRoot(ctx: Context): Promise<string> {
+  const home = resolve(ctx.paths.userHome);
+  const parents = listProjects(ctx.db).map((project) => dirname(resolve(project.path)));
+  const [first] = parents;
+  if (first === undefined) return home;
+
+  let common = first;
+  while (!parents.every((parent) => isWithin(common, parent))) {
+    const up = dirname(common);
+    if (up === common) break;
+    common = up;
+  }
+  if (isWithin(common, home)) common = busiestHomeChild(home, parents) ?? home;
+  return (await isDirectory(common)) ? common : home;
+}
+
+/** The direct child of `home` that holds the most of `dirs` (ties: alphabetical). */
+function busiestHomeChild(home: string, dirs: readonly string[]): string | null {
+  const counts = new Map<string, number>();
+  for (const dir of dirs) {
+    if (dir === home || !isWithin(home, dir)) continue;
+    const child = relative(home, dir).split(sep)[0] as string;
+    counts.set(child, (counts.get(child) ?? 0) + 1);
+  }
+  const [best] = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return best ? join(home, best[0]) : null;
+}
+
+/** Whether `path` is `dir` or inside it. */
+function isWithin(dir: string, path: string): boolean {
+  const rel = relative(dir, path);
+  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+}
+
+async function isDirectory(path: string): Promise<boolean> {
+  return (await stat(path).catch(() => null))?.isDirectory() ?? false;
 }
