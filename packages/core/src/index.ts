@@ -11,12 +11,14 @@ export { shortHash } from "./library/hash.ts";
 export { HARNESSES, type Harness } from "./projection/harnesses.ts";
 export { LOCKFILE_PATH } from "./projection/lockfile.ts";
 export type { Action } from "./services/actions.ts";
+export { activity } from "./services/activity.ts";
 export { type AdoptResult, adopt } from "./services/adopt.ts";
 export {
   type Context,
   type ContextOptions,
   closeContext,
   createContext,
+  withCwd,
 } from "./services/context.ts";
 export { type DiffResult, diffSkill, type FileDiff } from "./services/diff.ts";
 export { type DoctorCheck, doctor } from "./services/doctor.ts";
@@ -28,6 +30,7 @@ export {
   createSkill,
   refreshLibrary,
   type SkillDetail,
+  saveSkillContent,
   showSkill,
 } from "./services/library.ts";
 export {
@@ -44,11 +47,13 @@ export {
   update,
 } from "./services/loans.ts";
 export { listProjectOverviews, type ProjectOverview } from "./services/overview.ts";
-export { initProject } from "./services/project.ts";
+export { initProject, requireRegisteredProject } from "./services/project.ts";
 export { type PropagateResult, type PropagationStatus, propagate } from "./services/propagate.ts";
 export { type ScanGroup, type ScanReport, scan } from "./services/scan.ts";
 export { type SetupResult, setup } from "./services/setup.ts";
 export {
+  type ProjectReport,
+  projectReport,
   type StatusReport,
   type SweepReport,
   type SyncReport,
@@ -56,3 +61,4 @@ export {
   sweep,
   sync,
 } from "./services/status.ts";
+export type { EventRecord } from "./store/events.ts";

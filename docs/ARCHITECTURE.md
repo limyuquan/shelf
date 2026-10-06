@@ -11,13 +11,26 @@ packages/
     src/store/       SQLite: connection, migrations, one module per table.
     src/services/    Use cases (borrow, renew, promote, status, …). Take a Context.
   cli/       Thin adapter: parses args, calls one service, renders text or JSON.
+  dashboard/ `shelf ui`: Bun.serve JSON API (src/api.ts) over core + Preact app (src/app/).
+             The HTML import is bundled and embedded into the compiled binary.
   skill/     The bundled SKILL.md installed by `shelf setup`.
 tests/e2e/   Runs the real CLI (or the compiled binary via SHELF_BIN) as a subprocess.
 ```
 
-Dependencies point one way: `cli → core/index.ts → services → (domain, library,
-projection, store)`. `domain` imports nothing but itself. A future dashboard is
-another adapter over the same services, so its behaviour cannot drift from the CLI.
+Dependencies point one way: `cli → (dashboard →) core/index.ts → services →
+(domain, library, projection, store)`. `domain` imports nothing but itself. The
+dashboard is another thin adapter over the same services, so its behaviour
+cannot drift from the CLI. Its response shapes live in `dashboard/src/contract.ts`,
+shared by server and browser code (type-only imports from core).
+
+## Dashboard security
+
+The server binds 127.0.0.1 on a random port. Every API request must carry the
+per-process token (from the printed URL, kept in sessionStorage) in a custom
+header, and a Host header naming that loopback address — blocking other
+browsers' pages, CSRF (custom headers need CORS, which is never granted) and DNS
+rebinding. Viewing never mutates: project pages use `projectReport`, not
+`status`, so overdue loans are shown rather than returned.
 
 ## Who owns which data
 

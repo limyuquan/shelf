@@ -53,6 +53,19 @@ export async function status(ctx: Context): Promise<StatusReport> {
   };
 }
 
+export interface ProjectReport {
+  readonly project: ProjectSummary;
+  readonly loans: LoanReport[];
+  readonly actions: Action[];
+}
+
+/** A project's loans and next steps, without changing anything (unlike `status`). */
+export async function projectReport(ctx: Context, project: Project): Promise<ProjectReport> {
+  await refreshLibrary(ctx);
+  const loans = (await inspectLoans(ctx, project)).map((inspection) => inspection.report);
+  return { project: summarize(project), loans, actions: suggestActions(loans) };
+}
+
 export interface SyncReport {
   readonly project: ProjectSummary;
   readonly expired: string[];

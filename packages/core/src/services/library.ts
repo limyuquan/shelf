@@ -3,10 +3,15 @@ import { join } from "node:path";
 import { assertSkillName } from "../domain/skill-name.ts";
 import type { RevisionHash, Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
-import { pathExists } from "../library/fs.ts";
+import { pathExists, writeFileAtomic } from "../library/fs.ts";
 import { hashDirectory } from "../library/hash.ts";
 import { librarySkillPath, listLibrarySkills, snapshotSkill } from "../library/library.ts";
-import { readSkillMetadata, renderSkillTemplate, SKILL_FILE } from "../library/skill-file.ts";
+import {
+  parseSkillMetadata,
+  readSkillMetadata,
+  renderSkillTemplate,
+  SKILL_FILE,
+} from "../library/skill-file.ts";
 import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import {
@@ -107,6 +112,23 @@ export async function createSkill(ctx: Context, name: string, description: strin
   await writeFile(join(dir, SKILL_FILE), renderSkillTemplate(name, description));
   await refreshLibrary(ctx);
   return requireSkill(ctx, name);
+}
+
+/**
+ * Replaces a library skill's SKILL.md (e.g. from the dashboard editor) and records
+ * the new revision. The content is validated before anything is written.
+ */
+export async function saveSkillContent(
+  ctx: Context,
+  name: string,
+  content: string,
+): Promise<SkillDetail> {
+  requireSkill(ctx, name);
+  const file = join(librarySkillPath(ctx.paths, name), SKILL_FILE);
+  parseSkillMetadata(content, name, file);
+  await writeFileAtomic(file, content);
+  await refreshLibrary(ctx);
+  return showSkill(ctx, name);
 }
 
 export function requireSkill(ctx: Context, name: string): Skill {

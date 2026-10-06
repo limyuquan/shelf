@@ -110,3 +110,32 @@ describe("usage errors with --json", () => {
     expect(json.error?.message).toContain("SKILL");
   });
 });
+
+describe("shelf ui", () => {
+  test("serves the embedded dashboard and its API", async () => {
+    const proc = Bun.spawn([...COMMAND, "ui", "--no-open", "--json"], {
+      cwd: project,
+      env: { ...process.env, HOME: home, SHELF_HOME: join(home, ".shelf") },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    try {
+      const reader = proc.stdout.getReader();
+      const { value } = await reader.read();
+      const envelope = JSON.parse(new TextDecoder().decode(value).split("\n")[0] ?? "") as Envelope;
+      const url = new URL(String(envelope.data?.url));
+      const token = url.searchParams.get("token") ?? "";
+
+      const html = await (await fetch(url)).text();
+      const script = /src="([^"]+\.js)"/.exec(html)?.[1] ?? "";
+      expect((await fetch(new URL(script, url))).status).toBe(200);
+
+      const api = await fetch(new URL("/api/overview", url), {
+        headers: { "x-shelf-token": token },
+      });
+      expect(((await api.json()) as Envelope).ok).toBe(true);
+    } finally {
+      proc.kill();
+    }
+  });
+});

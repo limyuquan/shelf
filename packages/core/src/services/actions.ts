@@ -39,7 +39,9 @@ export function suggestActions(loans: readonly LoanReport[]): Action[] {
       );
     }
 
-    if (loan.due === "overdue" && !isClean(content)) {
+    if (loan.due === "overdue" && isClean(content)) {
+      add({ command: "shelf sync", reason: `${skill} is overdue; sync returns it` });
+    } else if (loan.due === "overdue") {
       add({
         command: `shelf detach ${skill}`,
         reason: `${skill} is overdue but kept because it has local edits. Promote or detach it`,

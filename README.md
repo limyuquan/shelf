@@ -72,6 +72,14 @@ adopted as loans with local edits (`modified`), so nothing is overwritten:
 To return overdue loans everywhere without visiting each project, run
 `shelf sweep` daily (cron, systemd timer, launchd).
 
+## Dashboard
+
+`shelf ui` opens a local dashboard: every project with its borrowed skills and
+due dates (renew, move, update, return, borrow), the library with a SKILL.md
+editor, revision diffs and "update these borrowers" after an edit, and the
+activity log with agents' renewal reasons. It listens on 127.0.0.1 only and
+requires the one-time token in the URL it prints.
+
 ## Install
 
 shelf is pre-release. Build from source with [Bun](https://bun.com) 1.4:
@@ -110,6 +118,7 @@ shelf setup              # creates ~/.shelf and installs the shelf skill for all
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
 | `shelf sweep` | `sync` every registered project (cron-friendly) |
 | `shelf doctor [--fix]` | Check and repair shelf's state |
+| `shelf ui [--port N] [--no-open]` | Local dashboard: projects, loans, due dates, library editor, activity |
 | `shelf guide` | The full guide for agents |
 
 ## For agents
@@ -141,7 +150,6 @@ Set `SHELF_HOME` to keep shelf's state elsewhere.
 
 ## Roadmap
 
-- `shelf ui`: a local dashboard of projects, loans and due dates, with an editor.
 - `shelf add <git-url>` with local security scanning.
 - Prebuilt binaries for macOS, Linux and Windows.
 

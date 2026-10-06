@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@shelf/core": "workspace:*",
+    "@shelf/dashboard": "workspace:*",
     "@shelf/skill": "workspace:*",
     "citty": "0.2.2"
   }

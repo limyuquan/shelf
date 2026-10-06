@@ -23,6 +23,7 @@ import { doctorCommand, sweepCommand } from "./commands/maintenance.ts";
 import { adoptCommand, scanCommand } from "./commands/onboarding.ts";
 import { projectsCommand, statusCommand, syncCommand } from "./commands/project.ts";
 import { initCommand, setupCommand } from "./commands/setup.ts";
+import { uiCommand } from "./commands/ui.ts";
 import { printUsageError } from "./output.ts";
 
 const main = defineCommand({
@@ -61,6 +62,7 @@ const main = defineCommand({
     projects: projectsCommand,
     sweep: sweepCommand,
     doctor: doctorCommand,
+    ui: uiCommand,
   },
 });
 

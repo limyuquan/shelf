@@ -24,7 +24,7 @@ export async function readSkillMetadata(dir: string): Promise<SkillMetadata> {
   return parseSkillMetadata(source, basename(dir), file);
 }
 
-function parseSkillMetadata(source: string, dirName: string, file: string): SkillMetadata {
+export function parseSkillMetadata(source: string, dirName: string, file: string): SkillMetadata {
   const match = FRONTMATTER.exec(source);
   if (!match?.[1]) throw new ShelfError("INVALID_SKILL", `${file} has no YAML frontmatter`);
 

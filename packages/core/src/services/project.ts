@@ -15,7 +15,7 @@ import {
 import { type Db, writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { insertLoan, listActiveLoans } from "../store/loans.ts";
-import { findProjectById, upsertProject } from "../store/projects.ts";
+import { findProjectById, listProjects, upsertProject } from "../store/projects.ts";
 import { findSkillByName } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { refreshLibrary } from "./library.ts";
@@ -115,6 +115,21 @@ export async function requireProject(ctx: Context): Promise<OpenProject> {
     );
   }
   return opened;
+}
+
+/** A registered project by id, name or path, wherever the caller is. */
+export function requireRegisteredProject(ctx: Context, ref: string): Project {
+  const project =
+    findProjectById(ctx.db, ref) ??
+    listProjects(ctx.db).find((candidate) => candidate.name === ref || candidate.path === ref);
+  if (!project) {
+    throw new ShelfError(
+      "INVALID_ARGUMENT",
+      `No registered project "${ref}"`,
+      "Run `shelf projects` to list them",
+    );
+  }
+  return project;
 }
 
 /** Creates loans for lockfile entries without one. Returns names of unknown skills. */
