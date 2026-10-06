@@ -66,6 +66,9 @@ packages/web/src/
 - **Insights.** `services/insights.ts` estimates session cost (name + description,
   chars/4, from each loan's borrowed revision) and usage from `loan.used` events
   per UTC day; the page draws it with plain SVG/CSS on the theme tokens, no chart library.
+- **Suggestions.** `services/suggest.ts` reads a project's manifests and well-known
+  files (root, direct subdirectories and workspace packages; bounded, no network) and
+  matches the terms against skill names (strong) and description words (weak).
 - **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
   navigation; both stand down while typing or while a dialog or menu is open.
 - **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,

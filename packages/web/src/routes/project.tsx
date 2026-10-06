@@ -21,6 +21,7 @@ import { LoanMenu } from "../features/loans/loan-menu.tsx";
 import { useLoanAction } from "../features/loans/mutations.ts";
 import { CONTENT, DUE } from "../features/loans/states.ts";
 import { projectQuery } from "../features/projects/queries.ts";
+import { ProjectSuggestions } from "../features/projects/suggestions.tsx";
 import { cn } from "../lib/cn.ts";
 import { dueLabel, shortDate, shortPath, timeAgo } from "../lib/format.ts";
 import { navigableRow, useHotkeys, useListNavigation } from "../lib/hotkeys.ts";
@@ -118,6 +119,7 @@ function ProjectPage() {
                 ))
               )}
             </Section>
+            <ProjectSuggestions projectId={project.id} />
           </>
         }
         aside={

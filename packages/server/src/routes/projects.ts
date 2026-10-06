@@ -10,6 +10,7 @@ import {
   renew,
   returnSkill,
   setDue,
+  suggestSkills,
   sync,
   update,
 } from "@shelf/core";
@@ -40,6 +41,12 @@ export const projectRoutes = new Hono<AppEnv>()
       report: await projectReport(ctx, project),
       events: activity(ctx, { limit: 50, projectId: project.id }),
     });
+  })
+
+  /** Library skills matching the project's dependencies and files, best first. */
+  .get("/:id/suggestions", validate("param", projectParams), async (c) => {
+    const { project, ctx } = inProject(c.get("ctx"), c.req.valid("param").id);
+    return c.json(await suggestSkills(ctx, project));
   })
 
   .post("/:id/sync", validate("param", projectParams), async (c) => {

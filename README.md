@@ -117,6 +117,10 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   edited, behind the library, overdue — with one-click renew, update, and a
   diff to review edits before promoting or discarding them.
 - **Projects**: borrow skills, see each loan's state and last use.
+- **Suggestions**: each project page lists library skills that match what the
+  project uses (its `package.json`, `pyproject.toml`, `Cargo.toml` or `go.mod`
+  dependencies, and files like `convex/` or `playwright.config.ts`), with the
+  reason and session cost, to borrow in one click.
 - **Library**: edit SKILL.md and reference files, see revisions and borrowers,
   push updates to chosen projects, and pull reviewed updates from a skill's
   upstream source.
@@ -196,6 +200,7 @@ boundary.
 | `shelf pull <name> [--yes]` | Update an imported skill from its source |
 | `shelf audit [name…]` | Scan library skills for risky content |
 | **This project** | |
+| `shelf suggest [--limit N]` | Library skills matching the project's dependencies and files (e.g. `convex/`, `playwright.config.ts`) |
 | `shelf borrow <name…> [--days N] [--keep] [--follow] [--link]` | Borrow skills into this project |
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
 | `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |

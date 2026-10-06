@@ -109,6 +109,14 @@ export {
   sync,
 } from "./services/status.ts";
 export {
+  type ProjectSignal,
+  type ProjectSuggestions,
+  type Suggestion,
+  type SuggestOptions,
+  suggestHere,
+  suggestSkills,
+} from "./services/suggest.ts";
+export {
   repairSystem,
   type SystemOptions,
   type SystemReport,

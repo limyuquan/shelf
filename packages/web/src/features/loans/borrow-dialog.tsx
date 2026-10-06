@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "../../components/ui/button.tsx";
 import { Checkbox } from "../../components/ui/checkbox.tsx";
 import { Dialog, DialogLayout } from "../../components/ui/dialog.tsx";
+import { projectSuggestionsQuery } from "../projects/queries.ts";
 import { skillsQuery } from "../skills/queries.ts";
 import { useBorrow } from "./mutations.ts";
 
@@ -26,13 +27,19 @@ export function BorrowDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [keep, setKeep] = useState(false);
   const skills = useQuery({ ...skillsQuery(), enabled: open });
+  const suggestions = useQuery({ ...projectSuggestionsQuery(projectId), enabled: open });
   const borrow = useBorrow();
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const available = (skills.data ?? []).filter(
-    (skill) =>
-      !borrowed.includes(skill.name) &&
-      terms.every((term) => `${skill.name} ${skill.description}`.toLowerCase().includes(term)),
-  );
+  // Suggested skills first, best first; the rest keep the catalog's order.
+  const rank = new Map((suggestions.data ?? []).map((s, index) => [s.skill, index]));
+  const suggestedRank = (name: string) => rank.get(name) ?? rank.size;
+  const available = (skills.data ?? [])
+    .filter(
+      (skill) =>
+        !borrowed.includes(skill.name) &&
+        terms.every((term) => `${skill.name} ${skill.description}`.toLowerCase().includes(term)),
+    )
+    .sort((a, b) => suggestedRank(a.name) - suggestedRank(b.name));
   const toggle = (name: string, on: boolean) =>
     setSelected((current) => (on ? [...current, name] : current.filter((n) => n !== name)));
   const close = (next: boolean) => {
@@ -99,7 +106,14 @@ export function BorrowDialog({
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-fg">{skill.name}</span>
+                    <span className="flex items-center gap-2 font-medium text-fg">
+                      {skill.name}
+                      {rank.has(skill.name) && (
+                        <span className="rounded-full bg-accent-soft px-1.5 font-normal text-[11px] text-accent">
+                          Suggested
+                        </span>
+                      )}
+                    </span>
                     <span className="line-clamp-2 text-[12.5px] text-fg-muted">
                       {skill.description}
                     </span>

@@ -494,6 +494,31 @@ describe("scan and adopt", () => {
   });
 });
 
+describe("suggestions", () => {
+  test("lists library skills matching the project's dependencies, minus borrowed ones", async () => {
+    const { env, client, projectId } = await setup(["convex-auth", "pdf"]);
+    await writeFile(
+      join(env.projectDir, "package.json"),
+      JSON.stringify({ dependencies: { "@convex-dev/auth": "1" } }),
+    );
+    const param = { id: projectId };
+
+    const suggestions = await ok(client.projects[":id"].suggestions.$get({ param }));
+    expect(suggestions).toEqual([
+      {
+        skill: "convex-auth",
+        description: "The convex-auth skill",
+        score: expect.any(Number),
+        reasons: ["package.json depends on @convex-dev/auth"],
+        descriptionTokens: Math.ceil("convex-authThe convex-auth skill".length / 4),
+      },
+    ]);
+
+    await ok(client.projects[":id"].loans.$post({ param, json: { skills: ["convex-auth"] } }));
+    expect(await ok(client.projects[":id"].suggestions.$get({ param }))).toEqual([]);
+  });
+});
+
 describe("system", () => {
   test("reports hooks, config and health, and repairs what it can", async () => {
     const { env, client } = await setup();

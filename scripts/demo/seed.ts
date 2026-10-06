@@ -244,6 +244,23 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
     { recursive: true },
   );
 
+  // What the projects are built with, so project pages suggest skills they lack.
+  const manifest = (name: string, dependencies: string[], devDependencies: string[] = []) =>
+    writeFile(
+      join(project(name), "package.json"),
+      JSON.stringify({
+        name,
+        dependencies: Object.fromEntries(dependencies.map((dep) => [dep, "*"])),
+        devDependencies: Object.fromEntries(devDependencies.map((dep) => [dep, "*"])),
+      }),
+    );
+  await manifest("storefront", ["react", "react-dom", "@prisma/client"], ["typescript"]);
+  await mkdir(join(project("storefront"), "migrations"), { recursive: true });
+  await manifest("billing-api", ["hono", "pg", "pdf-lib"], ["@playwright/test", "typescript"]);
+  await manifest("mobile-app", ["react", "react-native"], ["@playwright/test"]);
+  await manifest("docs-site", ["next", "react", "react-dom"], ["tailwindcss"]);
+  await writeFile(join(project("docs-site"), "playwright.config.ts"), "export default {};\n");
+
   return { root, env };
 }
 

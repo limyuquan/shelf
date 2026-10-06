@@ -12,6 +12,10 @@ export type ProjectPage = InferResponseType<(typeof api.projects)[":id"]["$get"]
 export type Loan = ProjectPage["report"]["loans"][number];
 export type ContentState = Loan["content"];
 export type DueState = Loan["due"];
+export type Suggestion = InferResponseType<
+  (typeof api.projects)[":id"]["suggestions"]["$get"],
+  200
+>[number];
 export type CatalogEntry = InferResponseType<typeof api.skills.$get, 200>[number];
 export type SkillPage = InferResponseType<(typeof api.skills)[":name"]["$get"], 200>;
 export type ActivityEvent = InferResponseType<typeof api.activity.$get, 200>[number];

@@ -161,6 +161,28 @@ describe("usage errors with --json", () => {
   });
 });
 
+describe("suggest", () => {
+  test("suggests skills matching the project's dependencies; needs an initialised project", async () => {
+    expect((await shelf("suggest")).json.error?.code).toBe("NOT_INITIALIZED");
+    await shelf("new", "convex-patterns", "-d", "Convex queries and mutations");
+    await shelf("new", "pdf-tools", "-d", "Work with PDFs");
+    await Bun.write(
+      join(project, "package.json"),
+      JSON.stringify({ dependencies: { convex: "1" } }),
+    );
+    await shelf("init");
+
+    const { exitCode, json } = await shelf("suggest");
+    expect(exitCode).toBe(0);
+    expect(json.data?.suggestions).toEqual([
+      expect.objectContaining({
+        skill: "convex-patterns",
+        reasons: ["package.json depends on convex"],
+      }),
+    ]);
+  });
+});
+
 /** Runs a hook the way a harness does: payload on stdin, plain stdout. */
 async function hook(event: string, payload: object): Promise<{ exitCode: number; stdout: string }> {
   const proc = Bun.spawn([...COMMAND, "hook", event, "--harness", "claude-code"], {
