@@ -37,8 +37,8 @@ export function CommandMenu({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} label="Command menu">
-      <Command loop className="flex flex-col">
+    <Dialog open={open} onOpenChange={onOpenChange} label="Command menu" placement="top">
+      <Command loop className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center gap-2.5 border-border border-b px-4">
           <Search className="size-4 text-fg-subtle" />
           <Command.Input
@@ -47,7 +47,7 @@ export function CommandMenu({
             className="h-12 flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-fg-subtle"
           />
         </div>
-        <Command.List className="max-h-[360px] overflow-y-auto p-1.5">
+        <Command.List className="max-h-[360px] overflow-y-auto p-1.5 max-sm:max-h-none max-sm:flex-1">
           <Command.Empty className="px-3 py-8 text-center text-fg-muted">No results</Command.Empty>
           <Group heading="Go to">
             <Item icon={<Inbox />} onSelect={go(() => navigate({ to: "/" }))}>
@@ -158,7 +158,7 @@ function Item({
     <Command.Item
       onSelect={onSelect}
       {...(value ? { value } : {})}
-      className="flex h-9 cursor-default items-center gap-2.5 rounded-md px-2.5 text-[13px] text-fg data-[selected=true]:bg-surface-hover [&_svg]:size-4 [&_svg]:text-fg-muted"
+      className="flex h-9 cursor-default items-center gap-2.5 rounded-md px-2.5 text-[13px] text-fg data-[selected=true]:bg-surface-hover [&_svg]:size-4 [&_svg]:text-fg-muted pointer-coarse:h-11 pointer-coarse:text-[15px]"
     >
       {icon}
       {children}

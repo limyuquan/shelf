@@ -11,8 +11,8 @@ import { systemRoutes } from "./routes/system.ts";
 
 export interface Guard {
   readonly token: string;
-  /** `host:port` values a request may carry; anything else is a DNS-rebinding attempt. */
-  readonly allowedHosts: () => ReadonlySet<string>;
+  /** Whether a request's host is this server; anything else is a DNS-rebinding attempt. */
+  readonly isAllowedHost: (host: string) => boolean;
 }
 
 /**
@@ -25,7 +25,7 @@ export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
     .use(async (c, next) => {
       // The request URL's host comes from the Host header, which a DNS-rebinding
       // page cannot set to 127.0.0.1:<port>.
-      if (!guard.allowedHosts().has(new URL(c.req.url).host)) {
+      if (!guard.isAllowedHost(new URL(c.req.url).host)) {
         return c.json(errorBody("FORBIDDEN", "Unexpected Host header"), 403);
       }
       if (c.req.header(TOKEN_HEADER) !== guard.token) {

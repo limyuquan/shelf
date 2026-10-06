@@ -57,6 +57,12 @@ packages/web/src/
 - **Binary-provided values.** Core cannot know the running binary's version,
   bundled skill or hook command, so the CLI passes them to the server
   (`SystemOptions`) for the settings page and repairs.
+- **Responsive.** One layout system, no separate mobile app: below `lg` the
+  sidebar becomes a drawer opened from the page header; below `xl` detail pages
+  stack their properties panel under the content (`SplitView`); rows reflow to
+  two lines below `md`; dialogs become bottom sheets below `sm`. Touch screens
+  (`pointer-coarse`) get 40px+ targets, always-visible row actions and no
+  keyboard hints; fields use 16px text so iOS doesn't zoom.
 - **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
   navigation; both stand down while typing or while a dialog or menu is open.
 - **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,
@@ -71,11 +77,17 @@ packages/web/src/
 
 ## Dashboard security
 
-The server binds 127.0.0.1 on a random port. Every API request must carry the
-per-process token (from the printed URL; the app moves it to sessionStorage and
-strips it from the address bar) in a custom header, and a Host naming that
-loopback address — blocking other browsers' pages, CSRF (custom headers need
-CORS, which is never granted) and DNS rebinding. Viewing never mutates: project
+The server binds 127.0.0.1 (on a random port unless `--port`). Every API request
+must carry the token in a custom header, and a Host naming that loopback address
+or one of the `--allow-host` names — blocking other browsers' pages, CSRF
+(custom headers need CORS, which is never granted) and DNS rebinding. The token
+lives in `~/.shelf/ui-token` (mode 0600) so bookmarks and home-screen shortcuts
+survive restarts; the app moves it from the URL into localStorage and strips it
+from the address bar, and shows a Connect screen when it is missing or wrong.
+
+Remote access goes through a proxy that terminates TLS and restricts who can
+connect (Tailscale Serve, which forwards the original Host — hence
+`--allow-host`). shelf itself never listens beyond loopback. Viewing never mutates: project
 pages use `projectReport` and Attention uses `listAttention`, not `status`, so
 overdue loans are shown rather than returned.
 

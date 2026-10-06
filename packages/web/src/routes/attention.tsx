@@ -135,30 +135,45 @@ function AttentionRow({
     <div
       {...nav}
       className={cn(
-        "group flex h-11 items-center gap-3 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+        "group flex items-center gap-3 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover md:h-11 md:px-5 md:py-0",
         navigableRow,
       )}
     >
-      <span className={cn("[&_svg]:size-4", toneText(REASON[reason].tone))}>{ICONS[reason]}</span>
-      <Link
-        to="/library/$skillName"
-        params={{ skillName: item.skill }}
-        className="shrink-0 font-medium text-fg hover:underline"
+      <span
+        className={cn(
+          "self-start pt-0.5 [&_svg]:size-4 md:self-auto md:pt-0",
+          toneText(REASON[reason].tone),
+        )}
       >
-        {item.skill}
-      </Link>
-      <Link
-        to="/projects/$projectId"
-        params={{ projectId: item.project.id }}
-        className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted hover:border-border-strong hover:text-fg"
-      >
-        <ProjectAvatar name={item.project.name} className="size-3.5 text-[8px]" />
-        {item.project.name}
-      </Link>
-      <span className="min-w-0 flex-1 truncate text-fg-muted">{describeAttention(item)}</span>
+        {ICONS[reason]}
+      </span>
+      {/* One line on wide screens; skill and project above the reason on phones. */}
+      <div className="min-w-0 flex-1 md:flex md:items-center md:gap-3">
+        <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
+          <Link
+            to="/library/$skillName"
+            params={{ skillName: item.skill }}
+            className="truncate font-medium text-fg hover:underline max-md:text-[14px]"
+          >
+            {item.skill}
+          </Link>
+          <Link
+            to="/projects/$projectId"
+            params={{ projectId: item.project.id }}
+            className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted hover:border-border-strong hover:text-fg md:flex"
+          >
+            <ProjectAvatar name={item.project.name} className="size-3.5 text-[8px]" />
+            {item.project.name}
+          </Link>
+        </div>
+        <p className="mt-0.5 truncate text-[12.5px] text-fg-muted md:mt-0 md:flex-1 md:text-[13px]">
+          <span className="text-fg md:hidden">{item.project.name} · </span>
+          {describeAttention(item)}
+        </p>
+      </div>
       <QuickAction item={item} onReview={onReview} />
       <Tooltip label={`Due ${new Date(item.dueAt).toLocaleDateString()}`}>
-        <span className="w-14 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums">
+        <span className="hidden w-14 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums md:block">
           {shortDate(item.dueAt)}
         </span>
       </Tooltip>
@@ -172,8 +187,9 @@ function AttentionRow({
   );
 }
 
+/** Revealed on hover or selection; always shown on touch screens, which can't hover. */
 const revealed =
-  "opacity-0 transition-opacity group-hover:opacity-100 group-data-[active=true]:opacity-100 focus-visible:opacity-100";
+  "opacity-0 transition-opacity group-hover:opacity-100 group-data-[active=true]:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
 
 /** The one obvious next step for an item, shown on hover or when selected. */
 function QuickAction({ item, onReview }: { item: AttentionItem; onReview: () => void }) {
@@ -209,9 +225,9 @@ function HooksBanner() {
   const broken = system.data ? brokenHooks(system.data.hooks) : [];
   if (broken.length === 0) return null;
   return (
-    <div className="flex items-center gap-3 border-border-subtle border-b bg-yellow/5 px-5 py-2.5 text-[13px]">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-border-subtle border-b bg-yellow/5 px-4 py-3 text-[13px] md:px-5 md:py-2.5">
       <TriangleAlert className="size-4 shrink-0 text-yellow" />
-      <span className="flex-1 text-fg-muted">
+      <span className="min-w-[12rem] flex-1 text-fg-muted">
         <span className="text-fg">
           {broken.map((hook) => hook.label).join(" and ")} {broken.length === 1 ? "has" : "have"} no
           shelf hooks.

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import type { SkillPage as SkillPageData } from "../api/types.ts";
 import { rootRoute } from "../app/root-route.tsx";
-import { PageBody, PageHeader } from "../components/layout/page.tsx";
+import { PageHeader, SplitView } from "../components/layout/page.tsx";
 import { PropertiesPanel, Property, PropertyGroup } from "../components/layout/properties.tsx";
 import { Button, IconButton } from "../components/ui/button.tsx";
 import { Dialog, DialogLayout } from "../components/ui/dialog.tsx";
@@ -62,18 +62,20 @@ function SkillPage() {
               </IconButton>
             </Tooltip>
             {detail.source && (
-              <Button onClick={() => setPulling(true)}>
+              <Button onClick={() => setPulling(true)} aria-label="Check for updates">
                 <RefreshCw />
-                Check for updates
+                <span className="max-sm:hidden">Check for updates</span>
               </Button>
             )}
           </>
         }
       />
-      <div className="flex min-h-0 flex-1">
-        <PageBody className="relative">
-          <div className="mx-auto max-w-[820px] px-10 pt-9 pb-24">
-            <h1 className="font-semibold text-[22px] text-fg tracking-tight">{detail.name}</h1>
+      <SplitView
+        main={
+          <div className="mx-auto max-w-[820px] px-4 pt-6 pb-24 md:px-10 md:pt-9">
+            <h1 className="break-words font-semibold text-[20px] text-fg tracking-tight md:text-[22px]">
+              {detail.name}
+            </h1>
             <p className="mt-2 max-w-[640px] text-[14px] text-fg-muted leading-relaxed">
               {detail.description}
             </p>
@@ -89,9 +91,9 @@ function SkillPage() {
               <ReferenceFile key={file} skill={detail.name} path={file} />
             )}
           </div>
-        </PageBody>
-        <SkillProperties page={page} />
-      </div>
+        }
+        aside={<SkillProperties page={page} />}
+      />
       {detail.source && (
         <PullDialog
           open={pulling}
@@ -179,8 +181,11 @@ function FileEditor({ skill, path, content }: { skill: string; path: string; con
         />
       </div>
       {dirty && (
-        <div className="-translate-x-1/2 sticky bottom-5 left-1/2 z-20 flex w-fit items-center gap-3 rounded-lg bg-surface-overlay py-1.5 pr-1.5 pl-3.5 shadow-popup">
-          <span className="text-[13px] text-fg-muted">Unsaved changes to {path}</span>
+        <div className="-translate-x-1/2 fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 flex w-max max-w-[calc(100vw-24px)] items-center gap-2 rounded-lg bg-surface-overlay py-1.5 pr-1.5 pl-3.5 shadow-popup xl:sticky xl:bottom-5">
+          <span className="truncate text-[13px] text-fg-muted">
+            <span className="max-sm:hidden">Unsaved changes to </span>
+            {path}
+          </span>
           <Button variant="ghost" onClick={() => setDraft(content)}>
             Discard
           </Button>

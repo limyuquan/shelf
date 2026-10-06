@@ -45,7 +45,7 @@ export function MenuItem({
     <BaseMenu.Item
       {...(onClick ? { onClick } : {})}
       className={cn(
-        "flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] outline-none data-[highlighted]:bg-surface-hover [&_svg]:size-3.5",
+        "flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] outline-none data-[highlighted]:bg-surface-hover [&_svg]:size-3.5 pointer-coarse:h-11 pointer-coarse:text-[15px]",
         danger ? "text-red" : "text-fg",
       )}
     >
@@ -71,7 +71,7 @@ export function MenuRadioGroup<T extends string>({
         <BaseMenu.RadioItem
           key={option.value}
           value={option.value}
-          className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] text-fg outline-none data-[highlighted]:bg-surface-hover [&_svg]:size-3.5"
+          className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] text-fg outline-none data-[highlighted]:bg-surface-hover [&_svg]:size-3.5 pointer-coarse:h-11 pointer-coarse:text-[15px]"
         >
           {option.icon && <span className="text-fg-muted">{option.icon}</span>}
           <span className="flex-1">{option.label}</span>

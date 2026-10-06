@@ -47,7 +47,7 @@ function SettingsPage() {
     <>
       <PageHeader crumbs={[{ label: "Settings" }]} />
       <PageBody>
-        <div className="mx-auto flex max-w-[760px] flex-col gap-10 px-8 py-8">
+        <div className="mx-auto flex max-w-[760px] flex-col gap-10 px-4 py-6 md:px-8 md:py-8">
           <Group title="shelf" description={`Version ${system.version}`}>
             <Row label="Home">
               <Mono>{shortPath(system.home)}</Mono>
@@ -65,7 +65,7 @@ function SettingsPage() {
               const status = HOOK_STATUS[hook.status];
               return (
                 <Row key={hook.harness} label={hook.label}>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-start gap-1 sm:items-end">
                     <StatusPill tone={status.tone}>{status.label}</StatusPill>
                     {hook.status === "installed" && hook.needsTrust && (
                       <span className="text-[12px] text-fg-subtle">
@@ -154,7 +154,7 @@ function Group({
 }) {
   return (
     <section>
-      <div className="mb-3 flex items-end justify-between gap-4">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-semibold text-[15px] text-fg">{title}</h2>
           {description && <p className="mt-1 text-[13px] text-fg-muted">{description}</p>}
@@ -176,12 +176,12 @@ function Row({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-6 border-border-subtle border-b py-2.5 last:border-0">
+    <div className="flex min-h-12 flex-col gap-1.5 border-border-subtle border-b py-2.5 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div>
         <div className="text-[13px] text-fg">{label}</div>
         {help && <div className="text-[12px] text-fg-subtle">{help}</div>}
       </div>
-      <div className="min-w-0 text-right">{children}</div>
+      <div className="min-w-0 break-all sm:text-right">{children}</div>
     </div>
   );
 }

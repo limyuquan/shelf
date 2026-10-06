@@ -28,6 +28,9 @@ const theme = EditorView.theme({
   },
   ".cm-foldGutter span": { color: "var(--fg-subtle)" },
   "&.cm-focused": { outline: "none" },
+  // Narrow screens give the text the full width; iOS zooms into text under 16px.
+  "@media (max-width: 640px)": { ".cm-gutters": { display: "none" } },
+  "@media (pointer: coarse)": { ".cm-content": { fontSize: "16px" } },
 });
 
 const highlight = HighlightStyle.define([

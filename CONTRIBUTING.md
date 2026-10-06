@@ -43,7 +43,9 @@ SHELF_BIN=dist/shelf bun test tests/e2e   # e2e against the binary
 - Pages live in `packages/web/src/routes/`; domain logic shared by pages lives
   in `features/<domain>/`; generic UI in `components/ui/`.
 - Use the semantic colour tokens (`bg-surface`, `text-fg-muted`, …), never raw
-  colours, so both themes keep working. Check both themes before submitting.
+  colours, so both themes keep working. Check both themes, and a phone-width
+  window with touch emulation, before submitting. Nothing may depend on hover
+  alone: touch screens can't hover.
 - Pure helpers go in `lib/` or a feature's `describe.ts` and get unit tests.
 
 ## Releasing

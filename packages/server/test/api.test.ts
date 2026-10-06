@@ -8,7 +8,8 @@ import { initProject } from "../../core/src/services/project.ts";
 import { appendToFile, createTestEnv, setupProject } from "../../core/test/helpers.ts";
 import { createApi } from "../src/app.ts";
 import { type Api, TOKEN_HEADER } from "../src/contract.ts";
-import { type DashboardServer, startServer } from "../src/serve.ts";
+import { type DashboardServer, hostMatcher, startServer } from "../src/serve.ts";
+import { loadToken } from "../src/token.ts";
 import page from "./fixture/index.html";
 
 type Success<R> =
@@ -38,7 +39,7 @@ const TOKEN = "test-token";
 async function setup(skills: string[] = ["pdf"]) {
   const env = await createTestEnv();
   const ctx = await setupProject(env, skills);
-  const app = createApi(ctx, { token: TOKEN, allowedHosts: () => new Set([HOST]) }, SYSTEM);
+  const app = createApi(ctx, { token: TOKEN, isAllowedHost: (host) => host === HOST }, SYSTEM);
   const client = hc<Api>(`http://${HOST}`, {
     headers: { [TOKEN_HEADER]: TOKEN },
     fetch: (input: RequestInfo | URL, init?: RequestInit) => app.request(input, init),
@@ -284,6 +285,30 @@ describe("system", () => {
   });
 });
 
+describe("remote access", () => {
+  test("allowed hosts: bare names match any port, name:port only that port", () => {
+    const allowed = hostMatcher(["127.0.0.1:4174", "pc.tailnet.ts.net", "phone.example:8445"]);
+    expect(allowed("127.0.0.1:4174")).toBe(true);
+    expect(allowed("127.0.0.1:9999")).toBe(false);
+    expect(allowed("PC.tailnet.ts.net:8443")).toBe(true);
+    expect(allowed("pc.tailnet.ts.net")).toBe(true);
+    expect(allowed("phone.example:8445")).toBe(true);
+    expect(allowed("phone.example:443")).toBe(false);
+    expect(allowed("evil.example")).toBe(false);
+  });
+
+  test("the token persists across restarts, owner-only, until rotated", async () => {
+    const env = await createTestEnv();
+    const first = await loadToken(env.shelfHome);
+    expect(await loadToken(env.shelfHome)).toBe(first);
+    const { mode } = await Bun.file(join(env.shelfHome, "ui-token")).stat();
+    expect(mode & 0o777).toBe(0o600);
+    const rotated = await loadToken(env.shelfHome, { rotate: true });
+    expect(rotated).not.toBe(first);
+    expect(await loadToken(env.shelfHome)).toBe(rotated);
+  });
+});
+
 describe("server", () => {
   let server: DashboardServer | null = null;
   afterEach(async () => {
@@ -294,7 +319,12 @@ describe("server", () => {
   test("listens on loopback, serves the app on every path and the API under /api", async () => {
     const env = await createTestEnv();
     const ctx = await setupProject(env, []);
-    server = startServer(ctx, { page, system: SYSTEM });
+    server = startServer(ctx, {
+      page,
+      system: SYSTEM,
+      token: TOKEN,
+      allowedHosts: ["pc.tailnet.ts.net"],
+    });
     const url = new URL(server.url);
     expect(url.hostname).toBe("127.0.0.1");
     const token = url.searchParams.get("token") ?? "";
@@ -303,5 +333,14 @@ describe("server", () => {
     expect(deepLink).toContain('<div id="root">');
     const api = await fetch(new URL("/api/projects", url), { headers: { [TOKEN_HEADER]: token } });
     expect(api.status).toBe(200);
+    // Through a proxy (Tailscale Serve), the browser's Host is the proxy's name.
+    const proxied = await fetch(new URL("/api/projects", url), {
+      headers: { [TOKEN_HEADER]: token, host: "pc.tailnet.ts.net:8445" },
+    });
+    expect(proxied.status).toBe(200);
+    const rebound = await fetch(new URL("/api/projects", url), {
+      headers: { [TOKEN_HEADER]: token, host: "evil.example:8445" },
+    });
+    expect(rebound.status).toBe(403);
   });
 });

@@ -41,7 +41,7 @@ function ProjectsPage() {
               params={{ projectId: project.id }}
               {...rowProps(index)}
               className={cn(
-                "flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+                "flex items-center gap-4 border-border-subtle border-b px-4 py-3 transition-colors hover:bg-surface-hover md:h-14 md:px-5 md:py-0",
                 navigableRow,
               )}
             >
@@ -52,7 +52,7 @@ function ProjectsPage() {
                   {shortPath(project.path)}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden shrink-0 items-center gap-2 md:flex">
                 {project.overdue > 0 && (
                   <StatusPill tone="red">{`${project.overdue} overdue`}</StatusPill>
                 )}
@@ -61,10 +61,15 @@ function ProjectsPage() {
                 )}
                 {!project.exists && <StatusPill tone="red">missing</StatusPill>}
               </div>
-              <span className="w-20 shrink-0 text-right text-[12px] text-fg-muted">
+              <span className="shrink-0 text-right text-[12px] text-fg-muted md:w-20">
                 {project.loans} skill{project.loans === 1 ? "" : "s"}
+                {project.dueSoon + project.overdue > 0 && (
+                  <span className="block text-yellow md:hidden">
+                    {project.dueSoon + project.overdue} need attention
+                  </span>
+                )}
               </span>
-              <span className="w-24 shrink-0 text-right text-[12px] text-fg-subtle">
+              <span className="hidden w-24 shrink-0 text-right text-[12px] text-fg-subtle md:block">
                 {timeAgo(project.lastSeenAt)}
               </span>
             </Link>

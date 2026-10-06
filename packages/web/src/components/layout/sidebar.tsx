@@ -63,7 +63,7 @@ export function Sidebar({
             key={project.id}
             to="/projects/$projectId"
             params={{ projectId: project.id }}
-            className="group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13px] text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-hover data-[status=active]:text-fg"
+            className="group flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13px] text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-hover data-[status=active]:text-fg pointer-coarse:h-11 pointer-coarse:text-[15px]"
           >
             <ProjectAvatar name={project.name} />
             <span className="flex-1 truncate">{project.name}</span>
@@ -78,13 +78,17 @@ export function Sidebar({
           <button
             type="button"
             onClick={onSearch}
-            className="flex h-7 items-center gap-2 rounded-md px-1.5 text-[12px] text-fg-subtle hover:text-fg-muted"
+            className="flex h-7 items-center gap-2 rounded-md px-1.5 text-[12px] text-fg-subtle hover:text-fg-muted pointer-coarse:invisible"
           >
             <Kbd>⌘K</Kbd> Commands
           </button>
           <div className="flex items-center">
             <Tooltip label="Keyboard shortcuts" shortcut="?" side="top">
-              <IconButton label="Keyboard shortcuts" onClick={onShortcuts}>
+              <IconButton
+                label="Keyboard shortcuts"
+                onClick={onShortcuts}
+                className="pointer-coarse:hidden"
+              >
                 <Keyboard />
               </IconButton>
             </Tooltip>
@@ -111,7 +115,7 @@ function NavItem({
     <Link
       to={to}
       activeOptions={{ exact: to === "/" }}
-      className="flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13px] text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-hover data-[status=active]:font-medium data-[status=active]:text-fg [&_svg]:size-4"
+      className="flex h-[30px] items-center gap-2.5 rounded-md px-2 text-[13px] text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg data-[status=active]:bg-surface-hover data-[status=active]:font-medium data-[status=active]:text-fg [&_svg]:size-4 pointer-coarse:h-11 pointer-coarse:text-[15px]"
     >
       {icon}
       <span className="flex-1">{label}</span>

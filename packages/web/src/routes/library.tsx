@@ -36,7 +36,7 @@ function LibraryPage() {
   return (
     <>
       <PageHeader crumbs={[{ label: "Library" }]} />
-      <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-5">
+      <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-4 md:px-5 pointer-coarse:h-12">
         <Search className="size-3.5 text-fg-subtle" />
         <input
           ref={filter}
@@ -48,7 +48,7 @@ function LibraryPage() {
               replace: true,
             })
           }
-          placeholder="Filter skills by name or description   /"
+          placeholder="Filter skills"
           className="h-full flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-fg-subtle"
         />
         {skills.data && (
@@ -78,11 +78,11 @@ function LibraryPage() {
               params={{ skillName: skill.name }}
               {...rowProps(index)}
               className={cn(
-                "flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+                "flex items-center gap-4 border-border-subtle border-b px-4 py-3 transition-colors hover:bg-surface-hover md:h-14 md:px-5 md:py-0",
                 navigableRow,
               )}
             >
-              <BookOpen className="size-4 shrink-0 text-fg-subtle" />
+              <BookOpen className="size-4 shrink-0 self-start text-fg-subtle max-md:mt-0.5 md:self-auto" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-fg">{skill.name}</span>
@@ -92,12 +92,18 @@ function LibraryPage() {
                     </Tooltip>
                   )}
                 </div>
-                <p className="truncate text-[12.5px] text-fg-muted">{skill.description}</p>
+                <p className="text-[12.5px] text-fg-muted max-md:line-clamp-2 md:truncate">
+                  {skill.description}
+                </p>
+                <p className="mt-1 text-[12px] text-fg-subtle md:hidden">
+                  {skill.borrowers} project{skill.borrowers === 1 ? "" : "s"} · ~
+                  {skill.tokens.toLocaleString()} tokens
+                </p>
               </div>
-              <span className="w-24 shrink-0 text-right text-[12px] text-fg-muted">
+              <span className="hidden w-24 shrink-0 text-right text-[12px] text-fg-muted md:block">
                 {skill.borrowers} project{skill.borrowers === 1 ? "" : "s"}
               </span>
-              <span className="w-20 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums">
+              <span className="hidden w-20 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums md:block">
                 ~{skill.tokens.toLocaleString()} tok
               </span>
             </Link>

@@ -18,7 +18,7 @@ export function Checkbox({
       onCheckedChange={onChange}
       aria-label={label}
       {...(disabled ? { disabled } : {})}
-      className="flex size-4 shrink-0 items-center justify-center rounded border border-border-strong bg-surface-raised transition-colors data-[checked]:border-accent data-[checked]:bg-accent data-[disabled]:opacity-40"
+      className="flex size-4 shrink-0 items-center justify-center rounded border border-border-strong bg-surface-raised transition-colors data-[checked]:border-accent data-[checked]:bg-accent data-[disabled]:opacity-40 pointer-coarse:size-5"
     >
       <BaseCheckbox.Indicator className="text-accent-fg">
         <Check className="size-3" strokeWidth={3} />

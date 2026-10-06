@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import type { Loan } from "../api/types.ts";
 import { rootRoute } from "../app/root-route.tsx";
-import { PageBody, PageHeader, Section } from "../components/layout/page.tsx";
+import { PageHeader, Section, SplitView } from "../components/layout/page.tsx";
 import { PropertiesPanel, Property, PropertyGroup } from "../components/layout/properties.tsx";
 import { ProjectAvatar } from "../components/project-avatar.tsx";
 import { Button, IconButton } from "../components/ui/button.tsx";
@@ -80,59 +80,65 @@ function ProjectPage() {
                 <Copy />
               </IconButton>
             </Tooltip>
-            <Button variant="primary" onClick={() => setBorrowing(true)}>
+            <Button variant="primary" onClick={() => setBorrowing(true)} aria-label="Borrow skills">
               <Plus />
-              Borrow skills
+              <span className="max-sm:hidden">Borrow skills</span>
               <Kbd className="border-white/25 bg-white/10 text-white/80">B</Kbd>
             </Button>
           </>
         }
       />
-      <div className="flex min-h-0 flex-1">
-        <PageBody>
-          <div className="flex items-center gap-3 px-5 pt-7 pb-5">
-            <ProjectAvatar name={project.name} className="size-8 rounded-lg text-[14px]" />
-            <div>
-              <h1 className="font-semibold text-[20px] text-fg tracking-tight">{project.name}</h1>
-              <p className="font-mono text-[12px] text-fg-subtle">{shortPath(project.path)}</p>
+      <SplitView
+        main={
+          <>
+            <div className="flex items-center gap-3 px-4 pt-6 pb-5 md:px-5 md:pt-7">
+              <ProjectAvatar name={project.name} className="size-8 rounded-lg text-[14px]" />
+              <div>
+                <h1 className="font-semibold text-[20px] text-fg tracking-tight">{project.name}</h1>
+                <p className="break-all font-mono text-[12px] text-fg-subtle">
+                  {shortPath(project.path)}
+                </p>
+              </div>
             </div>
-          </div>
-          <Section title="Borrowed skills" count={loans.length}>
-            {loans.length === 0 ? (
-              <EmptyState icon={<BookOpen />} title="No skills borrowed">
-                Borrow skills from your library, or let agents borrow them with `shelf borrow`.
-              </EmptyState>
-            ) : (
-              loans.map((loan, index) => (
-                <LoanRow
-                  key={loan.skill}
-                  loan={loan}
-                  projectId={project.id}
-                  projectName={project.name}
-                  onReview={() => setReviewing(loan)}
-                  {...rowProps(index)}
-                />
-              ))
-            )}
-          </Section>
-        </PageBody>
-        <PropertiesPanel>
-          <PropertyGroup title="Details">
-            <Property label="Skills">{loans.length}</Property>
-            <Property label="Due soon">
-              {loans.filter((loan) => loan.due === "due-soon").length}
-            </Property>
-            <Property label="Location">
-              <span className="font-mono text-[12px] text-fg-muted" title={project.path}>
-                {shortPath(project.path)}
-              </span>
-            </Property>
-          </PropertyGroup>
-          <PropertyGroup title="Activity">
-            <Timeline events={data.events.slice(0, 30)} showProject={false} compact />
-          </PropertyGroup>
-        </PropertiesPanel>
-      </div>
+            <Section title="Borrowed skills" count={loans.length}>
+              {loans.length === 0 ? (
+                <EmptyState icon={<BookOpen />} title="No skills borrowed">
+                  Borrow skills from your library, or let agents borrow them with `shelf borrow`.
+                </EmptyState>
+              ) : (
+                loans.map((loan, index) => (
+                  <LoanRow
+                    key={loan.skill}
+                    loan={loan}
+                    projectId={project.id}
+                    projectName={project.name}
+                    onReview={() => setReviewing(loan)}
+                    {...rowProps(index)}
+                  />
+                ))
+              )}
+            </Section>
+          </>
+        }
+        aside={
+          <PropertiesPanel>
+            <PropertyGroup title="Details">
+              <Property label="Skills">{loans.length}</Property>
+              <Property label="Due soon">
+                {loans.filter((loan) => loan.due === "due-soon").length}
+              </Property>
+              <Property label="Location">
+                <span className="font-mono text-[12px] text-fg-muted" title={project.path}>
+                  {shortPath(project.path)}
+                </span>
+              </Property>
+            </PropertyGroup>
+            <PropertyGroup title="Activity">
+              <Timeline events={data.events.slice(0, 30)} showProject={false} compact />
+            </PropertyGroup>
+          </PropertiesPanel>
+        }
+      />
       <BorrowDialog
         open={borrowing}
         onOpenChange={setBorrowing}
@@ -173,35 +179,44 @@ function LoanRow({
     <div
       {...nav}
       className={cn(
-        "flex h-11 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+        "flex items-center gap-4 border-border-subtle border-b px-4 py-2.5 transition-colors hover:bg-surface-hover md:h-11 md:px-5 md:py-0",
         navigableRow,
       )}
     >
-      <Link
-        to="/library/$skillName"
-        params={{ skillName: loan.skill }}
-        className="min-w-0 flex-1 truncate font-medium text-fg hover:underline"
-      >
-        {loan.skill}
-      </Link>
-      <Tooltip label={hasChanges(loan) ? `${content.help} — click to review` : content.help}>
-        {hasChanges(loan) ? (
-          <button type="button" onClick={onReview} className="rounded-full hover:brightness-125">
-            {pill}
-          </button>
-        ) : (
-          <span>{pill}</span>
-        )}
-      </Tooltip>
-      <span
-        className={cn("w-28 shrink-0 text-right text-[12px]", toneText(due.tone))}
-        title={`Due ${shortDate(loan.dueAt)}`}
-      >
-        {dueLabel(loan.daysLeft)}
-      </span>
-      <span className="w-28 shrink-0 text-right text-[12px] text-fg-subtle">
-        {loan.lastUsedAt ? `used ${timeAgo(loan.lastUsedAt)}` : "never used"}
-      </span>
+      {/* One line on wide screens; name above state, due date and last use on phones. */}
+      <div className="min-w-0 flex-1 md:flex md:items-center md:gap-4">
+        <Link
+          to="/library/$skillName"
+          params={{ skillName: loan.skill }}
+          className="block truncate font-medium text-fg hover:underline max-md:text-[14px] md:min-w-0 md:flex-1"
+        >
+          {loan.skill}
+        </Link>
+        <div className="mt-1.5 flex items-center gap-3 text-[12px] md:mt-0 md:gap-4">
+          <Tooltip label={hasChanges(loan) ? `${content.help} — click to review` : content.help}>
+            {hasChanges(loan) ? (
+              <button
+                type="button"
+                onClick={onReview}
+                className="rounded-full hover:brightness-125"
+              >
+                {pill}
+              </button>
+            ) : (
+              <span>{pill}</span>
+            )}
+          </Tooltip>
+          <span
+            className={cn("shrink-0 md:w-28 md:text-right", toneText(due.tone))}
+            title={`Due ${shortDate(loan.dueAt)}`}
+          >
+            {dueLabel(loan.daysLeft)}
+          </span>
+          <span className="shrink-0 truncate text-fg-subtle md:w-28 md:text-right">
+            {loan.lastUsedAt ? `used ${timeAgo(loan.lastUsedAt)}` : "never used"}
+          </span>
+        </div>
+      </div>
       <LoanMenu
         projectId={projectId}
         projectName={projectName}

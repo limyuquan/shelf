@@ -45,9 +45,10 @@
     font-size: 13px;
   }
 
+  /* dvh tracks mobile browsers' collapsing address bars; vh does not. */
   body,
   #root {
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -64,5 +65,17 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+/*
+ * iOS zooms into any focused field with text under 16px. Unlayered, so it wins
+ * over Tailwind's text-size utilities on touch screens only.
+ */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
 }

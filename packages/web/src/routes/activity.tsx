@@ -23,7 +23,7 @@ function ActivityPage() {
         {events.length === 0 ? (
           <EmptyState icon={<Activity />} title="No activity yet" />
         ) : (
-          <div className="mx-auto max-w-[760px] px-8 py-6">
+          <div className="mx-auto max-w-[760px] px-4 py-6 md:px-8">
             <Timeline events={events} />
           </div>
         )}

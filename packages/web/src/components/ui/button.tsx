@@ -17,10 +17,11 @@ const VARIANTS: Record<Variant, string> = {
   danger: "text-fg-muted hover:text-red hover:bg-red/10",
 };
 
+/** Touch screens get larger targets (pointer-coarse), without changing the desktop look. */
 const SIZES: Record<Size, string> = {
-  sm: "h-7 px-2.5 gap-1.5 text-[12.5px]",
-  md: "h-8 px-3 gap-2 text-[13px]",
-  icon: "size-7",
+  sm: "h-7 px-2.5 gap-1.5 text-[12.5px] pointer-coarse:h-9 pointer-coarse:px-3",
+  md: "h-8 px-3 gap-2 text-[13px] pointer-coarse:h-10",
+  icon: "size-7 pointer-coarse:size-10 pointer-coarse:[&_svg]:size-[18px]",
 };
 
 /** Button classes, also for links that should look like buttons. */
