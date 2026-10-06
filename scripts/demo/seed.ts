@@ -19,6 +19,7 @@ import {
   initProject,
   keep,
   refreshLibrary,
+  saveSet,
   setSkillLoanDays,
   update,
   used,
@@ -199,6 +200,15 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
       "- Prefer primary sources\n".repeat(12),
     ),
   );
+
+  // Sets: skills borrowed together.
+  await as("user", 20, root, async (ctx) => {
+    await saveSet(ctx, "frontend", {
+      description: "UI work in React apps",
+      skills: ["react-best-practices", "playwright-testing", "accessibility-audit"],
+    });
+    await saveSet(ctx, "backend", { skills: ["api-design", "sql-migrations", "git-hygiene"] });
+  });
 
   // Recent use across projects.
   await as("agent:codex", 0.1, project("docs-site"), (ctx) => used(ctx, ["release-notes"]));

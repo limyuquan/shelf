@@ -36,7 +36,7 @@ packages/web/src/
   app/                 Router (code-based route tree), query client, providers.
   api/                 Typed Hono client, `unwrap`, response types derived from `Api`.
   routes/              One file per page; each exports its route (loader + component).
-  features/<domain>/   attention, projects, skills, loans, activity, insights:
+  features/<domain>/   attention, projects, skills, sets, loans, activity, insights:
                        queries, mutations, and the components only that domain uses.
   components/ui/       Design-system primitives (Button, Menu, Dialog, Tooltip, …)
                        on Base UI, styled with Tailwind.
@@ -116,6 +116,7 @@ overdue loans are shown rather than returned.
 | Skill content (editable) | `~/.shelf/library/<name>/` | The user edits it with any tool. |
 | Skill revisions | `~/.shelf/objects/<sha256>/` | Immutable snapshots. Projects are always copied from here. |
 | Projects, loans, due dates, events | `~/.shelf/shelf.db` | Per machine. Source of truth for loan state. |
+| Skill sets (named groups of skills) | `~/.shelf/shelf.db` | Per machine, like the library. Only a way to name skills: borrowing `@set` creates ordinary per-skill loans, and nothing about the set reaches a project or its lockfile. |
 | What a project has borrowed | `<project>/.agents/shelf.lock.json` | Derived from the database on every change. Carries the project id, so a moved directory or a clone on another machine is recognised. |
 
 The library is reconciled lazily: commands that read skills hash the library

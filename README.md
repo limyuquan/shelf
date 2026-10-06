@@ -53,6 +53,10 @@ borrow only from it.
   skills in a Convex app): kept loans never expire. It's recorded in the
   lockfile, so clones keep them too. Only you can keep a skill; agents are
   told to ask.
+- **Sets**: `shelf set save frontend react-best-practices playwright-testing`
+  groups skills you often borrow together; `shelf borrow @frontend` borrows
+  them all. Sets live in your library (per machine); each skill still gets its
+  own loan, due date and lockfile entry.
 - **Expiry**: overdue loans are returned automatically at the next session
   start, `shelf status` or `shelf sync` — unless the project copy has local
   edits, which shelf never deletes.
@@ -124,7 +128,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 - **Library**: edit SKILL.md and reference files, see revisions and borrowers,
   push updates to chosen projects, and pull reviewed updates from a skill's
   upstream source. The filter searches inside skills too (SKILL.md and reference
-  files) and shows the matching lines; click one to open that file.
+  files) and shows the matching lines; click one to open that file. Group skills into sets
+  and borrow a whole set at once.
 - **Revisions**: open any revision of a skill to read its files, compare it with
   another revision or the latest, and restore it.
 - **Find existing skills**: scan for skills copied into projects by hand, see
@@ -195,6 +200,9 @@ boundary.
 | `shelf show <name> [--revision X]` | Print a library skill, or one of its revisions |
 | `shelf log <name>` | A skill's revisions and which projects borrow each |
 | `shelf restore <name> <revision>` | Make an earlier revision the library's latest again (borrowers update with `propagate`) |
+| `shelf set list` | Your skill sets and their skills |
+| `shelf set save <name> <skill…> [-d description]` | Create a set, or replace its skills (`@other` includes another set) |
+| `shelf set delete <name>` | Delete a set (loans are unaffected) |
 | `shelf loan-days <name> [days] [--reset]` | Show or set a skill's loan length (default: `loanDays`) |
 | `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
@@ -203,7 +211,7 @@ boundary.
 | `shelf audit [name…]` | Scan library skills for risky content |
 | **This project** | |
 | `shelf suggest [--limit N]` | Library skills matching the project's dependencies and files (e.g. `convex/`, `playwright.config.ts`) |
-| `shelf borrow <name…> [--days N] [--keep] [--follow] [--link]` | Borrow skills into this project |
+| `shelf borrow <name…\|@set> [--days N] [--keep] [--follow] [--link]` | Borrow skills (or every skill in a set) into this project |
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
 | `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |

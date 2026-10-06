@@ -19,8 +19,12 @@ export interface EventGroup {
 const WINDOW_MS = 60_000;
 
 /** Events of one type that read differently, e.g. keeping and stopping keeping. */
-const variant = (event: ActivityEvent) =>
-  event.type === "loan.kept" ? String(event.detail?.keep) : "";
+const variant = (event: ActivityEvent) => {
+  if (event.type === "loan.kept") return String(event.detail?.keep);
+  // Set events name no skill or project, so only the same set may group.
+  if (event.type === "set.saved" || event.type === "set.deleted") return String(event.detail?.set);
+  return "";
+};
 
 export function groupEvents(events: readonly ActivityEvent[]): EventGroup[] {
   const groups: EventGroup[] = [];
@@ -120,6 +124,23 @@ export function describeGroup(group: EventGroup): {
         preposition: null,
         detail: typeof detail.source === "string" ? `to ${sourceLabel(detail.source)}` : null,
       };
+    case "set.saved":
+    case "set.deleted": {
+      const set = typeof detail.set === "string" ? detail.set : "a set";
+      const count = Array.isArray(detail.skills) ? detail.skills.length : null;
+      const verb =
+        group.type === "set.deleted"
+          ? "deleted the set"
+          : detail.created === true
+            ? "created the set"
+            : "saved the set";
+      return {
+        ...base,
+        verb: `${verb} ${set}`,
+        preposition: null,
+        detail: count === null ? null : `${count} skill${count === 1 ? "" : "s"}`,
+      };
+    }
     case "project.registered":
       return { ...base, verb: "started using shelf", preposition: "in" };
     case "project.forgotten":

@@ -31,6 +31,7 @@ import type { Context } from "./context.ts";
 import { inspectBorrowedSkill, inspectLoans, type LoanInspection } from "./inspect.ts";
 import { requireSkill } from "./library.ts";
 import { dueAfterKeepChange, projectTargets, requireProject, syncLockfile } from "./project.ts";
+import { resolveSkillRefs } from "./sets.ts";
 
 export interface BorrowResult {
   readonly skill: string;
@@ -47,14 +48,15 @@ export interface BorrowResult {
  * Borrows skills into the current project. Idempotent: re-borrowing is a no-op,
  * except that `keep` also applies to skills already borrowed. Without `days`, each
  * skill gets its own loan length (`setSkillLoanDays`) or the configured default.
+ * `@set` refs borrow every skill in the set; each still gets its own loan.
  */
 export async function borrow(
   ctx: Context,
-  names: readonly string[],
+  refs: readonly string[],
   options: { days?: number; policy?: LoanPolicy; mode?: LoanMode; keep?: boolean } = {},
 ): Promise<BorrowResult[]> {
-  if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
-  if (options.keep) assertMayKeep(ctx, names);
+  if (refs.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
+  if (options.keep) assertMayKeep(ctx, refs);
   const { project } = await requireProject(ctx);
   if (options.days !== undefined) assertWithinLoanLimit(ctx, options.days);
   const targets = await projectTargets(ctx, project);
@@ -62,7 +64,7 @@ export async function borrow(
 
   // Validate everything before touching the project, so a bad name changes nothing.
   const plan: { skill: Skill; existing: Loan | null }[] = [];
-  for (const name of new Set(names)) {
+  for (const name of resolveSkillRefs(ctx, refs)) {
     assertSkillName(name);
     const skill = requireSkill(ctx, name);
     const existing = findActiveLoan(ctx.db, project.id, name);
@@ -137,7 +139,7 @@ export interface KeepResult {
 /**
  * Keeps loans in the current project (they never come due) or stops keeping them.
  * Keeping is the user's decision, recorded in the lockfile so every clone of the
- * project keeps the same skills; agents may only stop keeping.
+ * project keeps the same skills; agents may only stop keeping. Accepts `@set` refs.
  */
 export async function keep(
   ctx: Context,
@@ -147,7 +149,7 @@ export async function keep(
   if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
   if (options.keep) assertMayKeep(ctx, names);
   const { project } = await requireProject(ctx);
-  const loans = [...new Set(names)].map((name) => {
+  const loans = resolveSkillRefs(ctx, names).map((name) => {
     const loan = findActiveLoan(ctx.db, project.id, name);
     if (!loan) {
       throw new ShelfError(

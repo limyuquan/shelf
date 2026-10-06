@@ -11,6 +11,7 @@ import { insightsRoutes } from "./routes/insights.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { scanRoutes } from "./routes/scan.ts";
 import { searchRoutes } from "./routes/search.ts";
+import { setRoutes } from "./routes/sets.ts";
 import { skillRoutes } from "./routes/skills.ts";
 import { systemRoutes } from "./routes/system.ts";
 
@@ -50,6 +51,7 @@ export function createApi(
     .route("/projects", projectRoutes)
     .route("/skills", skillRoutes)
     .route("/search", searchRoutes)
+    .route("/sets", setRoutes)
     .route("/activity", activityRoutes)
     .route("/insights", insightsRoutes)
     .route("/system", systemRoutes)

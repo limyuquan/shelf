@@ -17,6 +17,7 @@ export type Suggestion = InferResponseType<
   200
 >[number];
 export type CatalogEntry = InferResponseType<typeof api.skills.$get, 200>[number];
+export type SkillSet = InferResponseType<typeof api.sets.$get, 200>[number];
 export type SkillPage = InferResponseType<(typeof api.skills)[":name"]["$get"], 200>;
 export type ActivityEvent = InferResponseType<typeof api.activity.$get, 200>[number];
 export type LoanDiff = InferResponseType<

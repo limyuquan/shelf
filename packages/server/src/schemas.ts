@@ -14,6 +14,7 @@ export const revisionParams = z.object({ name: z.string().min(1), revision: z.st
 const days = z.number().int().positive();
 
 export const borrowBody = z.object({
+  /** Skill names, or `@set` for every skill in a set. */
   skills: z.array(z.string().min(1)).min(1),
   days: days.optional(),
   /** Never expires. */
@@ -38,6 +39,13 @@ export const saveSkillBody = z.object({ content: z.string() });
 export const fileQuery = z.object({ path: z.string().min(1) });
 export const saveFileBody = z.object({ path: z.string().min(1), content: z.string() });
 export const propagateBody = z.object({ projects: z.array(z.string()).optional() });
+
+export const setParams = z.object({ name: z.string().min(1) });
+export const saveSetBody = z.object({
+  description: z.string().optional(),
+  /** Skill names; `@set` includes another set's skills. */
+  skills: z.array(z.string().min(1)).min(1),
+});
 
 export const catalogQuery = z.object({ q: z.string().optional() });
 export const searchQuery = z.object({

@@ -46,6 +46,10 @@ loans (`kept: true`) are always `active`: they never expire.
   still borrow only what the task at hand needs.
 - `shelf borrow <name...> [--days N] [--follow]`. `--follow` lets
   `shelf sync` apply library updates automatically.
+- Sets are the user's named groups of skills (`shelf set list`). When the user
+  names a set, `shelf borrow @<set>` borrows all of its skills; each is an
+  ordinary loan. Create or change sets (`shelf set save`, `shelf set delete`)
+  only when asked.
 
 ## Due dates
 

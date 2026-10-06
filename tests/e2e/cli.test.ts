@@ -108,6 +108,29 @@ describe("shelf CLI", () => {
     ]);
   });
 
+  test("a set borrows its skills in one step, as ordinary loans", async () => {
+    await shelf("init");
+    await shelf("new", "react", "-d", "React");
+    await shelf("new", "a11y", "-d", "Accessibility");
+    const saved = await shelf("set", "save", "frontend", "react", "a11y", "-d", "UI work");
+    expect(saved.json.data?.set).toEqual({
+      name: "frontend",
+      description: "UI work",
+      skills: ["a11y", "react"],
+    });
+    expect((await shelf("set", "list")).json.data?.sets).toHaveLength(1);
+
+    const borrowed = await shelf("borrow", "@frontend");
+    expect(borrowed.json.data?.skills).toMatchObject([
+      { skill: "a11y", status: "borrowed" },
+      { skill: "react", status: "borrowed" },
+    ]);
+    expect((await shelf("set", "delete", "frontend")).exitCode).toBe(0);
+    expect((await shelf("status")).json.data?.loans).toHaveLength(2);
+    const missing = await shelf("borrow", "@frontend");
+    expect(missing.json.error).toMatchObject({ code: "SKILL_NOT_FOUND" });
+  });
+
   test("errors carry a code, a hint and a distinct exit code", async () => {
     await shelf("init");
     const { exitCode, json } = await shelf("borrow", "nope");

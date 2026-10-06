@@ -98,6 +98,32 @@ describe("activity grouping", () => {
     expect(describeGroup(borrowed as never).detail).toBe("kept, never expires");
   });
 
+  test("saving and deleting sets", () => {
+    const setEvent = (type: ActivityEvent["type"], detail: ActivityEvent["detail"]) =>
+      event({ type, actor: "user", projectId: null, project: null, skill: null, detail });
+    const describe = (...events: ActivityEvent[]) =>
+      groupEvents(events).map((group) => describeGroup(group));
+
+    expect(
+      describe(setEvent("set.saved", { set: "frontend", skills: ["a", "b"], created: true })),
+    ).toMatchObject([
+      { actor: "you", verb: "created the set frontend", preposition: null, detail: "2 skills" },
+    ]);
+    expect(describe(setEvent("set.saved", { set: "frontend", skills: ["a"] }))).toMatchObject([
+      { verb: "saved the set frontend", detail: "1 skill" },
+    ]);
+    expect(describe(setEvent("set.deleted", { set: "docs", skills: [] }))).toMatchObject([
+      { verb: "deleted the set docs", detail: "0 skills" },
+    ]);
+    // Two different sets saved together stay two entries.
+    expect(
+      describe(
+        setEvent("set.saved", { set: "frontend", skills: ["a"] }),
+        setEvent("set.saved", { set: "docs", skills: ["b"] }),
+      ).map((entry) => entry.verb),
+    ).toEqual(["saved the set frontend", "saved the set docs"]);
+  });
+
   test("day headings", () => {
     const now = new Date("2026-10-06T15:00:00");
     expect(dayLabel(new Date("2026-10-06T09:00:00").toISOString(), now)).toBe("Today");

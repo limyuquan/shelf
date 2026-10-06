@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Layers, Search } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../../components/ui/button.tsx";
 import { Checkbox } from "../../components/ui/checkbox.tsx";
 import { Dialog, DialogLayout } from "../../components/ui/dialog.tsx";
 import { projectSuggestionsQuery } from "../projects/queries.ts";
+import { setsQuery } from "../sets/queries.ts";
 import { skillsQuery } from "../skills/queries.ts";
 import { useBorrow } from "./mutations.ts";
 
@@ -28,6 +29,7 @@ export function BorrowDialog({
   const [keep, setKeep] = useState(false);
   const skills = useQuery({ ...skillsQuery(), enabled: open });
   const suggestions = useQuery({ ...projectSuggestionsQuery(projectId), enabled: open });
+  const sets = useQuery({ ...setsQuery(), enabled: open });
   const borrow = useBorrow();
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   // Suggested skills first, best first; the rest keep the catalog's order.
@@ -42,6 +44,16 @@ export function BorrowDialog({
     .sort((a, b) => suggestedRank(a.name) - suggestedRank(b.name));
   const toggle = (name: string, on: boolean) =>
     setSelected((current) => (on ? [...current, name] : current.filter((n) => n !== name)));
+  // A set selects (or, when all are selected, deselects) its members not yet borrowed.
+  const offeredSets = (sets.data ?? [])
+    .map((set) => ({ ...set, members: set.skills.filter((skill) => !borrowed.includes(skill)) }))
+    .filter((set) => set.members.length > 0);
+  const toggleSet = (members: readonly string[], on: boolean) =>
+    setSelected((current) =>
+      on
+        ? [...current, ...members.filter((skill) => !current.includes(skill))]
+        : current.filter((skill) => !members.includes(skill)),
+    );
   const close = (next: boolean) => {
     onOpenChange(next);
     if (!next) {
@@ -89,6 +101,29 @@ export function BorrowDialog({
             className="flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-fg-subtle"
           />
         </div>
+        {offeredSets.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 flex items-center gap-1.5 text-[12px] text-fg-subtle">
+              <Layers className="size-3.5" />
+              Sets
+            </span>
+            {offeredSets.map((set) => {
+              const on = set.members.every((skill) => selected.includes(skill));
+              return (
+                <button
+                  key={set.name}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleSet(set.members, !on)}
+                  className="h-7 rounded-full border border-border px-2.5 text-[12.5px] text-fg-muted transition-colors hover:border-border-strong hover:text-fg aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-fg pointer-coarse:h-9 pointer-coarse:px-3 pointer-coarse:text-[14px]"
+                >
+                  {set.name}
+                  <span className="ml-1.5 text-fg-subtle tabular-nums">{set.members.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         {available.length === 0 ? (
           <p className="py-8 text-center text-fg-muted">
             {skills.data ? "No more skills to borrow." : "Loading…"}

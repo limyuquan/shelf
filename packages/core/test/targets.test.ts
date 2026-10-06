@@ -188,6 +188,10 @@ describe("schema migrations", () => {
         )
         .get(),
     ).toEqual({ n: 2 });
+    db.run("INSERT INTO skill_sets (name, created_at) VALUES ('web', 'now')");
+    db.run("INSERT INTO skill_set_members (set_name, skill_id) VALUES ('web', 1)");
+    db.run("DELETE FROM skill_sets WHERE name = 'web'");
+    expect(db.query("SELECT COUNT(*) AS n FROM skill_set_members").get()).toEqual({ n: 0 });
     db.close();
   });
 });

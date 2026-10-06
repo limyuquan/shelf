@@ -109,6 +109,19 @@ export const MIGRATIONS: readonly string[] = [
   -- NULL: use the config's loanDays.
   ALTER TABLE skills ADD COLUMN loan_days INTEGER;
   `,
+
+  /* 5: skill sets (machine-local groups of library skills) */ `
+  CREATE TABLE skill_sets (
+    name        TEXT PRIMARY KEY,
+    description TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL
+  );
+  CREATE TABLE skill_set_members (
+    set_name TEXT NOT NULL REFERENCES skill_sets(name) ON DELETE CASCADE ON UPDATE CASCADE,
+    skill_id INTEGER NOT NULL REFERENCES skills(id),
+    PRIMARY KEY (set_name, skill_id)
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

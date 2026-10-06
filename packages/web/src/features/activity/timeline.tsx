@@ -5,6 +5,7 @@ import {
   CircleDot,
   Clock,
   FolderPlus,
+  Layers,
   Link2,
   PenLine,
   Pin,
@@ -32,6 +33,8 @@ const ICONS: Partial<Record<ActivityEvent["type"], ReactNode>> = {
   "skill.revised": <PenLine />,
   "skill.linked": <Link2 />,
   "project.registered": <FolderPlus />,
+  "set.saved": <Layers />,
+  "set.deleted": <Layers />,
 };
 
 /**

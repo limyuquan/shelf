@@ -104,6 +104,13 @@ export {
   searchLibrary,
 } from "./services/search.ts";
 export { sessionNotice } from "./services/session.ts";
+export {
+  deleteSet,
+  listSets,
+  resolveSkillRefs,
+  type SkillSet,
+  saveSet,
+} from "./services/sets.ts";
 export { type SetupOptions, type SetupResult, setup } from "./services/setup.ts";
 export {
   type ProjectReport,

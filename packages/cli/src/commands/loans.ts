@@ -30,7 +30,11 @@ export const borrowCommand = shelfCommand({
   name: "borrow",
   description: "Copy library skills into this project with a due date",
   args: {
-    skill: { type: "positional", required: true, description: "One or more skill names" },
+    skill: {
+      type: "positional",
+      required: true,
+      description: "One or more skill names, or @<set> for every skill in a set",
+    },
     days: {
       type: "string",
       description: "Loan length in days (default: the skill's loan length, else config loanDays)",

@@ -11,6 +11,7 @@ import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { useContentSearch } from "../features/search/queries.ts";
 import { SearchResults } from "../features/search/search-results.tsx";
+import { SetsSection } from "../features/sets/sets-section.tsx";
 import { skillsQuery } from "../features/skills/queries.ts";
 import { cn } from "../lib/cn.ts";
 import { sourceLabel } from "../lib/format.ts";
@@ -79,6 +80,7 @@ function LibraryPage() {
         )}
       </div>
       <PageBody>
+        {!q.trim() && Boolean(skills.data?.length) && <SetsSection />}
         {searching ? (
           <SearchResults results={results} rowProps={rowProps} />
         ) : !skills.data ? (

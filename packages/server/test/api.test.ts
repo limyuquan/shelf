@@ -519,6 +519,56 @@ describe("suggestions", () => {
   });
 });
 
+describe("skill sets", () => {
+  test("save, list, borrow as @set, and delete", async () => {
+    const { client, projectId } = await setup(["react", "a11y", "pdf"]);
+
+    const saved = await ok(
+      client.sets[":name"].$put({
+        param: { name: "frontend" },
+        json: { description: "UI work", skills: ["react", "a11y"] },
+      }),
+    );
+    expect(saved).toEqual({ name: "frontend", description: "UI work", skills: ["a11y", "react"] });
+    expect(await ok(client.sets.$get())).toEqual([saved]);
+
+    const unknownSkill = await client.sets[":name"].$put({
+      param: { name: "docs" },
+      json: { skills: ["nope"] },
+    });
+    expect(unknownSkill.status).toBe(404);
+    expect(await unknownSkill.json()).toMatchObject({ error: { code: "SKILL_NOT_FOUND" } });
+    const badName = await client.sets[":name"].$put({
+      param: { name: "Docs!" },
+      json: { skills: ["pdf"] },
+    });
+    expect(badName.status).toBe(400);
+
+    const borrowed = await ok(
+      client.projects[":id"].loans.$post({
+        param: { id: projectId },
+        json: { skills: ["@frontend", "pdf"] },
+      }),
+    );
+    expect(borrowed.map((result) => result.skill)).toEqual(["a11y", "react", "pdf"]);
+    const unknownSet = await client.projects[":id"].loans.$post({
+      param: { id: projectId },
+      json: { skills: ["@nope"] },
+    });
+    expect(unknownSet.status).toBe(404);
+
+    expect(await ok(client.sets[":name"].$delete({ param: { name: "frontend" } }))).toMatchObject({
+      name: "frontend",
+    });
+    expect(await ok(client.sets.$get())).toEqual([]);
+    expect((await client.sets[":name"].$delete({ param: { name: "frontend" } })).status).toBe(404);
+    const events = await ok(client.activity.$get({ query: {} }));
+    expect(events.slice(0, 1)).toMatchObject([
+      { type: "set.deleted", detail: { set: "frontend", skills: ["a11y", "react"] } },
+    ]);
+  });
+});
+
 describe("system", () => {
   test("reports hooks, config and health, and repairs what it can", async () => {
     const { env, client } = await setup();

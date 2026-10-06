@@ -77,4 +77,6 @@ export type EventType =
   | "loan.restored"
   | "loan.returned"
   | "loan.expired"
-  | "loan.detached";
+  | "loan.detached"
+  | "set.saved"
+  | "set.deleted";
