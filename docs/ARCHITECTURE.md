@@ -36,8 +36,8 @@ packages/web/src/
   app/                 Router (code-based route tree), query client, providers.
   api/                 Typed Hono client, `unwrap`, response types derived from `Api`.
   routes/              One file per page; each exports its route (loader + component).
-  features/<domain>/   attention, projects, skills, loans, activity: queries,
-                       mutations, and the components only that domain uses.
+  features/<domain>/   attention, projects, skills, loans, activity, insights:
+                       queries, mutations, and the components only that domain uses.
   components/ui/       Design-system primitives (Button, Menu, Dialog, Tooltip, …)
                        on Base UI, styled with Tailwind.
   components/layout/   App shell, sidebar, page header, properties panel, ⌘K menu.
@@ -63,6 +63,9 @@ packages/web/src/
   two lines below `md`; dialogs become bottom sheets below `sm`. Touch screens
   (`pointer-coarse`) get 40px+ targets, always-visible row actions and no
   keyboard hints; fields use 16px text so iOS doesn't zoom.
+- **Insights.** `services/insights.ts` estimates session cost (name + description,
+  chars/4, from each loan's borrowed revision) and usage from `loan.used` events
+  per UTC day; the page draws it with plain SVG/CSS on the theme tokens, no chart library.
 - **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
   navigation; both stand down while typing or while a dialog or menu is open.
 - **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,

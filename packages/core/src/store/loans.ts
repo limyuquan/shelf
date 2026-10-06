@@ -125,3 +125,37 @@ export function listActiveLoanRevisions(db: Db): Set<RevisionHash> {
     .all();
   return new Set(rows.map((row) => row.revision));
 }
+
+export interface SkillLoanStats {
+  /** Active loans across all projects. */
+  readonly borrowers: number;
+  /**
+   * Latest use over every loan of the skill, returned ones included, or the latest
+   * `loan.used` event (events outlive the loans of forgotten projects).
+   */
+  readonly lastUsedAt: Date | null;
+}
+
+/** Borrower counts and last use of every skill that has ever been borrowed or used. */
+export function listSkillLoanStats(db: Db): Map<number, SkillLoanStats> {
+  const rows = db
+    .query<{ skill_id: number; borrowers: number; last_used_at: string | null }, []>(
+      `SELECT skill_id, SUM(borrowers) AS borrowers, MAX(last_used_at) AS last_used_at FROM (
+         SELECT skill_id, SUM(returned_at IS NULL) AS borrowers, MAX(last_used_at) AS last_used_at
+         FROM loans GROUP BY skill_id
+         UNION ALL
+         SELECT skill_id, 0, MAX(at) FROM events
+         WHERE type = 'loan.used' AND skill_id IS NOT NULL GROUP BY skill_id
+       ) GROUP BY skill_id`,
+    )
+    .all();
+  return new Map(
+    rows.map((row) => [
+      row.skill_id,
+      {
+        borrowers: row.borrowers,
+        lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
+      },
+    ]),
+  );
+}

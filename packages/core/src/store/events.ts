@@ -88,3 +88,22 @@ export function listEvents(db: Db, options: EventFilter): EventRecord[] {
       detail: row.detail ? (JSON.parse(row.detail) as Record<string, unknown>) : null,
     }));
 }
+
+export interface UseDay {
+  readonly projectId: string;
+  readonly skillId: number;
+  /** UTC calendar date, `YYYY-MM-DD`: `recordUse` logs `loan.used` at most once per such day. */
+  readonly day: string;
+}
+
+/** Distinct (project, skill, day) triples with a `loan.used` event since `since`. */
+export function listUseDays(db: Db, since: Date): UseDay[] {
+  return db
+    .query<{ project_id: string; skill_id: number; day: string }, [string]>(
+      `SELECT project_id, skill_id, substr(at, 1, 10) AS day FROM events
+       WHERE type = 'loan.used' AND at >= ? AND project_id IS NOT NULL AND skill_id IS NOT NULL
+       GROUP BY project_id, skill_id, day`,
+    )
+    .all(since.toISOString())
+    .map((row) => ({ projectId: row.project_id, skillId: row.skill_id, day: row.day }));
+}

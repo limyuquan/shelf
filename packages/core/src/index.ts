@@ -39,6 +39,13 @@ export {
   type PullResult,
   pullSkill,
 } from "./services/import.ts";
+export {
+  type GlobalSkill,
+  type Insights,
+  insights,
+  type ProjectInsight,
+  type SkillInsight,
+} from "./services/insights.ts";
 export type { LoanReport } from "./services/inspect.ts";
 export {
   type CatalogEntry,

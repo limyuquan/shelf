@@ -112,6 +112,12 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
   upstream source.
 - **Activity**: what your agents did, as a timeline ("codex used api-design in
   billing-api · 2m ago").
+- **Insights**: what skills cost at session start per project (user-level
+  skills plus borrowed ones), which skills agents actually use (active days and
+  a 30-day sparkline each), skills unused for 30 days, and the user-level skills
+  in `~/.claude/skills`, `~/.agents/skills`, … that load in every project.
+  Token counts are estimates (characters / 4): a skill's name and description
+  load at every session start, its full SKILL.md only when it is used.
 - **Settings**: hook status per harness, health checks with one-click repair.
 - ⌘K to jump anywhere, keyboard navigation (`?` lists shortcuts), dark and
   light themes.

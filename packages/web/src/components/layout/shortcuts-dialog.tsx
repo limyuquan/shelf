@@ -10,6 +10,7 @@ const GROUPS: { title: string; keys: [string[], string][] }[] = [
       [["G", "P"], "Go to Projects"],
       [["G", "L"], "Go to Library"],
       [["G", "Y"], "Go to Activity"],
+      [["G", "I"], "Go to Insights"],
       [["G", "S"], "Go to Settings"],
       [["?"], "Show shortcuts"],
     ],

@@ -4,6 +4,7 @@ import { Command } from "cmdk";
 import {
   Activity,
   BookOpen,
+  ChartColumn,
   FolderGit2,
   Inbox,
   Moon,
@@ -61,6 +62,9 @@ export function CommandMenu({
             </Item>
             <Item icon={<Activity />} onSelect={go(() => navigate({ to: "/activity" }))}>
               Activity
+            </Item>
+            <Item icon={<ChartColumn />} onSelect={go(() => navigate({ to: "/insights" }))}>
+              Insights
             </Item>
             <Item icon={<Settings />} onSelect={go(() => navigate({ to: "/settings" }))}>
               Settings

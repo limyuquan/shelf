@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Activity,
   BookOpen,
+  ChartColumn,
   FolderGit2,
   Inbox,
   Keyboard,
@@ -52,6 +53,7 @@ export function Sidebar({
         <NavItem to="/projects" icon={<FolderGit2 />} label="Projects" />
         <NavItem to="/library" icon={<BookOpen />} label="Library" />
         <NavItem to="/activity" icon={<Activity />} label="Activity" />
+        <NavItem to="/insights" icon={<ChartColumn />} label="Insights" />
       </nav>
 
       <div className="mt-6 flex items-center px-2 font-medium text-[12px] text-fg-subtle">
@@ -106,7 +108,7 @@ function NavItem({
   label,
   count,
 }: {
-  to: "/" | "/projects" | "/library" | "/activity" | "/settings";
+  to: "/" | "/projects" | "/library" | "/activity" | "/insights" | "/settings";
   icon: ReactNode;
   label: string;
   count?: number | undefined;

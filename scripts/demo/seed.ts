@@ -5,7 +5,7 @@
  *
  * Usage: bun scripts/demo/seed.ts [dir]   (default: $TMPDIR/shelf-demo)
  */
-import { appendFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -146,6 +146,52 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
   await appendFile(
     join(project("docs-site"), ".agents/skills/pdf-tools/SKILL.md"),
     "\n- Prefer pdftotext for scanned manuals\n",
+  );
+
+  // A month of use, oldest first (a use older than a loan's last one is ignored),
+  // so Insights has a usage history. git-hygiene and commit-messages stay unused.
+  const history: [string, string, string, number[]][] = [
+    ["agent:codex", "docs-site", "pdf-tools", [34]],
+    ["agent:codex", "docs-site", "release-notes", [33, 31, 16]],
+    ["agent:claude-code", "storefront", "react-best-practices", [22, 20, 19, 15, 13, 8, 7, 4, 2]],
+    ["agent:claude-code", "storefront", "accessibility-audit", [21, 18]],
+    ["agent:claude-code", "storefront", "playwright-testing", [2, 1]],
+    ["agent:claude-code", "mobile-app", "react-best-practices", [14, 9, 2]],
+    ["agent:codex", "billing-api", "api-design", [11, 10, 9, 7, 6, 5, 3, 2, 1]],
+    ["agent:codex", "billing-api", "release-notes", [9]],
+    ["agent:codex", "billing-api", "sql-migrations", [4, 2]],
+  ];
+  for (const [actor, name, skill, days] of history) {
+    for (const daysAgo of days) {
+      await as(actor, daysAgo, project(name), (ctx) => used(ctx, [skill]));
+    }
+  }
+
+  // User-level skills, which load in every project: shelf's own and two others.
+  const bundled = await readFile(join(import.meta.dir, "../../packages/skill/SKILL.md"), "utf8");
+  for (const dir of [".claude/skills", ".agents/skills"]) {
+    await mkdir(join(root, dir, "shelf"), { recursive: true });
+    await writeFile(join(root, dir, "shelf", "SKILL.md"), bundled);
+  }
+  const globalSkill = (name: string, description: string, body: string) =>
+    `---\nname: ${name}\ndescription: ${description}\n---\n\n# ${name}\n\n${body}\n`;
+  await mkdir(join(root, ".claude/skills/frontend-design"), { recursive: true });
+  await writeFile(
+    join(root, ".claude/skills/frontend-design/SKILL.md"),
+    globalSkill(
+      "frontend-design",
+      "Create distinctive, production-grade frontend interfaces with high design quality. Use when building web components, pages or applications, and when styling or beautifying any web UI.",
+      "- Pick a clear aesthetic direction before writing code\n".repeat(40),
+    ),
+  );
+  await mkdir(join(root, ".agents/skills/web-research"), { recursive: true });
+  await writeFile(
+    join(root, ".agents/skills/web-research/SKILL.md"),
+    globalSkill(
+      "web-research",
+      "Research a question on the web, cross-check sources and cite them.",
+      "- Prefer primary sources\n".repeat(12),
+    ),
   );
 
   // Recent use across projects.

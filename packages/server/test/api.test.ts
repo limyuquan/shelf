@@ -5,6 +5,7 @@ import { type ClientResponse, hc } from "hono/client";
 import { addSkill } from "../../core/src/services/import.ts";
 import { borrow } from "../../core/src/services/loans.ts";
 import { initProject } from "../../core/src/services/project.ts";
+import { used } from "../../core/src/services/usage.ts";
 import { appendToFile, createTestEnv, setupProject } from "../../core/test/helpers.ts";
 import { createApi } from "../src/app.ts";
 import { type Api, TOKEN_HEADER } from "../src/contract.ts";
@@ -134,6 +135,34 @@ describe("projects and loans", () => {
       ["git", ["modified", "due-soon"]],
       ["pdf", ["due-soon"]],
     ]);
+  });
+});
+
+describe("insights", () => {
+  test("reports session cost per project and 30 days of skill use", async () => {
+    const { env, ctx, client, projectId } = await setup(["pdf", "git"]);
+    await borrow(ctx, ["pdf"]);
+    await used(ctx, ["pdf"]);
+    await mkdir(join(env.root, ".claude/skills/review"), { recursive: true });
+    await writeFile(
+      join(env.root, ".claude/skills/review/SKILL.md"),
+      "---\nname: review\ndescription: Review code\n---\n",
+    );
+
+    const result = await ok(client.insights.$get());
+    expect(result.usage.days).toHaveLength(30);
+    expect(result.usage.active.at(-1)).toBe(1);
+    expect(result.globalSkills).toMatchObject([
+      { name: "review", harnessDirs: [".claude/skills"], bundled: false },
+    ]);
+    const [project] = result.projects;
+    expect(project).toMatchObject({ id: projectId, globalTokens: 5 });
+    expect(project?.skills).toMatchObject([{ skill: "pdf", activeDays30: 1 }]);
+    expect(project?.sessionTokens).toBe(project?.skills[0]?.descriptionTokens);
+    const pdf = result.skills.find((skill) => skill.name === "pdf");
+    expect(pdf).toMatchObject({ borrowers: 1, activeDays30: 1, neverUsed: false });
+    expect(typeof pdf?.lastUsedAt).toBe("string");
+    expect(result.skills.find((skill) => skill.name === "git")?.neverUsed).toBe(true);
   });
 });
 

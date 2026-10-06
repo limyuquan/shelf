@@ -5,6 +5,7 @@ import type { AppEnv } from "./env.ts";
 import { errorBody, handleError } from "./errors.ts";
 import { activityRoutes, maintenanceRoutes } from "./routes/activity.ts";
 import { attentionRoutes } from "./routes/attention.ts";
+import { insightsRoutes } from "./routes/insights.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { skillRoutes } from "./routes/skills.ts";
 import { systemRoutes } from "./routes/system.ts";
@@ -39,6 +40,7 @@ export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
     .route("/projects", projectRoutes)
     .route("/skills", skillRoutes)
     .route("/activity", activityRoutes)
+    .route("/insights", insightsRoutes)
     .route("/system", systemRoutes)
     .route("/", maintenanceRoutes)
     .notFound((c) => c.json(errorBody("NOT_FOUND", `No route ${c.req.method} ${c.req.path}`), 404))

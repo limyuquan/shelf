@@ -12,6 +12,7 @@ const GO_TO = {
   p: "/projects",
   l: "/library",
   y: "/activity",
+  i: "/insights",
   s: "/settings",
 } as const;
 
