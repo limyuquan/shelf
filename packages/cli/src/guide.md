@@ -14,7 +14,8 @@ due soon, local edits, library updates, skills just returned). No note means
 nothing to do.
 
 For details, or in harnesses without hooks, run `shelf status --json`. If
-`data.initialized` is false, the project does not use shelf. Otherwise read
+`data.initialized` is false, the project does not use shelf: leave it alone
+unless the user asks you to start using shelf there. Otherwise read
 `data.loans` and act on `data.actions` — each has a runnable `command` and a
 `reason`.
 

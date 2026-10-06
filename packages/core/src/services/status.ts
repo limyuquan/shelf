@@ -37,7 +37,9 @@ export async function status(ctx: Context): Promise<StatusReport> {
     return {
       initialized: false,
       root: await findProjectRoot(ctx.cwd),
-      actions: [{ command: "shelf init", reason: "This project is not using shelf yet" }],
+      // No `shelf init` action: an agent working through actions would start
+      // managing skills in a project the user never chose to use shelf in.
+      actions: [],
     };
   }
   const { project, warnings } = opened;

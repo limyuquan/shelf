@@ -69,10 +69,10 @@ describe("shelf CLI", () => {
     }
   });
 
-  test("an uninitialised project suggests `shelf init`", async () => {
+  test("an uninitialised project suggests nothing for agents to act on", async () => {
     const { exitCode, json } = await shelf("status");
     expect(exitCode).toBe(0);
-    expect(json.data).toMatchObject({ initialized: false, actions: [{ command: "shelf init" }] });
+    expect(json.data).toMatchObject({ initialized: false, actions: [] });
   });
 
   test("borrow → status round trip with a stable envelope", async () => {
