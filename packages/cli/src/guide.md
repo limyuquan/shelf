@@ -56,6 +56,19 @@ Otherwise read `data.loans` and act on `data.actions` — each has a runnable
 <path>` imports one into the library and manages its project's copies.
 Only adopt when the user asks — it changes the library.
 
+## Skills from outside the library
+
+`shelf add <source>` and `shelf pull <name>` fetch and audit; they import only
+with `--yes`. Agents cannot import from remote sources unless the user enabled
+it — if refused, tell the user the exact command to run. Never pass `--force`
+on high-severity findings without the user's explicit approval. `shelf audit`
+scans library skills.
+
+## Harness directories
+
+`shelf targets` shows which skill directories this project uses and suggests
+harnesses that need their own (e.g. Kiro). Change them only when asked.
+
 ## Rules
 
 - Do not edit library files under `~/.shelf` unless the user asks you to

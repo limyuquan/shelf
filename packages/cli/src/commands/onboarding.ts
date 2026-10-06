@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { adopt, parsePositiveInt, scan, shortHash } from "@shelf/core";
 import { positionals, shelfCommand } from "../command.ts";
 import { lines } from "../format.ts";
+import { renderFindings } from "./sources.ts";
 
 export const scanCommand = shelfCommand({
   name: "scan",
@@ -58,6 +59,7 @@ export const adoptCommand = shelfCommand({
             result.loan
               ? `  ${result.loan.status === "created" ? "now borrowed by" : "already borrowed by"} ${result.loan.project} (${result.loan.content})`
               : `  no loan: ${result.note}`,
+            ...(result.findings.length > 0 ? renderFindings(result.findings, "  ") : []),
           ),
         ),
       ),

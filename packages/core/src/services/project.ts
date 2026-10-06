@@ -117,6 +117,11 @@ export async function requireProject(ctx: Context): Promise<OpenProject> {
   return opened;
 }
 
+/** Where this project's borrowed skills go: its lockfile's targets, else the user default. */
+export async function projectTargets(ctx: Context, project: Project): Promise<readonly string[]> {
+  return (await readLockfile(project.path))?.targets ?? ctx.config.targets;
+}
+
 /** A registered project by id, name or path, wherever the caller is. */
 export function requireRegisteredProject(ctx: Context, ref: string): Project {
   const project =
@@ -151,6 +156,7 @@ function adoptLockedSkills(ctx: Context, project: Project, lockfile: Lockfile): 
       revision: locked.revision,
       targets: locked.targets,
       policy: "pinned",
+      mode: locked.mode ?? "copy",
       borrowedAt: now,
       dueAt: addDays(now, ctx.config.loanDays),
     });
@@ -178,7 +184,16 @@ export function syncLockfile(db: Db, project: Project): void {
     if (!findSkillByName(db, name)) skills[name] = entry;
   }
   for (const loan of listActiveLoans(db, project.id)) {
-    skills[loan.skillName] = { revision: loan.revision, targets: [...loan.targets] };
+    skills[loan.skillName] = {
+      revision: loan.revision,
+      targets: [...loan.targets],
+      ...(loan.mode === "link" ? { mode: "link" as const } : {}),
+    };
   }
-  writeLockfileSync(project.path, { version: 1, project: project.id, skills });
+  writeLockfileSync(project.path, {
+    version: 1,
+    project: project.id,
+    ...(current.targets ? { targets: current.targets } : {}),
+    skills,
+  });
 }

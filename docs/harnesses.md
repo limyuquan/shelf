@@ -20,11 +20,16 @@ every harness below except Kiro (and Antigravity, which is unclear).
 | Factory Droid | `.factory/skills`, `.agents/skills` | Yes | Undocumented |
 | Kiro | `.kiro/skills` | Undocumented | Undocumented |
 
+Projects that use a harness outside the default two can add its directory with
+`shelf targets --add <id>`; `shelf targets` marks which harnesses it detects.
+The full list lives in `packages/core/src/projection/harnesses.ts`.
+
 ## Why copies, not symlinks
 
 Symlinked skills have open or recent bugs in Cursor, Claude Code and Codex,
 mostly on Windows. Windows-native apps cannot follow Linux symlinks inside WSL.
-Copies work everywhere; shelf tracks them by hash instead.
+Copies work everywhere; shelf tracks them by hash instead. `--link` mode is
+available for projects where symlinks are known to work.
 
 ## Frontmatter
 

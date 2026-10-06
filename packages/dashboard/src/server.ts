@@ -22,6 +22,7 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   CONFLICT: 409,
   LOCAL_CHANGES: 409,
   LOAN_LIMIT: 422,
+  NOT_ALLOWED: 403,
 };
 
 /** A long-lived reader can keep the WAL from shrinking; checkpoint periodically. */

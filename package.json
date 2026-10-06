@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit -p .",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "check": "bun run lint && bun run typecheck && bun run test"
+    "check": "bun run lint && bun run typecheck && bun run test",
+    "build:all": "bun scripts/build-all.ts",
+    "pack:npm": "bun scripts/pack-npm.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

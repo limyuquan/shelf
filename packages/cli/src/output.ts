@@ -20,6 +20,7 @@ const EXIT_CODES: Record<ErrorCode, number> = {
   CONFLICT: 5,
   LOCAL_CHANGES: 6,
   LOAN_LIMIT: 7,
+  NOT_ALLOWED: 8,
 };
 const INTERNAL_EXIT_CODE = 1;
 

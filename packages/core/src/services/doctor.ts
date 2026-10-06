@@ -3,8 +3,6 @@ import { dirname, join } from "node:path";
 import { pathExists, removeDirectory, writeFileAtomic } from "../library/fs.ts";
 import { revisionKey } from "../library/hash.ts";
 import { revisionPath } from "../library/library.ts";
-import { SKILL_FILE } from "../library/skill-file.ts";
-import { HARNESSES } from "../projection/harnesses.ts";
 import { lockfilePath } from "../projection/lockfile.ts";
 import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
@@ -13,6 +11,7 @@ import { deleteProject, listProjects } from "../store/projects.ts";
 import { listAllRevisionHashes } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { refreshLibrary } from "./library.ts";
+import { bundledSkillFiles } from "./setup.ts";
 
 export interface DoctorCheck {
   readonly id: string;
@@ -72,8 +71,7 @@ async function checkBundledSkill(
 ): Promise<DoctorCheck> {
   const problems: string[] = [];
   const fixed: string[] = [];
-  for (const harness of HARNESSES) {
-    const file = join(ctx.paths.userHome, harness.userDir, "shelf", SKILL_FILE);
+  for (const file of await bundledSkillFiles(ctx)) {
     const current = await readFile(file, "utf8").catch(() => null);
     if (current === bundled) continue;
     const problem = `${file} is ${current === null ? "missing" : "outdated"}`;

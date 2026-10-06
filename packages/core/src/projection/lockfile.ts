@@ -15,11 +15,15 @@ export const LOCKFILE_PATH = ".agents/shelf.lock.json";
 const LockedSkillSchema = z.object({
   revision: z.string().startsWith("sha256:"),
   targets: z.array(z.string()).min(1),
+  /** Omitted for the default, `copy`. */
+  mode: z.literal("link").optional(),
 });
 
 const LockfileSchema = z.object({
   version: z.literal(1),
   project: z.uuid(),
+  /** Project-specific skill directories; omitted to use the user's configured default. */
+  targets: z.array(z.string()).min(1).optional(),
   skills: z.record(z.string(), LockedSkillSchema),
 });
 

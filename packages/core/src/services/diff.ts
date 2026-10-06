@@ -125,7 +125,7 @@ async function resolveSide(
   return { dir: revisionPath(ctx.paths, hash), revision: hash };
 }
 
-async function diffDirectories(fromDir: string, toDir: string): Promise<FileDiff[]> {
+export async function diffDirectories(fromDir: string, toDir: string): Promise<FileDiff[]> {
   const fromFiles = new Set((await pathExists(fromDir)) ? await listFiles(fromDir) : []);
   const toFiles = new Set((await pathExists(toDir)) ? await listFiles(toDir) : []);
   const diffs: FileDiff[] = [];

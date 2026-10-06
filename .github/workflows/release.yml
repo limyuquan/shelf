@@ -1,0 +1,63 @@
+name: Release
+
+# Push a tag matching the CLI version (e.g. v0.4.0) to publish binaries to a
+# GitHub release and, if the NPM_TOKEN secret is set, the npm packages.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the release
+  id-token: write # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+
+      - name: Check the tag matches the CLI version
+        run: test "v$(jq -r .version packages/cli/package.json)" = "$GITHUB_REF_NAME"
+
+      - run: bun run build:all
+
+      - name: Archive binaries
+        run: |
+          mkdir -p release
+          for dir in dist/shelf-*/; do
+            id=$(basename "$dir")
+            if [ -f "$dir/shelf.exe" ]; then
+              (cd "$dir" && zip -q "../../release/$id.zip" shelf.exe)
+            else
+              tar -C "$dir" -czf "release/$id.tar.gz" shelf
+            fi
+          done
+          (cd release && sha256sum * > SHA256SUMS)
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --generate-notes --verify-tag
+
+      - uses: actions/setup-node@v4
+        if: env.NPM_TOKEN != ''
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish to npm
+        if: env.NPM_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          bun run pack:npm
+          # Platform packages first, so the launcher's optionalDependencies resolve.
+          for dir in dist/npm/shelf-*/; do npm publish "$dir" --access public --provenance; done
+          npm publish dist/npm/shelf --access public --provenance

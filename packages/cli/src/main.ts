@@ -23,6 +23,8 @@ import { doctorCommand, sweepCommand } from "./commands/maintenance.ts";
 import { adoptCommand, scanCommand } from "./commands/onboarding.ts";
 import { projectsCommand, statusCommand, syncCommand } from "./commands/project.ts";
 import { initCommand, setupCommand } from "./commands/setup.ts";
+import { addCommand, auditCommand, pullCommand } from "./commands/sources.ts";
+import { targetsCommand } from "./commands/targets.ts";
 import { uiCommand } from "./commands/ui.ts";
 import { printUsageError } from "./output.ts";
 
@@ -55,9 +57,13 @@ const main = defineCommand({
     promote: promoteCommand,
     detach: detachCommand,
     sync: syncCommand,
-    // Bringing existing skills under management
+    targets: targetsCommand,
+    // Bringing skills in: existing copies, or from outside
     scan: scanCommand,
     adopt: adoptCommand,
+    add: addCommand,
+    pull: pullCommand,
+    audit: auditCommand,
     // Across projects
     projects: projectsCommand,
     sweep: sweepCommand,

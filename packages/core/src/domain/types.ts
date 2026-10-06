@@ -6,6 +6,12 @@ export type Actor = string;
 
 export type LoanPolicy = "pinned" | "follow";
 
+/**
+ * `copy`: every target holds its own copy. `link`: the first target holds the copy
+ * and the others are relative symlinks to it (one copy per project).
+ */
+export type LoanMode = "copy" | "link";
+
 /** How close a loan is to its due date. */
 export type DueState = "active" | "due-soon" | "overdue";
 
@@ -32,7 +38,7 @@ export interface Skill {
   readonly archivedAt: Date | null;
 }
 
-export type RevisionSource = "library" | "promote";
+export type RevisionSource = "library" | "promote" | "import";
 
 export interface Loan {
   readonly id: number;
@@ -42,6 +48,7 @@ export interface Loan {
   readonly revision: RevisionHash;
   readonly targets: readonly string[];
   readonly policy: LoanPolicy;
+  readonly mode: LoanMode;
   readonly borrowedAt: Date;
   readonly dueAt: Date;
   readonly returnedAt: Date | null;

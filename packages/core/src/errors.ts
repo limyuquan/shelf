@@ -12,7 +12,8 @@ export type ErrorCode =
   | "NOT_BORROWED"
   | "CONFLICT"
   | "LOCAL_CHANGES"
-  | "LOAN_LIMIT";
+  | "LOAN_LIMIT"
+  | "NOT_ALLOWED";
 
 export class ShelfError extends Error {
   override readonly name = "ShelfError";

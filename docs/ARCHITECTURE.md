@@ -14,6 +14,8 @@ packages/
   dashboard/ `shelf ui`: Bun.serve JSON API (src/api.ts) over core + Preact app (src/app/).
              The HTML import is bundled and embedded into the compiled binary.
   skill/     The bundled SKILL.md installed by `shelf setup`.
+scripts/     Cross-compilation and npm packaging (see Distribution).
+npm/         The npm launcher script.
 tests/e2e/   Runs the real CLI (or the compiled binary via SHELF_BIN) as a subprocess.
 ```
 
@@ -81,6 +83,35 @@ Several agents may run shelf at once in the same project.
   and none of them loses another's entry (see the e2e test).
 - Operations are safe to retry. Borrow takes over a leftover copy only when it
   is byte-identical to the revision being borrowed.
+
+## Link mode
+
+A loan's `mode` is `copy` (every target holds a copy) or `link` (the first
+target holds the copy; the others are relative symlinks, junctions on Windows).
+Hashing and copying follow symlinks, so content states work the same either way.
+
+## Importing and auditing
+
+`shelf add` fetches a source (shallow `git clone` with prompts disabled, or a
+local directory), audits it with `core/src/security/audit.ts`, and returns a
+review. Nothing enters the library without `yes`; high-severity findings also
+need `force`. The source (URL, ref, path, commit, resulting revision) is kept in
+`skill_sources`, so `shelf pull` can re-fetch, diff, re-audit, and refuse to
+clobber library edits made since the import. Agents (actor `agent:*`) are
+refused remote imports unless `allowAgentImports` is set.
+
+The audit is a tripwire for human review, not a sandbox: pattern rules
+(pipe-to-shell, decode-and-run, prompt-injection phrasing, file uploads,
+credential paths, raw-IP URLs, encoded blobs, destructive commands), invisible
+and bidi Unicode, binaries and scripts.
+
+## Distribution
+
+`scripts/build-all.ts` cross-compiles every platform in `scripts/targets.ts`.
+`scripts/pack-npm.ts` lays out one npm package per platform (`os`/`cpu`-gated,
+holding the binary) and a launcher package (`npm/shelf.js`) whose
+`optionalDependencies` list them — the esbuild/biome pattern, with no install
+scripts. `.github/workflows/release.yml` runs both on a version tag.
 
 ## Errors and output
 

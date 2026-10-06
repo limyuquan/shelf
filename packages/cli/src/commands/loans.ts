@@ -31,11 +31,16 @@ export const borrowCommand = shelfCommand({
       type: "boolean",
       description: "Let `shelf sync` apply library updates automatically",
     },
+    link: {
+      type: "boolean",
+      description: "One copy per project; other harness directories symlink to it",
+    },
   },
   async run(ctx, args) {
     const results = await borrow(ctx, positionals(args), {
       days: parseDays(args.days, ctx.config.loanDays),
       policy: args.follow ? "follow" : "pinned",
+      ...(args.link ? { mode: "link" as const } : {}),
     });
     return {
       data: { skills: results },

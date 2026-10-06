@@ -24,7 +24,12 @@ export function stagingPath(dest: string): string {
 
 export async function copyDirectory(src: string, dest: string): Promise<void> {
   await mkdir(dirname(dest), { recursive: true });
-  await cp(src, dest, { recursive: true, filter: (path) => !IGNORED_FILES.has(basename(path)) });
+  // Dereference: copies hold real files, matching how hashes follow symlinks.
+  await cp(src, dest, {
+    recursive: true,
+    dereference: true,
+    filter: (path) => !IGNORED_FILES.has(basename(path)) && basename(path) !== ".git",
+  });
 }
 
 /**

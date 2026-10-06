@@ -32,3 +32,15 @@ SHELF_BIN=dist/shelf bun test tests/e2e   # e2e against the binary
 - Every failure a user or agent can act on is a `ShelfError` with a `hint`.
 - Plain SQL, no ORM. Schema changes are new entries in `migrations.ts`.
 - Comments explain *why*. Don't restate the code.
+
+## Releasing
+
+1. Bump `version` in every `packages/*/package.json` (the CLI reports
+   `packages/cli/package.json`).
+2. Commit, then tag and push: `git tag v0.5.0 && git push --tags`.
+3. The release workflow checks the tag matches, builds every platform, attaches
+   archives and `SHA256SUMS` to a GitHub release, and publishes to npm when the
+   `NPM_TOKEN` secret is set (`NPM_SCOPE` changes the package scope).
+
+Locally: `bun run build:all && bun run pack:npm` produces the same artifacts
+in `dist/`.

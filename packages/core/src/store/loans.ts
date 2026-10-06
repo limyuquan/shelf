@@ -1,4 +1,4 @@
-import type { Loan, LoanPolicy, RevisionHash } from "../domain/types.ts";
+import type { Loan, LoanMode, LoanPolicy, RevisionHash } from "../domain/types.ts";
 import type { Db } from "./database.ts";
 
 interface LoanRow {
@@ -9,6 +9,7 @@ interface LoanRow {
   revision: string;
   targets: string;
   policy: LoanPolicy;
+  mode: LoanMode;
   borrowed_at: string;
   due_at: string;
   returned_at: string | null;
@@ -26,6 +27,7 @@ const toLoan = (row: LoanRow): Loan => ({
   revision: row.revision,
   targets: JSON.parse(row.targets) as string[],
   policy: row.policy,
+  mode: row.mode,
   borrowedAt: new Date(row.borrowed_at),
   dueAt: new Date(row.due_at),
   returnedAt: row.returned_at ? new Date(row.returned_at) : null,
@@ -57,19 +59,21 @@ export function insertLoan(
     revision: RevisionHash;
     targets: readonly string[];
     policy: LoanPolicy;
+    mode?: LoanMode;
     borrowedAt: Date;
     dueAt: Date;
   },
 ): void {
   db.query(
-    `INSERT INTO loans (project_id, skill_id, revision, targets, policy, borrowed_at, due_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO loans (project_id, skill_id, revision, targets, policy, mode, borrowed_at, due_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     loan.projectId,
     loan.skillId,
     loan.revision,
     JSON.stringify(loan.targets),
     loan.policy,
+    loan.mode ?? "copy",
     loan.borrowedAt.toISOString(),
     loan.dueAt.toISOString(),
   );
@@ -77,6 +81,10 @@ export function insertLoan(
 
 export function setLoanRevision(db: Db, loanId: number, revision: RevisionHash): void {
   db.query("UPDATE loans SET revision = ? WHERE id = ?").run(revision, loanId);
+}
+
+export function setLoanTargets(db: Db, loanId: number, targets: readonly string[]): void {
+  db.query("UPDATE loans SET targets = ? WHERE id = ?").run(JSON.stringify(targets), loanId);
 }
 
 export function setLoanDue(db: Db, loanId: number, dueAt: Date): void {

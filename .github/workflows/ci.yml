@@ -34,3 +34,29 @@ jobs:
       - run: bun test tests/e2e
         env:
           SHELF_BIN: ${{ github.workspace }}/dist/shelf
+
+  windows:
+    # Smoke-test the Windows binary end to end, including link mode (junctions).
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun scripts/build-all.ts shelf-win32-x64
+      - name: Borrow, edit, promote and return a skill
+        run: |
+          set -e
+          S="$PWD/dist/shelf-win32-x64/shelf.exe"
+          export SHELF_HOME="$RUNNER_TEMP/shelf-home" HOME="$RUNNER_TEMP" USERPROFILE="$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/proj/.git" && cd "$RUNNER_TEMP/proj"
+          "$S" setup && "$S" init && "$S" new demo -d "Demo skill"
+          "$S" borrow demo --link
+          echo "edit" >> .claude/skills/demo/SKILL.md
+          "$S" status --json | grep -q '"content":"modified"'
+          "$S" promote demo && "$S" return demo
+          test -z "$(ls .agents/skills .claude/skills)"

@@ -8,13 +8,20 @@ import { librarySkillPath } from "../library/library.ts";
 import { readSkillMetadata } from "../library/skill-file.ts";
 import { locateSkillCopy } from "../projection/locate.ts";
 import { skillCopyPath, writeSkillCopies } from "../projection/materialize.ts";
+import { auditDirectory, type Finding } from "../security/audit.ts";
 import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { findActiveLoan, insertLoan } from "../store/loans.ts";
 import { type Context, withCwd } from "./context.ts";
 import { inspectBorrowedSkill } from "./inspect.ts";
 import { refreshLibrary, requireSkill } from "./library.ts";
-import { findProjectRoot, initProject, requireProject, syncLockfile } from "./project.ts";
+import {
+  findProjectRoot,
+  initProject,
+  projectTargets,
+  requireProject,
+  syncLockfile,
+} from "./project.ts";
 
 export interface AdoptResult {
   readonly path: string;
@@ -34,6 +41,8 @@ export interface AdoptResult {
   } | null;
   /** Why no loan was created, when `loan` is null. */
   readonly note: string | null;
+  /** Security findings in the adopted copy, for review (adopting is never blocked). */
+  readonly findings: Finding[];
 }
 
 /**
@@ -70,7 +79,8 @@ async function adoptOne(ctx: Context, path: string): Promise<AdoptResult> {
     library = requireSkill(ctx, name).latestRevision === hash ? "matched" : "differs";
   }
   const skill = requireSkill(ctx, name);
-  const base = { path, skill: name, library, revision: skill.latestRevision };
+  const findings = await auditDirectory(path);
+  const base = { path, skill: name, library, revision: skill.latestRevision, findings };
 
   const location = locateSkillCopy(path);
   if (!location) {
@@ -98,12 +108,12 @@ async function adoptOne(ctx: Context, path: string): Promise<AdoptResult> {
 
   // Manage this copy where it is, plus the configured targets. Targets without a
   // copy get this copy's content, so every copy of the loan starts out identical.
-  const targets = [...new Set([...ctx.config.targets, location.target])];
+  const targets = [...new Set([...(await projectTargets(ctx, project)), location.target])];
   const absent: string[] = [];
   for (const target of targets) {
     if (!(await pathExists(skillCopyPath(project.path, target, name)))) absent.push(target);
   }
-  await writeSkillCopies(project.path, absent, name, path);
+  await writeSkillCopies(project.path, { targets, mode: "copy" }, name, path, absent);
 
   const now = ctx.clock.now();
   writeTransaction(ctx.db, () => {

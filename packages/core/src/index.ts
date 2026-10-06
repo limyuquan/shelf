@@ -8,11 +8,13 @@ export { parseDays, parsePositiveInt } from "./domain/due.ts";
 export type * from "./domain/types.ts";
 export { type ErrorCode, ShelfError } from "./errors.ts";
 export { shortHash } from "./library/hash.ts";
-export { HARNESSES, type Harness } from "./projection/harnesses.ts";
+export { findHarness, HARNESSES, type Harness } from "./projection/harnesses.ts";
 export { LOCKFILE_PATH } from "./projection/lockfile.ts";
+export type { Finding, Severity } from "./security/audit.ts";
 export type { Action } from "./services/actions.ts";
 export { activity } from "./services/activity.ts";
 export { type AdoptResult, adopt } from "./services/adopt.ts";
+export { audit, type SkillAudit } from "./services/audit.ts";
 export {
   type Context,
   type ContextOptions,
@@ -23,6 +25,14 @@ export {
 export { type DiffResult, diffSkill, type FileDiff } from "./services/diff.ts";
 export { type DoctorCheck, doctor } from "./services/doctor.ts";
 export { type SkillHistory, skillHistory } from "./services/history.ts";
+export {
+  type AddResult,
+  addSkill,
+  type ImportOptions,
+  type ImportStatus,
+  type PullResult,
+  pullSkill,
+} from "./services/import.ts";
 export type { LoanReport } from "./services/inspect.ts";
 export {
   type CatalogEntry,
@@ -61,4 +71,10 @@ export {
   sweep,
   sync,
 } from "./services/status.ts";
+export {
+  changeTargets,
+  describeTargets,
+  type TargetsChange,
+  type TargetsReport,
+} from "./services/targets.ts";
 export type { EventRecord } from "./store/events.ts";

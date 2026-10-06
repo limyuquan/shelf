@@ -10,6 +10,13 @@ export const ConfigSchema = z.object({
   maxLoanDays: z.number().int().positive().default(90),
   /** Loans due within this many days are reported as `due-soon`. */
   dueSoonDays: z.number().int().nonnegative().default(7),
+  /**
+   * Lets agents run `shelf add` / `shelf pull` from remote sources. Off by default:
+   * the library is the trust boundary, and only the user should widen it.
+   */
+  allowAgentImports: z.boolean().default(false),
+  /** `copy`: a copy per target. `link`: one copy, other targets symlink to it. */
+  mode: z.enum(["copy", "link"]).default("copy"),
   /** Project-relative directories that borrowed skills are written into. */
   targets: z
     .array(z.string().min(1))

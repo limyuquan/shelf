@@ -1,7 +1,15 @@
 import { addDays, parseDueExpression } from "../domain/due.ts";
 import { isClean } from "../domain/loan-state.ts";
 import { assertSkillName } from "../domain/skill-name.ts";
-import type { EventType, Loan, LoanPolicy, Project, RevisionHash, Skill } from "../domain/types.ts";
+import type {
+  EventType,
+  Loan,
+  LoanMode,
+  LoanPolicy,
+  Project,
+  RevisionHash,
+  Skill,
+} from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { pathExists, replaceDirectory } from "../library/fs.ts";
 import { hashDirectoryIfExists } from "../library/hash.ts";
@@ -21,7 +29,7 @@ import { insertRevision, updateSkillHead } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { inspectBorrowedSkill, inspectLoans, type LoanInspection } from "./inspect.ts";
 import { requireSkill } from "./library.ts";
-import { requireProject, syncLockfile } from "./project.ts";
+import { projectTargets, requireProject, syncLockfile } from "./project.ts";
 
 export interface BorrowResult {
   readonly skill: string;
@@ -29,18 +37,21 @@ export interface BorrowResult {
   readonly revision: RevisionHash;
   readonly dueAt: Date;
   readonly targets: readonly string[];
+  readonly mode: LoanMode;
 }
 
 /** Borrows skills into the current project. Idempotent: re-borrowing is a no-op. */
 export async function borrow(
   ctx: Context,
   names: readonly string[],
-  options: { days?: number; policy?: LoanPolicy } = {},
+  options: { days?: number; policy?: LoanPolicy; mode?: LoanMode } = {},
 ): Promise<BorrowResult[]> {
   if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
   const { project } = await requireProject(ctx);
   const days = options.days ?? ctx.config.loanDays;
   assertWithinLoanLimit(ctx, days);
+  const targets = await projectTargets(ctx, project);
+  const mode = options.mode ?? ctx.config.mode;
 
   // Validate everything before touching the project, so a bad name changes nothing.
   const plan: { skill: Skill; existing: Loan | null }[] = [];
@@ -48,7 +59,7 @@ export async function borrow(
     assertSkillName(name);
     const skill = requireSkill(ctx, name);
     const existing = findActiveLoan(ctx.db, project.id, name);
-    if (!existing) await assertNoUnmanagedCopies(ctx, project, skill);
+    if (!existing) await assertNoUnmanagedCopies(project, targets, skill);
     plan.push({ skill, existing });
   }
 
@@ -58,12 +69,11 @@ export async function borrow(
       results.push({ skill: skill.name, status: "already-borrowed", ...pickLoan(existing) });
       continue;
     }
-    const targets = ctx.config.targets;
     const now = ctx.clock.now();
     const dueAt = addDays(now, days);
     await writeSkillCopies(
       project.path,
-      targets,
+      { targets, mode },
       skill.name,
       revisionPath(ctx.paths, skill.latestRevision),
     );
@@ -74,6 +84,7 @@ export async function borrow(
         revision: skill.latestRevision,
         targets,
         policy: options.policy ?? "pinned",
+        mode,
         borrowedAt: now,
         dueAt,
       });
@@ -93,6 +104,7 @@ export async function borrow(
       revision: skill.latestRevision,
       dueAt,
       targets,
+      mode,
     });
   }
   return results;
@@ -104,11 +116,11 @@ export async function borrow(
  * is safe to take over.
  */
 async function assertNoUnmanagedCopies(
-  ctx: Context,
   project: Project,
+  targets: readonly string[],
   skill: Skill,
 ): Promise<void> {
-  for (const target of ctx.config.targets) {
+  for (const target of targets) {
     const path = skillCopyPath(project.path, target, skill.name);
     const hash = await hashDirectoryIfExists(path);
     if (hash !== null && hash !== skill.latestRevision) {
@@ -289,12 +301,7 @@ export async function moveLoanToRevision(
   revision: RevisionHash,
   reason: Extract<EventType, "loan.updated" | "loan.restored">,
 ): Promise<void> {
-  await writeSkillCopies(
-    project.path,
-    loan.targets,
-    loan.skillName,
-    revisionPath(ctx.paths, revision),
-  );
+  await writeSkillCopies(project.path, loan, loan.skillName, revisionPath(ctx.paths, revision));
   const now = ctx.clock.now();
   writeTransaction(ctx.db, () => {
     setLoanRevision(ctx.db, loan.id, revision);
@@ -335,7 +342,7 @@ export async function restoreMissingCopies(
     return;
   }
 
-  await writeSkillCopies(project.path, missing, loan.skillName, source);
+  await writeSkillCopies(project.path, loan, loan.skillName, source, missing);
   writeTransaction(ctx.db, () => {
     recordEvent(ctx.db, {
       type: "loan.restored",
@@ -402,7 +409,7 @@ export async function promote(
   await replaceDirectory(source, librarySkillPath(ctx.paths, name));
   const revision = await snapshotSkill(ctx.paths, name);
   const { description } = await readSkillMetadata(librarySkillPath(ctx.paths, name));
-  await writeSkillCopies(project.path, loan.targets, name, revisionPath(ctx.paths, revision));
+  await writeSkillCopies(project.path, loan, name, revisionPath(ctx.paths, revision));
 
   const now = ctx.clock.now();
   writeTransaction(ctx.db, () => {
@@ -438,6 +445,6 @@ function assertWithinLoanLimit(ctx: Context, days: number): void {
   }
 }
 
-function pickLoan(loan: Loan): { revision: RevisionHash; dueAt: Date; targets: readonly string[] } {
-  return { revision: loan.revision, dueAt: loan.dueAt, targets: loan.targets };
+function pickLoan(loan: Loan): Pick<BorrowResult, "revision" | "dueAt" | "targets" | "mode"> {
+  return { revision: loan.revision, dueAt: loan.dueAt, targets: loan.targets, mode: loan.mode };
 }

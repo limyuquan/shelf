@@ -4,7 +4,7 @@ import type { Database } from "bun:sqlite";
  * Append-only list of schema migrations. Position N (1-based) is applied when
  * `PRAGMA user_version` < N. Never edit a shipped migration; add a new one.
  */
-const MIGRATIONS: readonly string[] = [
+export const MIGRATIONS: readonly string[] = [
   /* 1: initial schema */ `
   CREATE TABLE projects (
     id           TEXT PRIMARY KEY,
@@ -56,6 +56,34 @@ const MIGRATIONS: readonly string[] = [
     detail     TEXT
   );
   CREATE INDEX events_at ON events(at);
+  `,
+
+  /* 2: imported skills, link mode */ `
+  -- SQLite cannot alter a CHECK constraint, so rebuild revisions to allow 'import'.
+  CREATE TABLE revisions_v2 (
+    skill_id   INTEGER NOT NULL REFERENCES skills(id),
+    hash       TEXT NOT NULL,
+    parent     TEXT,
+    source     TEXT NOT NULL CHECK (source IN ('library', 'promote', 'import')),
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (skill_id, hash)
+  );
+  INSERT INTO revisions_v2 (skill_id, hash, parent, source, created_at)
+    SELECT skill_id, hash, parent, source, created_at FROM revisions;
+  DROP TABLE revisions;
+  ALTER TABLE revisions_v2 RENAME TO revisions;
+
+  ALTER TABLE loans ADD COLUMN mode TEXT NOT NULL DEFAULT 'copy' CHECK (mode IN ('copy', 'link'));
+
+  CREATE TABLE skill_sources (
+    skill_id    INTEGER PRIMARY KEY REFERENCES skills(id),
+    url         TEXT NOT NULL,
+    ref         TEXT,
+    path        TEXT,
+    commit_sha  TEXT,
+    revision    TEXT NOT NULL,
+    imported_at TEXT NOT NULL
+  );
   `,
 ];
 
