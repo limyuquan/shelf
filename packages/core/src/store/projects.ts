@@ -44,3 +44,8 @@ export function upsertProject(db: Db, project: Project): void {
     project.lastSeenAt.toISOString(),
   );
 }
+
+/** Forgets a project and its loan history (events are kept). */
+export function deleteProject(db: Db, id: string): void {
+  db.query("DELETE FROM projects WHERE id = ?").run(id);
+}

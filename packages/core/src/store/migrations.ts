@@ -62,12 +62,15 @@ const MIGRATIONS: readonly string[] = [
 export const SCHEMA_VERSION = MIGRATIONS.length;
 
 export function migrate(db: Database): void {
-  const current = db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version;
-  for (let version = (current ?? 0) + 1; version <= MIGRATIONS.length; version++) {
-    const sql = MIGRATIONS[version - 1] as string;
-    db.transaction(() => {
-      db.run(sql);
-      db.run(`PRAGMA user_version = ${version}`);
-    }).immediate();
-  }
+  const version = () =>
+    db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version ?? 0;
+  if (version() >= MIGRATIONS.length) return;
+  // Re-read the version under the write lock: concurrent processes opening a new
+  // database must not both apply the same migration.
+  db.transaction(() => {
+    for (let next = version() + 1; next <= MIGRATIONS.length; next++) {
+      db.run(MIGRATIONS[next - 1] as string);
+      db.run(`PRAGMA user_version = ${next}`);
+    }
+  }).immediate();
 }

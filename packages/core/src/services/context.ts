@@ -36,3 +36,8 @@ export async function createContext(options: ContextOptions = {}): Promise<Conte
 export function closeContext(ctx: Context): void {
   ctx.db.close();
 }
+
+/** The same context acting from another directory, e.g. a project found by `scan`. */
+export function withCwd(ctx: Context, cwd: string): Context {
+  return { ...ctx, cwd };
+}

@@ -33,7 +33,8 @@ export function shortHash(hash: RevisionHash): string {
   return revisionKey(hash).slice(0, 10);
 }
 
-async function listFiles(dir: string, prefix = ""): Promise<string[]> {
+/** Relative POSIX paths of every file in a skill directory, sorted, excluding OS clutter. */
+export async function listFiles(dir: string, prefix = ""): Promise<string[]> {
   const entries = await readdir(join(dir, prefix), { withFileTypes: true });
   const files: string[] = [];
   for (const entry of entries) {

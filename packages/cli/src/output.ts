@@ -53,3 +53,23 @@ export function printFailure(error: unknown, json: boolean): number {
   }
   return error instanceof ShelfError ? EXIT_CODES[error.code] : INTERNAL_EXIT_CODE;
 }
+
+/**
+ * Prints a citty usage error (unknown command, missing argument) as a JSON
+ * envelope and returns the exit code. Anything else is an internal error.
+ */
+export function printUsageError(error: unknown): number {
+  if (!(error instanceof Error) || error.name !== "CLIError") return printFailure(error, true);
+  const failure = {
+    code: "INVALID_ARGUMENT",
+    message: stripAnsi(error.message),
+    hint: "Run `shelf --help` or `shelf <command> --help` for usage",
+  };
+  console.log(JSON.stringify({ schemaVersion: SCHEMA_VERSION, ok: false, error: failure }));
+  return EXIT_CODES.INVALID_ARGUMENT;
+}
+
+function stripAnsi(text: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: matching ANSI escapes is the point
+  return text.replace(/\u001b\[[0-9;]*m/g, "");
+}

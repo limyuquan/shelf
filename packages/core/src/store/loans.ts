@@ -86,3 +86,23 @@ export function setLoanDue(db: Db, loanId: number, dueAt: Date): void {
 export function closeLoan(db: Db, loanId: number, at: Date): void {
   db.query("UPDATE loans SET returned_at = ? WHERE id = ?").run(at.toISOString(), loanId);
 }
+
+/** Active loans of one skill across all projects. */
+export function listActiveLoansForSkill(db: Db, skillId: number): Loan[] {
+  return db
+    .query<LoanRow, [number]>(
+      `${SELECT_LOAN} WHERE loans.skill_id = ? AND loans.returned_at IS NULL ORDER BY loans.project_id`,
+    )
+    .all(skillId)
+    .map(toLoan);
+}
+
+/** Base revisions of every active loan, across all projects. */
+export function listActiveLoanRevisions(db: Db): Set<RevisionHash> {
+  const rows = db
+    .query<{ revision: string }, []>(
+      "SELECT DISTINCT revision FROM loans WHERE returned_at IS NULL",
+    )
+    .all();
+  return new Set(rows.map((row) => row.revision));
+}

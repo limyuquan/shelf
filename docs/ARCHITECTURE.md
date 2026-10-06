@@ -58,7 +58,7 @@ overwrite local edits. Any operation that would discard edits (`return`,
 
 Several agents may run shelf at once in the same project.
 
-- SQLite runs in WAL mode with `busy_timeout = 5000`.
+- SQLite runs in WAL mode with `busy_timeout = 15000`.
 - Every write uses `BEGIN IMMEDIATE` (`writeTransaction`). Deferred transactions
   that upgrade from read to write fail instantly with `SQLITE_BUSY` under
   contention instead of waiting.

@@ -4,19 +4,23 @@
  */
 export { type Clock, systemClock } from "./clock.ts";
 export { type Config, ConfigSchema } from "./config.ts";
-export { parseDays } from "./domain/due.ts";
+export { parseDays, parsePositiveInt } from "./domain/due.ts";
 export type * from "./domain/types.ts";
 export { type ErrorCode, ShelfError } from "./errors.ts";
 export { shortHash } from "./library/hash.ts";
 export { HARNESSES, type Harness } from "./projection/harnesses.ts";
 export { LOCKFILE_PATH } from "./projection/lockfile.ts";
 export type { Action } from "./services/actions.ts";
+export { type AdoptResult, adopt } from "./services/adopt.ts";
 export {
   type Context,
   type ContextOptions,
   closeContext,
   createContext,
 } from "./services/context.ts";
+export { type DiffResult, diffSkill, type FileDiff } from "./services/diff.ts";
+export { type DoctorCheck, doctor } from "./services/doctor.ts";
+export { type SkillHistory, skillHistory } from "./services/history.ts";
 export type { LoanReport } from "./services/inspect.ts";
 export {
   type CatalogEntry,
@@ -41,5 +45,14 @@ export {
 } from "./services/loans.ts";
 export { listProjectOverviews, type ProjectOverview } from "./services/overview.ts";
 export { initProject } from "./services/project.ts";
+export { type PropagateResult, type PropagationStatus, propagate } from "./services/propagate.ts";
+export { type ScanGroup, type ScanReport, scan } from "./services/scan.ts";
 export { type SetupResult, setup } from "./services/setup.ts";
-export { type StatusReport, type SyncReport, status, sync } from "./services/status.ts";
+export {
+  type StatusReport,
+  type SweepReport,
+  type SyncReport,
+  status,
+  sweep,
+  sync,
+} from "./services/status.ts";

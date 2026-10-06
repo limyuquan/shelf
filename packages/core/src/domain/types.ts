@@ -52,6 +52,7 @@ export type EventType =
   | "skill.revised"
   | "skill.archived"
   | "project.registered"
+  | "project.forgotten"
   | "loan.borrowed"
   | "loan.adopted"
   | "loan.due-changed"

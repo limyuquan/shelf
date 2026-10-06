@@ -57,6 +57,21 @@ Each loan has a **content** state — `current`, `behind`, `modified`, `diverged
 or `missing` — computed from three hashes: the revision borrowed, the library's
 latest, and the files on disk.
 
+## Migrating existing skills
+
+```sh
+shelf scan ~/code          # every skill copy, grouped by name and content
+shelf adopt ~/code/app/.claude/skills/review ~/code/api/.claude/skills/review
+```
+
+The first copy adopted becomes the library version. Copies that differ are
+adopted as loans with local edits (`modified`), so nothing is overwritten:
+`shelf diff`, then `shelf promote --propagate` the best one or
+`shelf update --force` to take the library's.
+
+To return overdue loans everywhere without visiting each project, run
+`shelf sweep` daily (cron, systemd timer, launchd).
+
 ## Install
 
 shelf is pre-release. Build from source with [Bun](https://bun.com) 1.4:
@@ -84,10 +99,17 @@ shelf setup              # creates ~/.shelf and installs the shelf skill for all
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
 | `shelf return <name> [--force]` | Remove a borrowed skill |
 | `shelf update [name…] [--force]` | Update borrowed skills to the library's latest revision |
-| `shelf promote <name> [--force]` | Publish a project's edits back to the library |
+| `shelf promote <name> [--force] [--propagate]` | Publish a project's edits back to the library (and to other borrowers) |
 | `shelf detach <name>` | Stop managing a skill; keep its files |
 | `shelf sync` | Return overdue, restore missing copies, update `--follow` loans |
 | `shelf projects` | Every project using shelf, with loan counts |
+| `shelf scan [dir]` | Find skill copies under a directory, grouped by name and version |
+| `shelf adopt <path…>` | Import existing skills into the library and manage their copies as loans |
+| `shelf log <name>` | A skill's revisions and which projects borrow each |
+| `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
+| `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
+| `shelf sweep` | `sync` every registered project (cron-friendly) |
+| `shelf doctor [--fix]` | Check and repair shelf's state |
 | `shelf guide` | The full guide for agents |
 
 ## For agents
@@ -119,10 +141,6 @@ Set `SHELF_HOME` to keep shelf's state elsewhere.
 
 ## Roadmap
 
-- `shelf scan` / `shelf adopt`: find duplicated skills across your projects and
-  turn them into loans from one library copy.
-- `shelf promote --propagate`: push a library change to every clean borrower.
-- `shelf diff`, revision history, `shelf sweep` across all projects.
 - `shelf ui`: a local dashboard of projects, loans and due dates, with an editor.
 - `shelf add <git-url>` with local security scanning.
 - Prebuilt binaries for macOS, Linux and Windows.

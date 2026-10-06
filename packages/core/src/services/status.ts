@@ -1,8 +1,11 @@
 import { isClean } from "../domain/loan-state.ts";
 import type { Project } from "../domain/types.ts";
+import { pathExists } from "../library/fs.ts";
+import { listProjects } from "../store/projects.ts";
 import { type Action, suggestActions } from "./actions.ts";
 import type { Context } from "./context.ts";
 import { inspectLoans, type LoanInspection, type LoanReport } from "./inspect.ts";
+import { refreshLibrary } from "./library.ts";
 import { closeLoanAndFiles, moveLoanToRevision, restoreMissingCopies } from "./loans.ts";
 import { findProjectRoot, openProject, requireProject } from "./project.ts";
 
@@ -64,6 +67,32 @@ export interface SyncReport {
  */
 export async function sync(ctx: Context): Promise<SyncReport> {
   const { project, warnings } = await requireProject(ctx);
+  return syncProject(ctx, project, warnings);
+}
+
+export interface SweepReport {
+  readonly synced: SyncReport[];
+  /** Registered projects whose directory no longer exists (see `shelf doctor`). */
+  readonly missing: ProjectSummary[];
+}
+
+/** `sync` for every registered project — suitable for a daily cron job. */
+export async function sweep(ctx: Context): Promise<SweepReport> {
+  await refreshLibrary(ctx);
+  const synced: SyncReport[] = [];
+  const missing: ProjectSummary[] = [];
+  for (const project of listProjects(ctx.db)) {
+    if (await pathExists(project.path)) synced.push(await syncProject(ctx, project, []));
+    else missing.push(summarize(project));
+  }
+  return { synced, missing };
+}
+
+async function syncProject(
+  ctx: Context,
+  project: Project,
+  warnings: string[],
+): Promise<SyncReport> {
   const expired = await expireOverdue(ctx, project, await inspectLoans(ctx, project));
   const restored: string[] = [];
   const updated: string[] = [];

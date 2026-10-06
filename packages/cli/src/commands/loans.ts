@@ -3,6 +3,7 @@ import {
   detach,
   parseDays,
   promote,
+  propagate,
   renew,
   returnSkill,
   setDue,
@@ -11,6 +12,7 @@ import {
 } from "@shelf/core";
 import { positionals, shelfCommand } from "../command.ts";
 import { formatDate, lines } from "../format.ts";
+import { renderPropagation } from "./library.ts";
 
 const reasonArg = {
   type: "string",
@@ -132,12 +134,20 @@ export const promoteCommand = shelfCommand({
   args: {
     skill: { type: "positional", required: true, description: "Skill name" },
     force: forceArg("Replace the library revision even if it changed since borrowing"),
+    propagate: {
+      type: "boolean",
+      description: "Then update every other project borrowing it (skips local edits)",
+    },
   },
   async run(ctx, args) {
     const result = await promote(ctx, args.skill, { force: Boolean(args.force) });
+    const propagation = args.propagate ? await propagate(ctx, args.skill) : null;
     return {
-      data: result,
-      text: `Promoted ${result.skill}: library ${shortHash(result.previousRevision)} → ${shortHash(result.revision)}`,
+      data: { ...result, propagation },
+      text: lines(
+        `Promoted ${result.skill}: library ${shortHash(result.previousRevision)} → ${shortHash(result.revision)}`,
+        propagation && renderPropagation(propagation),
+      ),
     };
   },
 });

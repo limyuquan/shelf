@@ -41,6 +41,21 @@ Otherwise read `data.loans` and act on `data.actions` — each has a runnable
 - Renew skills you actually used; return the ones you did not. Give a reason:
   the user reviews it in the activity log.
 
+## Changing skills everywhere
+
+- `shelf diff <name>` shows local edits (or pending library changes).
+- `shelf promote <name> --propagate` publishes this project's edits and updates
+  every other project borrowing the skill. Copies with their own local edits
+  are skipped, never overwritten.
+- `shelf propagate <name> --dry-run` previews pushing the library's latest.
+- `shelf log <name>` lists revisions and who borrows which.
+
+## Existing skills
+
+`shelf scan <dir>` finds skill copies not yet managed by shelf; `shelf adopt
+<path>` imports one into the library and manages its project's copies.
+Only adopt when the user asks — it changes the library.
+
 ## Rules
 
 - Do not edit library files under `~/.shelf` unless the user asks you to

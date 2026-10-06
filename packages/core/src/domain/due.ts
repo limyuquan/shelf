@@ -31,10 +31,18 @@ export function parseDueExpression(expression: string, currentDue: Date): Date {
 }
 
 export function parseDays(value: string | undefined, fallback: number): number {
+  return parsePositiveInt(value, fallback, "--days");
+}
+
+export function parsePositiveInt(
+  value: string | undefined,
+  fallback: number,
+  flag: string,
+): number {
   if (value === undefined) return fallback;
-  const days = Number(value);
-  if (!Number.isInteger(days) || days <= 0) {
-    throw new ShelfError("INVALID_ARGUMENT", `--days must be a positive integer, got "${value}"`);
+  const number = Number(value);
+  if (!Number.isInteger(number) || number <= 0) {
+    throw new ShelfError("INVALID_ARGUMENT", `${flag} must be a positive integer, got "${value}"`);
   }
-  return days;
+  return number;
 }

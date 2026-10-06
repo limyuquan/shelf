@@ -86,3 +86,39 @@ export function countRevisions(db: Db, skillId: number): number {
       .get(skillId)?.n ?? 0
   );
 }
+
+interface RevisionRow {
+  hash: string;
+  parent: string | null;
+  source: RevisionSource;
+  created_at: string;
+}
+
+export interface RevisionRecord {
+  readonly hash: RevisionHash;
+  readonly parent: RevisionHash | null;
+  readonly source: RevisionSource;
+  readonly createdAt: Date;
+}
+
+/** Revisions of a skill, newest first. */
+export function listRevisions(db: Db, skillId: number): RevisionRecord[] {
+  return db
+    .query<RevisionRow, [number]>(
+      `SELECT hash, parent, source, created_at FROM revisions
+       WHERE skill_id = ? ORDER BY created_at DESC, rowid DESC`,
+    )
+    .all(skillId)
+    .map((row) => ({
+      hash: row.hash,
+      parent: row.parent,
+      source: row.source,
+      createdAt: new Date(row.created_at),
+    }));
+}
+
+/** Every revision hash still needed by some skill (for object-store hygiene). */
+export function listAllRevisionHashes(db: Db): Set<RevisionHash> {
+  const rows = db.query<{ hash: string }, []>("SELECT DISTINCT hash FROM revisions").all();
+  return new Set(rows.map((row) => row.hash));
+}

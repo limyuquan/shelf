@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -7,6 +7,10 @@ import { join, resolve } from "node:path";
  * Drives the real CLI as a subprocess. Set SHELF_BIN to test a compiled binary
  * (CI does); otherwise the TypeScript entry point runs under Bun.
  */
+// Each test spawns real CLI processes that create a fresh SQLite database; on a
+// busy disk those fsyncs alone can exceed the 5 s default.
+setDefaultTimeout(60_000);
+
 const ENTRY = resolve(import.meta.dir, "../../packages/cli/src/main.ts");
 const COMMAND = process.env.SHELF_BIN ? [process.env.SHELF_BIN] : [process.execPath, ENTRY];
 
@@ -27,8 +31,16 @@ async function shelf(...args: string[]): Promise<{ exitCode: number; json: Envel
     stdout: "pipe",
     stderr: "pipe",
   });
-  const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
-  return { exitCode, json: JSON.parse(stdout) as Envelope };
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  try {
+    return { exitCode, json: JSON.parse(stdout) as Envelope };
+  } catch {
+    throw new Error(`shelf ${args.join(" ")} printed no JSON (exit ${exitCode}): ${stderr}`);
+  }
 }
 
 beforeEach(async () => {
@@ -82,5 +94,19 @@ describe("shelf CLI", () => {
     expect(results.map((result) => result.exitCode)).toEqual(names.map(() => 0));
     const lockfile = await Bun.file(join(project, ".agents/shelf.lock.json")).json();
     expect(Object.keys(lockfile.skills).sort()).toEqual(names);
+  });
+});
+
+describe("usage errors with --json", () => {
+  test("an unknown command returns an INVALID_ARGUMENT envelope", async () => {
+    const { exitCode, json } = await shelf("frobnicate");
+    expect(exitCode).toBe(2);
+    expect(json).toMatchObject({ ok: false, error: { code: "INVALID_ARGUMENT" } });
+  });
+
+  test("a missing argument returns an INVALID_ARGUMENT envelope", async () => {
+    const { exitCode, json } = await shelf("borrow");
+    expect(exitCode).toBe(2);
+    expect(json.error?.message).toContain("SKILL");
   });
 });
