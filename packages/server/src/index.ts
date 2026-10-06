@@ -4,5 +4,5 @@
  */
 export { createApi, type Guard } from "./app.ts";
 export { type Api, type ApiErrorBody, TOKEN_HEADER } from "./contract.ts";
-export { type DashboardServer, hostMatcher, type ServeOptions, startServer } from "./serve.ts";
+export { type DashboardServer, type ServeOptions, startServer } from "./serve.ts";
 export { loadToken } from "./token.ts";

@@ -79,15 +79,13 @@ packages/web/src/
 
 The server binds 127.0.0.1 (on a random port unless `--port`). Every API request
 must carry the token in a custom header, and a Host naming that loopback address
-or one of the `--allow-host` names — blocking other browsers' pages, CSRF
+— blocking other browsers' pages, CSRF
 (custom headers need CORS, which is never granted) and DNS rebinding. The token
 lives in `~/.shelf/ui-token` (mode 0600) so bookmarks and home-screen shortcuts
 survive restarts; the app moves it from the URL into localStorage and strips it
 from the address bar, and shows a Connect screen when it is missing or wrong.
 
-Remote access goes through a proxy that terminates TLS and restricts who can
-connect (Tailscale Serve, which forwards the original Host — hence
-`--allow-host`). shelf itself never listens beyond loopback. Viewing never mutates: project
+shelf never listens beyond loopback and has no remote-access mode. Viewing never mutates: project
 pages use `projectReport` and Attention uses `listAttention`, not `status`, so
 overdue loans are shown rather than returned.
 

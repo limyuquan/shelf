@@ -121,22 +121,6 @@ in `~/.shelf/ui-token`, so bookmarks survive restarts; `--rotate-token` signs
 every browser out). Everything is built into the binary: no Node, no CDN, works
 offline. The layout adapts to phones and tablets.
 
-### On your phone, over Tailscale
-
-Put [Tailscale Serve](https://tailscale.com/kb/1312/serve) in front of the
-dashboard and tell shelf to accept that hostname:
-
-```sh
-shelf ui --port 4174 --allow-host my-pc.tailnet.ts.net:8446 --no-open
-tailscale serve --bg --https=8446 http://127.0.0.1:4174   # tailnet only
-```
-
-Open the `also:` URL it prints on your phone, then "Add to Home Screen". The
-dashboard still binds to loopback only; Tailscale provides HTTPS and limits
-access to your tailnet, and the token is still required. Without
-`--allow-host`, requests through the proxy are refused as a DNS-rebinding
-guard.
-
 ## Install
 
 Download a binary from the [releases page](https://github.com/limyuquan/shelf/releases)
@@ -206,7 +190,7 @@ boundary.
 | `shelf projects` | Every project using shelf, with loan counts |
 | `shelf sweep` | `sync` every registered project (cron-friendly) |
 | `shelf doctor [--fix]` | Check and repair shelf's state |
-| `shelf ui [--port N] [--no-open] [--allow-host h]` | Local dashboard: projects, loans, due dates, library editor, activity |
+| `shelf ui [--port N] [--no-open]` | Local dashboard: projects, loans, due dates, library editor, activity |
 
 ### Harnesses and link mode
 

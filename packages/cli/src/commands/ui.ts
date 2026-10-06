@@ -5,7 +5,6 @@ import bundledSkill from "@shelf/skill/SKILL.md" with { type: "text" };
 import page from "@shelf/web/index.html";
 import { defineCommand } from "citty";
 import pkg from "../../package.json" with { type: "json" };
-import { lines } from "../format.ts";
 import { resolveHookCommand } from "../hook-command.ts";
 import { printFailure, printSuccess } from "../output.ts";
 
@@ -15,11 +14,6 @@ export const uiCommand = defineCommand({
   args: {
     port: { type: "string", description: "Port to listen on (default: a free port)" },
     open: { type: "boolean", default: true, description: "Open a browser (--no-open to skip)" },
-    "allow-host": {
-      type: "string",
-      description:
-        "Also accept these hosts, e.g. your Tailscale Serve name (comma-separated; name or name:port)",
-    },
     "rotate-token": {
       type: "boolean",
       description: "Replace the access token (signs out every browser)",
@@ -31,28 +25,17 @@ export const uiCommand = defineCommand({
     try {
       const ctx = await createContext({ actor: "user:dashboard" });
       const port = args.port === undefined ? 0 : parsePositiveInt(args.port, 0, "--port");
-      const allowedHosts = (args["allow-host"] ?? "")
-        .split(",")
-        .map((host) => host.trim())
-        .filter(Boolean);
       const token = await loadToken(ctx.paths.home, { rotate: Boolean(args["rotate-token"]) });
       const dashboard = startServer(ctx, {
         page,
         port,
         token,
-        allowedHosts,
         system: { version: pkg.version, bundledSkill, hookCommand: resolveHookCommand() },
       });
-      // Proxies such as Tailscale Serve terminate HTTPS in front of the dashboard.
-      const remote = allowedHosts.map((host) => `https://${host}/?token=${token}`);
       printSuccess(
         {
-          data: { url: dashboard.url, remote },
-          text: lines(
-            `shelf dashboard: ${dashboard.url}`,
-            ...remote.map((url) => `             also: ${url}`),
-            "Ctrl-C to stop.",
-          ),
+          data: { url: dashboard.url },
+          text: `shelf dashboard: ${dashboard.url}\nCtrl-C to stop.`,
         },
         json,
       );
