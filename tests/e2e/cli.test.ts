@@ -108,6 +108,24 @@ describe("shelf CLI", () => {
     const lockfile = await Bun.file(join(project, ".agents/shelf.lock.json")).json();
     expect(Object.keys(lockfile.skills).sort()).toEqual(names);
   });
+
+  test("restore brings back an earlier revision; show --revision prints it", async () => {
+    await shelf("new", "pdf-tools", "-d", "Work with PDFs");
+    const skillFile = join(home, ".shelf/library/pdf-tools/SKILL.md");
+    const original = await Bun.file(skillFile).text();
+    const first = (await shelf("show", "pdf-tools")).json.data?.revision as string;
+    await Bun.write(skillFile, `${original}\nA later edit.\n`);
+
+    const old = await shelf("show", "pdf-tools", "--revision", first.slice(7, 15));
+    expect(old.json.data).toMatchObject({ revision: first, latest: false, files: ["SKILL.md"] });
+
+    const { exitCode, json } = await shelf("restore", "pdf-tools", first.slice(7, 15));
+    expect(exitCode).toBe(0);
+    expect(json.data).toMatchObject({ skill: "pdf-tools", revision: first, restored: true });
+    expect(await Bun.file(skillFile).text()).toBe(original);
+    const log = await shelf("log", "pdf-tools");
+    expect(log.json.data?.revisions).toHaveLength(2);
+  });
 });
 
 describe("usage errors with --json", () => {

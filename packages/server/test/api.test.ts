@@ -281,6 +281,91 @@ describe("skill files", () => {
   });
 });
 
+describe("revisions", () => {
+  /** "pdf" at v1, then v2 with a reference file. */
+  async function withHistory() {
+    const context = await setup();
+    const { env, client } = context;
+    const skill = client.skills[":name"];
+    const v1 = (await ok(skill.$get({ param: { name: "pdf" } }))).detail.revision;
+    await mkdir(join(env.shelfHome, "library/pdf/references"));
+    await writeFile(join(env.shelfHome, "library/pdf/references/tables.md"), "# Tables\n");
+    const v2 = (await ok(skill.$get({ param: { name: "pdf" } }))).detail.revision;
+    return { ...context, revisions: skill.revisions[":revision"], v1, v2 };
+  }
+  const prefix = (hash: string, length = 8) => hash.replace("sha256:", "").slice(0, length);
+
+  test("shows a revision by prefix or latest, and compares it", async () => {
+    const { client, revisions, v1, v2 } = await withHistory();
+    const old = await ok(revisions.$get({ param: { name: "pdf", revision: prefix(v1, 6) } }));
+    expect(old).toMatchObject({ revision: v1, latest: false, parent: null, files: ["SKILL.md"] });
+    const head = await ok(revisions.$get({ param: { name: "pdf", revision: "latest" } }));
+    expect(head).toMatchObject({ revision: v2, latest: true, parent: v1 });
+
+    const diff = await ok(
+      client.skills[":name"].diff.$get({
+        param: { name: "pdf" },
+        query: { from: prefix(v1), to: prefix(v2) },
+      }),
+    );
+    expect(diff.files.map((file) => file.path)).toEqual(["references/tables.md"]);
+
+    const unknown = await revisions.$get({ param: { name: "pdf", revision: "ffffffff" } });
+    expect(unknown.status).toBe(400);
+    expect(await unknown.json()).toMatchObject({
+      error: { code: "INVALID_ARGUMENT", hint: expect.stringContaining("shelf log pdf") },
+    });
+  });
+
+  test("reads a revision's files and refuses paths outside it", async () => {
+    const { revisions, v1, v2 } = await withHistory();
+    const file = revisions.file;
+    const read = await ok(
+      file.$get({
+        param: { name: "pdf", revision: prefix(v2) },
+        query: { path: "references/tables.md" },
+      }),
+    );
+    expect(read).toMatchObject({
+      path: "references/tables.md",
+      content: "# Tables\n",
+      revision: v2,
+    });
+
+    for (const path of ["../../config.json", "/etc/passwd", `../${prefix(v2, 64)}/SKILL.md`]) {
+      const response = await file.$get({
+        param: { name: "pdf", revision: prefix(v1) },
+        query: { path },
+      });
+      expect(response.status).toBe(400);
+    }
+    // Present in v2 only.
+    const missing = await file.$get({
+      param: { name: "pdf", revision: prefix(v1) },
+      query: { path: "references/tables.md" },
+    });
+    expect(missing.status).toBe(400);
+  });
+
+  test("restores a revision as the head and returns the skill page", async () => {
+    const { ctx, client, revisions, v1, v2 } = await withHistory();
+    await borrow(ctx, ["pdf"]);
+    const page = await ok(
+      revisions.restore.$post({ param: { name: "pdf", revision: prefix(v1) } }),
+    );
+    expect(page.detail).toMatchObject({ revision: v1, files: ["SKILL.md"] });
+    expect(page.history.revisions.map((revision) => revision.hash)).toEqual(
+      expect.arrayContaining([v1, v2]),
+    );
+    // The borrower stays on v2 until it updates.
+    expect(page.propagation.projects).toEqual([
+      expect.objectContaining({ project: "project", status: "updated" }),
+    ]);
+    const events = await ok(client.activity.$get({ query: { skill: "pdf" } }));
+    expect(events[0]).toMatchObject({ type: "skill.revised", detail: { restoredFrom: v1 } });
+  });
+});
+
 describe("pull", () => {
   test("reviews upstream changes, then applies them", async () => {
     const { env, ctx, client } = await setup([]);

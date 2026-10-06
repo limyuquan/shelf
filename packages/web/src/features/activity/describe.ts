@@ -1,5 +1,5 @@
 import type { ActivityEvent } from "../../api/types.ts";
-import { actorLabel, sourceLabel } from "../../lib/format.ts";
+import { actorLabel, shortHash, sourceLabel } from "../../lib/format.ts";
 
 /**
  * Consecutive events of the same kind by the same actor in the same project,
@@ -81,7 +81,14 @@ export function describeGroup(group: EventGroup): {
     case "skill.created":
       return { ...base, verb: "added", preposition: null, detail: "to the library" };
     case "skill.revised":
-      return { ...base, verb: "revised", preposition: null };
+      return typeof detail.restoredFrom === "string"
+        ? {
+            ...base,
+            verb: "restored",
+            preposition: null,
+            detail: `to rev ${shortHash(detail.restoredFrom)}`,
+          }
+        : { ...base, verb: "revised", preposition: null };
     case "skill.archived":
       return { ...base, verb: "archived", preposition: null };
     case "skill.linked":

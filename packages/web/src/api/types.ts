@@ -31,6 +31,10 @@ export type Insights = InferResponseType<typeof api.insights.$get, 200>;
 export type SkillInsight = Insights["skills"][number];
 export type ProjectInsight = Insights["projects"][number];
 export type GlobalSkill = Insights["globalSkills"][number];
+export type Revision = InferResponseType<
+  (typeof api.skills)[":name"]["revisions"][":revision"]["$get"],
+  200
+>;
 export type SystemReport = InferResponseType<typeof api.system.$get, 200>;
 export type HookStatus = SystemReport["hooks"][number];
 export type DoctorCheck = SystemReport["checks"][number];

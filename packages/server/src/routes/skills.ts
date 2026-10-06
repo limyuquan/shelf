@@ -5,8 +5,11 @@ import {
   propagate,
   pullSkill,
   readLibraryFile,
+  readRevisionFile,
+  restoreRevision,
   saveLibraryFile,
   saveSkillContent,
+  showRevision,
   showSkill,
   skillHistory,
 } from "@shelf/core";
@@ -19,6 +22,7 @@ import {
   fileQuery,
   propagateBody,
   pullBody,
+  revisionParams,
   saveFileBody,
   saveSkillBody,
   skillParams,
@@ -98,4 +102,29 @@ export const skillRoutes = new Hono<AppEnv>()
         defined(c.req.valid("query")),
       ),
     ),
-  );
+  )
+
+  /** `:revision` is a hash, a unique prefix of one, or `latest`. */
+  .get("/:name/revisions/:revision", validate("param", revisionParams), async (c) => {
+    const { name, revision } = c.req.valid("param");
+    return c.json(await showRevision(atHome(c.get("ctx")), name, revision));
+  })
+
+  .get(
+    "/:name/revisions/:revision/file",
+    validate("param", revisionParams),
+    validate("query", fileQuery),
+    async (c) => {
+      const { name, revision } = c.req.valid("param");
+      return c.json(
+        await readRevisionFile(atHome(c.get("ctx")), name, revision, c.req.valid("query").path),
+      );
+    },
+  )
+
+  /** Makes the revision the library's head; borrowers keep theirs until they update. */
+  .post("/:name/revisions/:revision/restore", validate("param", revisionParams), async (c) => {
+    const { name, revision } = c.req.valid("param");
+    await restoreRevision(atHome(c.get("ctx")), name, revision);
+    return c.json(await skillPage(c.get("ctx"), name));
+  });

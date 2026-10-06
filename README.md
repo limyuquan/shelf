@@ -110,6 +110,8 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 - **Library**: edit SKILL.md and reference files, see revisions and borrowers,
   push updates to chosen projects, and pull reviewed updates from a skill's
   upstream source.
+- **Revisions**: open any revision of a skill to read its files, compare it with
+  another revision or the latest, and restore it.
 - **Activity**: what your agents did, as a timeline ("codex used api-design in
   billing-api · 2m ago").
 - **Insights**: what skills cost at session start per project (user-level
@@ -172,8 +174,9 @@ boundary.
 | **Library** | |
 | `shelf new <name> -d <description>` | Create a library skill |
 | `shelf catalog [terms]` | List library skills with a token estimate |
-| `shelf show <name>` | Print a library skill |
+| `shelf show <name> [--revision X]` | Print a library skill, or one of its revisions |
 | `shelf log <name>` | A skill's revisions and which projects borrow each |
+| `shelf restore <name> <revision>` | Make an earlier revision the library's latest again (borrowers update with `propagate`) |
 | `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
 | `shelf add <source> [--yes] [--force]` | Import skills from git or a directory after a local audit, or link existing ones to it |

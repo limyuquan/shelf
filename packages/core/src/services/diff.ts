@@ -4,7 +4,7 @@ import { createTwoFilesPatch } from "diff";
 import type { RevisionHash } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { pathExists } from "../library/fs.ts";
-import { listFiles, revisionKey } from "../library/hash.ts";
+import { listFiles } from "../library/hash.ts";
 import { revisionPath } from "../library/library.ts";
 import { skillCopyPath } from "../projection/materialize.ts";
 import { findActiveLoan } from "../store/loans.ts";
@@ -13,10 +13,11 @@ import type { Context } from "./context.ts";
 import { inspectBorrowedSkill, type LoanInspection } from "./inspect.ts";
 import { refreshLibrary, requireSkill } from "./library.ts";
 import { openProject } from "./project.ts";
+import { matchRevision } from "./revisions.ts";
 
 /**
  * A side of a diff: `borrowed` (the loan's base revision), `library` (latest),
- * `project` (this project's copy on disk), or a revision hash prefix.
+ * `project` (this project's copy on disk), `latest`, or a revision (hash or unique prefix).
  */
 export type DiffSide = string;
 
@@ -108,20 +109,8 @@ async function resolveSide(
     return { dir, revision: working[index] ?? null };
   }
 
-  const prefix = side.replace(/^sha256:/, "");
-  const matches = listRevisions(ctx.db, skill.id).filter((rev) =>
-    revisionKey(rev.hash).startsWith(prefix),
-  );
-  if (matches.length !== 1 || prefix.length < 4) {
-    throw new ShelfError(
-      "INVALID_ARGUMENT",
-      matches.length > 1
-        ? `Revision prefix "${side}" is ambiguous`
-        : `Unknown revision "${side}" of "${name}"`,
-      `Use borrowed, library, project, or a revision from \`shelf log ${name}\``,
-    );
-  }
-  const hash = (matches[0] as { hash: RevisionHash }).hash;
+  // `latest`, a full hash, or a unique prefix of one.
+  const { hash } = matchRevision(ctx, skill, side);
   return { dir: revisionPath(ctx.paths, hash), revision: hash };
 }
 

@@ -59,6 +59,8 @@ unless the user asks you to start using shelf there. Otherwise read
   are skipped, never overwritten.
 - `shelf propagate <name> --dry-run` previews pushing the library's latest.
 - `shelf log <name>` lists revisions and who borrows which.
+- `shelf restore <name> <revision>` makes an earlier revision the library's
+  latest again. Only when the user asks; borrowers change only on `propagate`.
 
 ## Existing skills
 

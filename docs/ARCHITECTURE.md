@@ -105,6 +105,10 @@ The library is reconciled lazily: commands that read skills hash the library
 directory and record a revision for anything that changed. There is no daemon
 and no file watcher.
 
+Revisions are never deleted. `restore` records any unrecorded library edits as a
+revision, then copies an earlier snapshot back over the library copy, making it
+the head again; borrowers keep their revision until they update.
+
 ## Content states
 
 A loan's content state is computed, never stored, from three hashes:

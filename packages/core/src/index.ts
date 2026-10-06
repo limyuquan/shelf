@@ -75,6 +75,14 @@ export {
 export { listProjectOverviews, type ProjectOverview } from "./services/overview.ts";
 export { initProject, requireRegisteredProject } from "./services/project.ts";
 export { type PropagateResult, type PropagationStatus, propagate } from "./services/propagate.ts";
+export {
+  type RevisionDetail,
+  type RevisionFile,
+  readRevisionFile,
+  resolveRevision,
+  restoreRevision,
+  showRevision,
+} from "./services/revisions.ts";
 export { type ScanGroup, type ScanReport, scan } from "./services/scan.ts";
 export { sessionNotice } from "./services/session.ts";
 export { type SetupOptions, type SetupResult, setup } from "./services/setup.ts";

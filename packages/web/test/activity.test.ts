@@ -59,6 +59,21 @@ describe("activity grouping", () => {
     });
   });
 
+  test("a restored revision reads as a restore", () => {
+    const [group] = groupEvents([
+      event({
+        type: "skill.revised",
+        projectId: null,
+        project: null,
+        detail: { revision: "sha256:9f86d081abc", restoredFrom: "sha256:9f86d081abc" },
+      }),
+    ]);
+    expect(describeGroup(group as never)).toMatchObject({
+      verb: "restored",
+      detail: "to rev 9f86d081",
+    });
+  });
+
   test("day headings", () => {
     const now = new Date("2026-10-06T15:00:00");
     expect(dayLabel(new Date("2026-10-06T09:00:00").toISOString(), now)).toBe("Today");

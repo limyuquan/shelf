@@ -1,6 +1,6 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createRoute, Link, useBlocker } from "@tanstack/react-router";
-import { Copy, FileText, GitBranch, Link2, RefreshCw } from "lucide-react";
+import { Copy, FileText, Link2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -21,9 +21,10 @@ import {
   useSaveFile,
   useSaveSkill,
 } from "../features/skills/queries.ts";
+import { RevisionHistory } from "../features/skills/revision-history.tsx";
 import { languageFor, SkillEditor } from "../features/skills/skill-editor.tsx";
 import { cn } from "../lib/cn.ts";
-import { shortDate, shortHash, shortPath, sourceLabel } from "../lib/format.ts";
+import { shortHash, shortPath, sourceLabel } from "../lib/format.ts";
 
 const SKILL_FILE = "SKILL.md";
 
@@ -249,23 +250,7 @@ function SkillProperties({ page }: { page: SkillPageData }) {
 
       <Borrowers page={page} />
 
-      <PropertyGroup title="History">
-        {history.revisions.map((revision) => (
-          <div key={revision.hash} className="flex h-8 items-center gap-2.5 text-[13px]">
-            <GitBranch className="size-3.5 text-fg-subtle" />
-            <code className="font-mono text-[12px] text-fg">{shortHash(revision.hash)}</code>
-            <span className="text-fg-muted">{revision.source}</span>
-            {revision.latest && (
-              <span className="rounded-full bg-accent-soft px-1.5 text-[11px] text-accent">
-                latest
-              </span>
-            )}
-            <span className="ml-auto text-[12px] text-fg-subtle">
-              {shortDate(revision.createdAt)}
-            </span>
-          </div>
-        ))}
-      </PropertyGroup>
+      <RevisionHistory skill={detail.name} revisions={history.revisions} />
     </PropertiesPanel>
   );
 }

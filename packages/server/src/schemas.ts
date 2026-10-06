@@ -8,6 +8,7 @@ import { z } from "zod";
 export const projectParams = z.object({ id: z.string().min(1) });
 export const loanParams = z.object({ id: z.string().min(1), skill: z.string().min(1) });
 export const skillParams = z.object({ name: z.string().min(1) });
+export const revisionParams = z.object({ name: z.string().min(1), revision: z.string().min(1) });
 
 const days = z.number().int().positive();
 

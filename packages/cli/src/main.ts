@@ -9,6 +9,7 @@ import {
   logCommand,
   newCommand,
   propagateCommand,
+  restoreCommand,
   showCommand,
 } from "./commands/library.ts";
 import {
@@ -49,6 +50,7 @@ const main = defineCommand({
     log: logCommand,
     diff: diffCommand,
     propagate: propagateCommand,
+    restore: restoreCommand,
     // Loans in the current project
     borrow: borrowCommand,
     renew: renewCommand,

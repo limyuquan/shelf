@@ -1,7 +1,7 @@
 import { markdown } from "@codemirror/lang-markdown";
 import { yaml, yamlFrontmatter } from "@codemirror/lang-yaml";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
-import type { Extension } from "@codemirror/state";
+import { EditorState, type Extension, Prec } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 import { basicSetup, EditorView } from "codemirror";
 import { useEffect, useRef } from "react";
@@ -31,6 +31,11 @@ const theme = EditorView.theme({
   // Narrow screens give the text the full width; iOS zooms into text under 16px.
   "@media (max-width: 640px)": { ".cm-gutters": { display: "none" } },
   "@media (pointer: coarse)": { ".cm-content": { fontSize: "16px" } },
+});
+
+/** Without a caret, a highlighted "current line" is just a stray band on line 1. */
+const readOnlyTheme = EditorView.theme({
+  ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "transparent" },
 });
 
 const highlight = HighlightStyle.define([
@@ -70,12 +75,15 @@ export function SkillEditor({
   onChange,
   onSave,
   language = "markdown",
+  readOnly = false,
 }: {
   value: string;
-  onChange: (next: string) => void;
-  onSave: () => void;
+  onChange?: (next: string) => void;
+  onSave?: () => void;
   /** Fixed for the editor's lifetime; give the component a new `key` to change it. */
   language?: EditorLanguage;
+  /** Shows the text (selectable, copyable) without letting it be edited. Fixed like `language`. */
+  readOnly?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -95,18 +103,22 @@ export function SkillEditor({
         syntaxHighlighting(highlight),
         ...LANGUAGES[language](),
         EditorView.lineWrapping,
+        EditorState.readOnly.of(readOnly),
+        // Not editable: no caret, and touch screens don't raise the keyboard.
+        EditorView.editable.of(!readOnly),
+        readOnly ? Prec.highest(readOnlyTheme) : [],
         EditorView.domEventHandlers({
           keydown: (event) => {
             if (event.key === "s" && (event.metaKey || event.ctrlKey)) {
               event.preventDefault();
-              callbacks.current.onSave();
+              callbacks.current.onSave?.();
               return true;
             }
             return false;
           },
         }),
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) callbacks.current.onChange(update.state.doc.toString());
+          if (update.docChanged) callbacks.current.onChange?.(update.state.doc.toString());
         }),
       ],
     });

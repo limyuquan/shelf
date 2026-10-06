@@ -75,9 +75,17 @@ export async function refreshLibrary(ctx: Context): Promise<string[]> {
   return warnings;
 }
 
-function recordRevision(
+/** Makes `revision` the skill's head, recording it unless the skill already has it. */
+export function recordRevision(
   ctx: Context,
-  input: { name: string; description: string; revision: RevisionHash; existing: Skill | null },
+  input: {
+    name: string;
+    description: string;
+    revision: RevisionHash;
+    existing: Skill | null;
+    /** Extra event detail, e.g. `{ restoredFrom }`. */
+    detail?: Record<string, unknown>;
+  },
 ): void {
   const at = ctx.clock.now();
   writeTransaction(ctx.db, () => {
@@ -99,7 +107,7 @@ function recordRevision(
       actor: ctx.actor,
       at,
       skillId: skill.id,
-      detail: { revision: input.revision },
+      detail: { revision: input.revision, ...input.detail },
     });
   });
 }
@@ -231,10 +239,18 @@ export async function readLibraryFile(
   path: string,
 ): Promise<LibraryFile> {
   const file = await resolveLibraryFile(ctx, name, path);
+  return readSkillFile(name, file);
+}
+
+/** Reads a resolved skill file; binary and oversized files come back without content. */
+export async function readSkillFile(
+  skill: string,
+  file: { absolute: string; relative: string },
+): Promise<LibraryFile> {
   const bytes = new Uint8Array(await readFile(file.absolute));
   const binary = bytes.length > MAX_FILE_BYTES || bytes.includes(0);
   return {
-    skill: name,
+    skill,
     path: file.relative,
     content: binary ? null : new TextDecoder().decode(bytes),
     size: bytes.length,
@@ -264,19 +280,26 @@ export async function saveLibraryFile(
   return readLibraryFile(ctx, name, file.relative);
 }
 
-/** Only existing files inside the skill directory: no traversal, no new files. */
 async function resolveLibraryFile(ctx: Context, name: string, path: string) {
   requireSkill(ctx, name);
-  const dir = librarySkillPath(ctx.paths, name);
+  return resolveSkillFile(librarySkillPath(ctx.paths, name), name, path);
+}
+
+/**
+ * Only existing files inside a skill directory (the library copy or a revision
+ * snapshot): no traversal, no new files.
+ */
+export async function resolveSkillFile(
+  dir: string,
+  name: string,
+  path: string,
+  hint = `Run \`shelf show ${name}\` to list its files`,
+) {
   const relative = normalize(path).split(sep).join("/");
   const absolute = join(dir, relative);
   const inside = absolute.startsWith(dir + sep) && !relative.split("/").includes("..");
   if (!inside || isAbsolute(path) || !(await stat(absolute).catch(() => null))?.isFile()) {
-    throw new ShelfError(
-      "INVALID_ARGUMENT",
-      `"${path}" is not a file of ${name}`,
-      `Run \`shelf show ${name}\` to list its files`,
-    );
+    throw new ShelfError("INVALID_ARGUMENT", `"${path}" is not a file of ${name}`, hint);
   }
   return { absolute, relative };
 }
