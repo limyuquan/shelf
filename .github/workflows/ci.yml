@@ -59,4 +59,4 @@ jobs:
           echo "edit" >> .claude/skills/demo/SKILL.md
           "$S" status --json | grep -q '"content":"modified"'
           "$S" promote demo && "$S" return demo
-          test -z "$(ls .agents/skills .claude/skills)"
+          test -z "$(ls -A .agents/skills)" && test -z "$(ls -A .claude/skills)"
