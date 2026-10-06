@@ -24,6 +24,7 @@ export function BorrowDialog({
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [keep, setKeep] = useState(false);
   const skills = useQuery({ ...skillsQuery(), enabled: open });
   const borrow = useBorrow();
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -39,6 +40,7 @@ export function BorrowDialog({
     if (!next) {
       setSelected([]);
       setQuery("");
+      setKeep(false);
     }
   };
 
@@ -48,17 +50,26 @@ export function BorrowDialog({
         title={`Borrow skills into ${projectName}`}
         description="Borrowed skills are copied into the project and renew whenever an agent uses them."
         footer={
-          <Button
-            variant="primary"
-            disabled={selected.length === 0 || borrow.isPending}
-            onClick={() =>
-              borrow.mutate({ projectId, skills: selected }, { onSuccess: () => close(false) })
-            }
-          >
-            {selected.length === 0
-              ? "Borrow skills"
-              : `Borrow ${selected.length} skill${selected.length === 1 ? "" : "s"}`}
-          </Button>
+          <>
+            <label className="mr-auto flex cursor-pointer items-center gap-2 text-[13px] text-fg-muted pointer-coarse:text-[15px]">
+              <Checkbox label="Keep (never expires)" checked={keep} onChange={setKeep} />
+              Keep (never expires)
+            </label>
+            <Button
+              variant="primary"
+              disabled={selected.length === 0 || borrow.isPending}
+              onClick={() =>
+                borrow.mutate(
+                  { projectId, skills: selected, keep },
+                  { onSuccess: () => close(false) },
+                )
+              }
+            >
+              {selected.length === 0
+                ? "Borrow skills"
+                : `Borrow ${selected.length} skill${selected.length === 1 ? "" : "s"}`}
+            </Button>
+          </>
         }
       >
         <div className="-mt-1 mb-3 flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-2.5 focus-within:border-border-strong">

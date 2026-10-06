@@ -8,6 +8,7 @@ interface SkillRow {
   latest_revision: string;
   created_at: string;
   archived_at: string | null;
+  loan_days: number | null;
 }
 
 const toSkill = (row: SkillRow): Skill => ({
@@ -17,6 +18,7 @@ const toSkill = (row: SkillRow): Skill => ({
   latestRevision: row.latest_revision,
   createdAt: new Date(row.created_at),
   archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+  loanDays: row.loan_days,
 });
 
 export function findSkillByName(db: Db, name: string): Skill | null {
@@ -51,6 +53,10 @@ export function updateSkillHead(
   db.query(
     "UPDATE skills SET description = ?, latest_revision = ?, archived_at = NULL WHERE id = ?",
   ).run(head.description, head.revision, id);
+}
+
+export function setSkillLoanDays(db: Db, id: number, days: number | null): void {
+  db.query("UPDATE skills SET loan_days = ? WHERE id = ?").run(days, id);
 }
 
 export function archiveSkill(db: Db, id: number, at: Date): void {

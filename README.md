@@ -47,7 +47,12 @@ borrow only from it.
 - **Lockfile**: `.agents/shelf.lock.json` records which skills shelf manages and
   at which revision. It has no timestamps, so commit it without merge churn.
 - **Renew on use**: each time an agent uses a borrowed skill, its due date moves
-  to 30 days out. A loan only comes due after going unused (see [Hooks](#hooks)).
+  to 30 days out (or the skill's own loan length, `shelf loan-days`). A loan only
+  comes due after going unused (see [Hooks](#hooks)).
+- **Keep**: `shelf keep <name>` for skills a project always needs (say, Convex
+  skills in a Convex app): kept loans never expire. It's recorded in the
+  lockfile, so clones keep them too. Only you can keep a skill; agents are
+  told to ask.
 - **Expiry**: overdue loans are returned automatically at the next session
   start, `shelf status` or `shelf sync` — unless the project copy has local
   edits, which shelf never deletes.
@@ -184,16 +189,18 @@ boundary.
 | `shelf show <name> [--revision X]` | Print a library skill, or one of its revisions |
 | `shelf log <name>` | A skill's revisions and which projects borrow each |
 | `shelf restore <name> <revision>` | Make an earlier revision the library's latest again (borrowers update with `propagate`) |
+| `shelf loan-days <name> [days] [--reset]` | Show or set a skill's loan length (default: `loanDays`) |
 | `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
 | `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
 | `shelf add <source> [--yes] [--force]` | Import skills from git or a directory after a local audit, or link existing ones to it |
 | `shelf pull <name> [--yes]` | Update an imported skill from its source |
 | `shelf audit [name…]` | Scan library skills for risky content |
 | **This project** | |
-| `shelf borrow <name…> [--days N] [--follow] [--link]` | Borrow skills into this project |
+| `shelf borrow <name…> [--days N] [--keep] [--follow] [--link]` | Borrow skills into this project |
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
 | `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
+| `shelf keep <name…> [--off]` | Keep loans: they never expire (only you, not agents) |
 | `shelf return <name> [--force]` | Remove a borrowed skill |
 | `shelf update [name…] [--force]` | Update borrowed skills to the library's latest revision |
 | `shelf promote <name> [--force] [--propagate]` | Publish a project's edits back to the library (and to other borrowers) |
@@ -241,7 +248,7 @@ lines; the details live in `shelf guide`.
 
 | Key | Default | |
 |---|---|---|
-| `loanDays` | `30` | Loan length, and how far a use or renewal moves the due date |
+| `loanDays` | `30` | Loan length, and how far a use or renewal moves the due date (a skill can override it with `shelf loan-days`) |
 | `maxLoanDays` | `90` | Due dates can't be set further out than this |
 | `dueSoonDays` | `7` | When a loan counts as `due-soon` |
 | `targets` | `[".agents/skills", ".claude/skills"]` | Where borrowed skills are written (a project can override with `shelf targets`) |

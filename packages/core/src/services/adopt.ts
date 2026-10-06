@@ -1,5 +1,5 @@
 import { relative, resolve } from "node:path";
-import { addDays } from "../domain/due.ts";
+import { addDays, effectiveLoanDays } from "../domain/due.ts";
 import type { ContentState, RevisionHash, Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { copyDirectory, pathExists } from "../library/fs.ts";
@@ -147,7 +147,7 @@ async function adoptOne(ctx: Context, path: string, options: AdoptOptions): Prom
       targets,
       policy: "pinned",
       borrowedAt: now,
-      dueAt: addDays(now, ctx.config.loanDays),
+      dueAt: addDays(now, effectiveLoanDays(skill, ctx.config)),
     });
     recordEvent(ctx.db, {
       type: "loan.adopted",

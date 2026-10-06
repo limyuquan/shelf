@@ -172,9 +172,13 @@ function AttentionRow({
         </p>
       </div>
       <QuickAction item={item} onReview={onReview} />
-      <Tooltip label={`Due ${new Date(item.dueAt).toLocaleDateString()}`}>
+      <Tooltip
+        label={
+          item.kept ? "Kept: never expires" : `Due ${new Date(item.dueAt).toLocaleDateString()}`
+        }
+      >
         <span className="hidden w-14 shrink-0 text-right text-[12px] text-fg-subtle tabular-nums md:block">
-          {shortDate(item.dueAt)}
+          {item.kept ? "Kept" : shortDate(item.dueAt)}
         </span>
       </Tooltip>
       <LoanMenu
@@ -182,6 +186,8 @@ function AttentionRow({
         projectName={item.project.name}
         skill={item.skill}
         content={item.content}
+        kept={item.kept}
+        loanDays={item.loanDays}
       />
     </div>
   );

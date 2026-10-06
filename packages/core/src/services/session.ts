@@ -33,7 +33,7 @@ export function formatNotice(
     dueSoon.length > 0 &&
       `due soon unless used: ${names(dueSoon.map((loan) => `${loan.skill} (${loan.daysLeft}d)`))} — \`shelf renew <name>\` to keep, \`shelf return <name>\` if unneeded`,
     overdueKept.length > 0 &&
-      `overdue but kept for local edits: ${names(overdueKept.map((loan) => loan.skill))} — \`shelf promote\` or \`shelf detach\` them`,
+      `overdue, not returned because of local edits: ${names(overdueKept.map((loan) => loan.skill))} — \`shelf promote\` or \`shelf detach\` them`,
     modified.length > 0 &&
       `edited here: ${names(modified.map((loan) => loan.skill))} — \`shelf promote <name>\` publishes to the library`,
     diverged.length > 0 &&

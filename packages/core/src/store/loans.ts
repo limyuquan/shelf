@@ -13,6 +13,7 @@ interface LoanRow {
   borrowed_at: string;
   due_at: string;
   last_used_at: string | null;
+  keep: number;
   returned_at: string | null;
 }
 
@@ -32,6 +33,7 @@ const toLoan = (row: LoanRow): Loan => ({
   borrowedAt: new Date(row.borrowed_at),
   dueAt: new Date(row.due_at),
   lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
+  keep: row.keep === 1,
   returnedAt: row.returned_at ? new Date(row.returned_at) : null,
 });
 
@@ -62,13 +64,14 @@ export function insertLoan(
     targets: readonly string[];
     policy: LoanPolicy;
     mode?: LoanMode;
+    keep?: boolean;
     borrowedAt: Date;
     dueAt: Date;
   },
 ): void {
   db.query(
-    `INSERT INTO loans (project_id, skill_id, revision, targets, policy, mode, borrowed_at, due_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO loans (project_id, skill_id, revision, targets, policy, mode, keep, borrowed_at, due_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     loan.projectId,
     loan.skillId,
@@ -76,6 +79,7 @@ export function insertLoan(
     JSON.stringify(loan.targets),
     loan.policy,
     loan.mode ?? "copy",
+    loan.keep ? 1 : 0,
     loan.borrowedAt.toISOString(),
     loan.dueAt.toISOString(),
   );
@@ -97,6 +101,15 @@ export function setLoanDue(db: Db, loanId: number, dueAt: Date): void {
 export function setLoanUsed(db: Db, loanId: number, usedAt: Date, dueAt: Date): void {
   db.query("UPDATE loans SET last_used_at = ?, due_at = ? WHERE id = ?").run(
     usedAt.toISOString(),
+    dueAt.toISOString(),
+    loanId,
+  );
+}
+
+/** Marks a loan kept (never due) or not, with the due date it has from then on. */
+export function setLoanKeep(db: Db, loanId: number, keep: boolean, dueAt: Date): void {
+  db.query("UPDATE loans SET keep = ?, due_at = ? WHERE id = ?").run(
+    keep ? 1 : 0,
     dueAt.toISOString(),
     loanId,
   );

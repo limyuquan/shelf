@@ -36,6 +36,8 @@ export interface Skill {
   readonly latestRevision: RevisionHash;
   readonly createdAt: Date;
   readonly archivedAt: Date | null;
+  /** This machine's loan length for the skill; null to use the config's `loanDays`. */
+  readonly loanDays: number | null;
 }
 
 /** `adopt`: an older, unedited version of a library skill found in a project. */
@@ -54,6 +56,8 @@ export interface Loan {
   readonly dueAt: Date;
   /** Last time an agent was seen using the skill in this project (see `recordUse`). */
   readonly lastUsedAt: Date | null;
+  /** Kept loans never come due: the user decided the project always needs the skill. */
+  readonly keep: boolean;
   readonly returnedAt: Date | null;
 }
 
@@ -69,6 +73,7 @@ export type EventType =
   | "loan.due-changed"
   | "loan.updated"
   | "loan.used"
+  | "loan.kept"
   | "loan.restored"
   | "loan.returned"
   | "loan.expired"

@@ -1,3 +1,4 @@
+import { effectiveLoanDays } from "../domain/due.ts";
 import { contentState, daysUntil, dueState } from "../domain/loan-state.ts";
 import type {
   ContentState,
@@ -18,11 +19,16 @@ import type { Context } from "./context.ts";
 export interface LoanReport {
   readonly skill: string;
   readonly content: ContentState;
+  /** Always `active` for kept loans. */
   readonly due: DueState;
   readonly dueAt: Date;
   readonly daysLeft: number;
   /** Last recorded use in this project; null if never seen (e.g. no harness hooks). */
   readonly lastUsedAt: Date | null;
+  /** Kept loans never come due, so they are never returned for going unused. */
+  readonly kept: boolean;
+  /** How far a use or a renewal moves the due date: the skill's loan length. */
+  readonly loanDays: number;
   readonly policy: LoanPolicy;
   readonly revision: RevisionHash;
   readonly latestRevision: RevisionHash;
@@ -50,10 +56,12 @@ async function inspectLoan(ctx: Context, project: Project, loan: Loan): Promise<
     report: {
       skill: loan.skillName,
       content: contentState({ base: loan.revision, head: skill.latestRevision, working }),
-      due: dueState(loan.dueAt, now, ctx.config.dueSoonDays),
+      due: loan.keep ? "active" : dueState(loan.dueAt, now, ctx.config.dueSoonDays),
       dueAt: loan.dueAt,
       daysLeft: daysUntil(loan.dueAt, now),
       lastUsedAt: loan.lastUsedAt,
+      kept: loan.keep,
+      loanDays: effectiveLoanDays(skill, ctx.config),
       policy: loan.policy,
       revision: loan.revision,
       latestRevision: skill.latestRevision,

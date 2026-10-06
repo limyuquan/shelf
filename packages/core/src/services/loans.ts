@@ -1,4 +1,4 @@
-import { addDays, parseDueExpression } from "../domain/due.ts";
+import { addDays, effectiveLoanDays, parseDueExpression } from "../domain/due.ts";
 import { isClean } from "../domain/loan-state.ts";
 import { assertSkillName } from "../domain/skill-name.ts";
 import type {
@@ -23,13 +23,14 @@ import {
   findActiveLoan,
   insertLoan,
   setLoanDue,
+  setLoanKeep,
   setLoanRevision,
 } from "../store/loans.ts";
 import { insertRevision, updateSkillHead } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { inspectBorrowedSkill, inspectLoans, type LoanInspection } from "./inspect.ts";
 import { requireSkill } from "./library.ts";
-import { projectTargets, requireProject, syncLockfile } from "./project.ts";
+import { dueAfterKeepChange, projectTargets, requireProject, syncLockfile } from "./project.ts";
 
 export interface BorrowResult {
   readonly skill: string;
@@ -38,18 +39,24 @@ export interface BorrowResult {
   readonly dueAt: Date;
   readonly targets: readonly string[];
   readonly mode: LoanMode;
+  /** Kept loans never come due (see `keep`). */
+  readonly kept: boolean;
 }
 
-/** Borrows skills into the current project. Idempotent: re-borrowing is a no-op. */
+/**
+ * Borrows skills into the current project. Idempotent: re-borrowing is a no-op,
+ * except that `keep` also applies to skills already borrowed. Without `days`, each
+ * skill gets its own loan length (`setSkillLoanDays`) or the configured default.
+ */
 export async function borrow(
   ctx: Context,
   names: readonly string[],
-  options: { days?: number; policy?: LoanPolicy; mode?: LoanMode } = {},
+  options: { days?: number; policy?: LoanPolicy; mode?: LoanMode; keep?: boolean } = {},
 ): Promise<BorrowResult[]> {
   if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
+  if (options.keep) assertMayKeep(ctx, names);
   const { project } = await requireProject(ctx);
-  const days = options.days ?? ctx.config.loanDays;
-  assertWithinLoanLimit(ctx, days);
+  if (options.days !== undefined) assertWithinLoanLimit(ctx, options.days);
   const targets = await projectTargets(ctx, project);
   const mode = options.mode ?? ctx.config.mode;
 
@@ -66,11 +73,14 @@ export async function borrow(
   const results: BorrowResult[] = [];
   for (const { skill, existing } of plan) {
     if (existing) {
-      results.push({ skill: skill.name, status: "already-borrowed", ...pickLoan(existing) });
+      const loan =
+        options.keep && !existing.keep ? setKeep(ctx, project, existing, true) : existing;
+      results.push({ skill: skill.name, status: "already-borrowed", ...pickLoan(loan) });
       continue;
     }
     const now = ctx.clock.now();
-    const dueAt = addDays(now, days);
+    const kept = options.keep ?? false;
+    const dueAt = addDays(now, options.days ?? effectiveLoanDays(skill, ctx.config));
     await writeSkillCopies(
       project.path,
       { targets, mode },
@@ -85,6 +95,7 @@ export async function borrow(
         targets,
         policy: options.policy ?? "pinned",
         mode,
+        keep: kept,
         borrowedAt: now,
         dueAt,
       });
@@ -94,7 +105,11 @@ export async function borrow(
         at: now,
         projectId: project.id,
         skillId: skill.id,
-        detail: { revision: skill.latestRevision, dueAt: dueAt.toISOString() },
+        detail: {
+          revision: skill.latestRevision,
+          dueAt: dueAt.toISOString(),
+          ...(kept ? { keep: true } : {}),
+        },
       });
       syncLockfile(ctx.db, project);
     });
@@ -105,9 +120,77 @@ export async function borrow(
       dueAt,
       targets,
       mode,
+      kept,
     });
   }
   return results;
+}
+
+export interface KeepResult {
+  readonly skill: string;
+  readonly kept: boolean;
+  /** False when the loan already was (or wasn't) kept. */
+  readonly changed: boolean;
+  readonly dueAt: Date;
+}
+
+/**
+ * Keeps loans in the current project (they never come due) or stops keeping them.
+ * Keeping is the user's decision, recorded in the lockfile so every clone of the
+ * project keeps the same skills; agents may only stop keeping.
+ */
+export async function keep(
+  ctx: Context,
+  names: readonly string[],
+  options: { keep: boolean },
+): Promise<KeepResult[]> {
+  if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
+  if (options.keep) assertMayKeep(ctx, names);
+  const { project } = await requireProject(ctx);
+  const loans = [...new Set(names)].map((name) => {
+    const loan = findActiveLoan(ctx.db, project.id, name);
+    if (!loan) {
+      throw new ShelfError(
+        "NOT_BORROWED",
+        `"${name}" is not borrowed by ${project.name}`,
+        `Run \`shelf borrow ${name}${options.keep ? " --keep" : ""}\` first`,
+      );
+    }
+    return loan;
+  });
+  return loans.map((loan) => {
+    const changed = loan.keep !== options.keep;
+    const after = changed ? setKeep(ctx, project, loan, options.keep) : loan;
+    return { skill: loan.skillName, kept: after.keep, changed, dueAt: after.dueAt };
+  });
+}
+
+function assertMayKeep(ctx: Context, names: readonly string[]): void {
+  if (!ctx.actor.startsWith("agent:")) return;
+  throw new ShelfError(
+    "NOT_ALLOWED",
+    "Only the user can keep a skill (a kept loan never expires)",
+    `Ask the user whether this project should always have it; they can run \`shelf keep ${names.join(" ")}\``,
+  );
+}
+
+/** Turns keep on or off, records it, and writes it to the lockfile. */
+function setKeep(ctx: Context, project: Project, loan: Loan, on: boolean): Loan {
+  const now = ctx.clock.now();
+  const dueAt = dueAfterKeepChange(ctx, loan, on);
+  writeTransaction(ctx.db, () => {
+    setLoanKeep(ctx.db, loan.id, on, dueAt);
+    recordEvent(ctx.db, {
+      type: "loan.kept",
+      actor: ctx.actor,
+      at: now,
+      projectId: project.id,
+      skillId: loan.skillId,
+      detail: { keep: on },
+    });
+    syncLockfile(ctx.db, project);
+  });
+  return { ...loan, keep: on, dueAt };
 }
 
 /**
@@ -139,14 +222,17 @@ export interface DueChange {
   readonly dueAt: Date;
 }
 
-/** Extends a loan by `days` from its due date (or from now, if already overdue). */
+/**
+ * Extends a loan by `days` from its due date (or from now, if already overdue).
+ * The default is the skill's loan length.
+ */
 export async function renew(
   ctx: Context,
   name: string,
   options: { days?: number; reason?: string } = {},
 ): Promise<DueChange> {
-  const days = options.days ?? ctx.config.loanDays;
-  return changeDue(ctx, name, options.reason, (loan) => {
+  return changeDue(ctx, name, options.reason, (loan, skill) => {
+    const days = options.days ?? effectiveLoanDays(skill, ctx.config);
     const from = Math.max(loan.dueAt.getTime(), ctx.clock.now().getTime());
     return addDays(new Date(from), days);
   });
@@ -166,11 +252,11 @@ async function changeDue(
   ctx: Context,
   name: string,
   reason: string | undefined,
-  compute: (loan: Loan) => Date,
+  compute: (loan: Loan, skill: Skill) => Date,
 ): Promise<DueChange> {
   const { project } = await requireProject(ctx);
-  const { loan } = await inspectBorrowedSkill(ctx, project, name);
-  const dueAt = compute(loan);
+  const { loan, skill } = await inspectBorrowedSkill(ctx, project, name);
+  const dueAt = compute(loan, skill);
   const now = ctx.clock.now();
   const latest = addDays(now, ctx.config.maxLoanDays);
   if (dueAt > latest) {
@@ -445,6 +531,14 @@ function assertWithinLoanLimit(ctx: Context, days: number): void {
   }
 }
 
-function pickLoan(loan: Loan): Pick<BorrowResult, "revision" | "dueAt" | "targets" | "mode"> {
-  return { revision: loan.revision, dueAt: loan.dueAt, targets: loan.targets, mode: loan.mode };
+function pickLoan(
+  loan: Loan,
+): Pick<BorrowResult, "revision" | "dueAt" | "targets" | "mode" | "kept"> {
+  return {
+    revision: loan.revision,
+    dueAt: loan.dueAt,
+    targets: loan.targets,
+    mode: loan.mode,
+    kept: loan.keep,
+  };
 }

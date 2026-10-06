@@ -103,6 +103,12 @@ export const MIGRATIONS: readonly string[] = [
   DROP TABLE revisions;
   ALTER TABLE revisions_v3 RENAME TO revisions;
   `,
+
+  /* 4: kept loans (never expire), per-skill loan length */ `
+  ALTER TABLE loans ADD COLUMN keep INTEGER NOT NULL DEFAULT 0;
+  -- NULL: use the config's loanDays.
+  ALTER TABLE skills ADD COLUMN loan_days INTEGER;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

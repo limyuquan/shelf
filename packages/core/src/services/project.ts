@@ -1,6 +1,6 @@
 import { basename, dirname, join, resolve } from "node:path";
-import { addDays } from "../domain/due.ts";
-import type { Project } from "../domain/types.ts";
+import { addDays, effectiveLoanDays } from "../domain/due.ts";
+import type { Loan, Project } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { pathExists } from "../library/fs.ts";
 import {
@@ -15,7 +15,7 @@ import {
 import { distinctTargets } from "../projection/materialize.ts";
 import { type Db, writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
-import { insertLoan, listActiveLoans } from "../store/loans.ts";
+import { insertLoan, listActiveLoans, setLoanKeep } from "../store/loans.ts";
 import { findProjectById, listProjects, upsertProject } from "../store/projects.ts";
 import { findSkillByName } from "../store/skills.ts";
 import type { Context } from "./context.ts";
@@ -99,7 +99,10 @@ export async function openProject(ctx: Context): Promise<OpenProject | null> {
         projectId: project.id,
       });
     }
-    for (const name of adoptLockedSkills(ctx, project, lockfile)) {
+    // Re-read under the write lock: another process may have changed the lockfile
+    // (e.g. `shelf keep`) since it was read above, and adoption must not undo that.
+    const current = readLockfileSync(root) ?? lockfile;
+    for (const name of adoptLockedSkills(ctx, project, current)) {
       warnings.push(`Lockfile lists "${name}", which is not in this machine's library`);
     }
   });
@@ -139,14 +142,33 @@ export function requireRegisteredProject(ctx: Context, ref: string): Project {
   return project;
 }
 
-/** Creates loans for lockfile entries without one. Returns names of unknown skills. */
+/**
+ * Creates loans for lockfile entries without one, and takes `keep` from the
+ * lockfile (it is a project decision, e.g. made on another machine). Returns
+ * names of unknown skills.
+ */
 function adoptLockedSkills(ctx: Context, project: Project, lockfile: Lockfile): string[] {
-  const active = new Set(listActiveLoans(ctx.db, project.id).map((loan) => loan.skillName));
+  const active = new Map(listActiveLoans(ctx.db, project.id).map((loan) => [loan.skillName, loan]));
   const unknown: string[] = [];
   const now = ctx.clock.now();
 
   for (const [name, locked] of Object.entries(lockfile.skills)) {
-    if (active.has(name)) continue;
+    const keep = locked.keep ?? false;
+    const loan = active.get(name);
+    if (loan) {
+      if (loan.keep !== keep) {
+        setLoanKeep(ctx.db, loan.id, keep, dueAfterKeepChange(ctx, loan, keep));
+        recordEvent(ctx.db, {
+          type: "loan.kept",
+          actor: ctx.actor,
+          at: now,
+          projectId: project.id,
+          skillId: loan.skillId,
+          detail: { keep, source: "lockfile" },
+        });
+      }
+      continue;
+    }
     const skill = findSkillByName(ctx.db, name);
     if (!skill) {
       unknown.push(name);
@@ -159,8 +181,9 @@ function adoptLockedSkills(ctx: Context, project: Project, lockfile: Lockfile): 
       targets: locked.targets,
       policy: "pinned",
       mode: locked.mode ?? "copy",
+      keep,
       borrowedAt: now,
-      dueAt: addDays(now, ctx.config.loanDays),
+      dueAt: addDays(now, effectiveLoanDays(skill, ctx.config)),
     });
     recordEvent(ctx.db, {
       type: "loan.adopted",
@@ -172,6 +195,18 @@ function adoptLockedSkills(ctx: Context, project: Project, lockfile: Lockfile): 
     });
   }
   return unknown;
+}
+
+/**
+ * The due date of a loan whose `keep` changes. One that stops being kept gets at
+ * least a fresh loan period, so a due date that passed while it was kept doesn't
+ * expire it at once.
+ */
+export function dueAfterKeepChange(ctx: Context, loan: Loan, keep: boolean): Date {
+  const skill = findSkillByName(ctx.db, loan.skillName);
+  const days = skill ? effectiveLoanDays(skill, ctx.config) : ctx.config.loanDays;
+  const fresh = addDays(ctx.clock.now(), days);
+  return keep || fresh <= loan.dueAt ? loan.dueAt : fresh;
 }
 
 /**
@@ -190,6 +225,7 @@ export function syncLockfile(db: Db, project: Project): void {
       revision: loan.revision,
       targets: [...loan.targets],
       ...(loan.mode === "link" ? { mode: "link" as const } : {}),
+      ...(loan.keep ? { keep: true as const } : {}),
     };
   }
   writeLockfileSync(project.path, {

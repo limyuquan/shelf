@@ -18,6 +18,10 @@ export interface EventGroup {
 
 const WINDOW_MS = 60_000;
 
+/** Events of one type that read differently, e.g. keeping and stopping keeping. */
+const variant = (event: ActivityEvent) =>
+  event.type === "loan.kept" ? String(event.detail?.keep) : "";
+
 export function groupEvents(events: readonly ActivityEvent[]): EventGroup[] {
   const groups: EventGroup[] = [];
   for (const event of events) {
@@ -27,6 +31,7 @@ export function groupEvents(events: readonly ActivityEvent[]): EventGroup[] {
       last.type === event.type &&
       last.actor === event.actor &&
       last.projectId === event.projectId &&
+      variant(last.events[0] as ActivityEvent) === variant(event) &&
       new Date(last.events.at(-1)?.at ?? last.at).getTime() - new Date(event.at).getTime() <
         WINDOW_MS;
     if (last && sameBatch) {
@@ -61,11 +66,28 @@ export function describeGroup(group: EventGroup): {
   const base = { actor: actorLabel(group.actor), detail: reason };
   switch (group.type) {
     case "loan.borrowed":
-      return { ...base, verb: "borrowed", preposition: "into" };
+      return {
+        ...base,
+        verb: "borrowed",
+        preposition: "into",
+        detail: detail.keep === true ? "kept, never expires" : null,
+      };
     case "loan.adopted":
       return { ...base, verb: "adopted", preposition: "in" };
     case "loan.used":
       return { ...base, verb: "used", preposition: "in" };
+    case "loan.kept":
+      return {
+        ...base,
+        verb: detail.keep === false ? "stopped keeping" : "kept",
+        preposition: "in",
+        detail:
+          detail.source === "lockfile"
+            ? "from the lockfile"
+            : detail.keep === false
+              ? null
+              : "never expires",
+      };
     case "loan.due-changed":
       return { ...base, verb: reason ? "renewed" : "moved the due date of", preposition: "in" };
     case "loan.updated":

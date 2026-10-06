@@ -180,6 +180,14 @@ describe("schema migrations", () => {
         .query("SELECT COUNT(*) AS n FROM pragma_table_info('loans') WHERE name = 'last_used_at'")
         .get(),
     ).toEqual({ n: 1 });
+    expect(
+      db
+        .query(
+          `SELECT (SELECT COUNT(*) FROM pragma_table_info('loans') WHERE name = 'keep') +
+                  (SELECT COUNT(*) FROM pragma_table_info('skills') WHERE name = 'loan_days') AS n`,
+        )
+        .get(),
+    ).toEqual({ n: 2 });
     db.close();
   });
 });

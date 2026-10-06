@@ -28,6 +28,24 @@ export function useSaveSkill(name: string) {
   });
 }
 
+/** Sets the skill's loan length on this machine; `null` uses the config's loanDays. */
+export function useSetLoanDays(name: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (days: number | null) =>
+      unwrap(api.skills[":name"]["loan-days"].$put({ param: { name }, json: { days } })),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries();
+      toast.success(
+        result.customLoanDays === null
+          ? `${name} uses the default loan length`
+          : `Loans of ${name} now last ${result.loanDays} days`,
+        { description: "Applies from the next borrow, use or renewal." },
+      );
+    },
+  });
+}
+
 /** Updates the chosen borrowers to the library's latest revision. */
 export function usePropagate(name: string) {
   const queryClient = useQueryClient();

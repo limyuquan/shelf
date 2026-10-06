@@ -21,8 +21,8 @@ export const statusCommand = shelfCommand({
             ...report.loans.map((loan) => [
               loan.skill,
               loan.content,
-              formatDate(loan.dueAt),
-              formatDaysLeft(loan.daysLeft),
+              loan.kept ? "kept" : formatDate(loan.dueAt),
+              loan.kept ? "" : formatDaysLeft(loan.daysLeft),
               formatLastUsed(loan.lastUsedAt, new Date()),
               loan.policy,
               shortHash(loan.revision),

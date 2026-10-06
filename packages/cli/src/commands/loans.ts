@@ -1,6 +1,7 @@
 import {
   borrow,
   detach,
+  keep,
   parseDays,
   promote,
   propagate,
@@ -21,12 +22,23 @@ const reasonArg = {
 
 const forceArg = (description: string) => ({ type: "boolean", description }) as const;
 
+/** `--days`, when given; otherwise the service uses the skill's loan length. */
+const daysOption = (value: string | undefined) =>
+  value === undefined ? {} : { days: parseDays(value, 0) };
+
 export const borrowCommand = shelfCommand({
   name: "borrow",
   description: "Copy library skills into this project with a due date",
   args: {
     skill: { type: "positional", required: true, description: "One or more skill names" },
-    days: { type: "string", description: "Loan length in days (default: config loanDays)" },
+    days: {
+      type: "string",
+      description: "Loan length in days (default: the skill's loan length, else config loanDays)",
+    },
+    keep: {
+      type: "boolean",
+      description: "Never expire (the user's decision; agents should ask first)",
+    },
     follow: {
       type: "boolean",
       description: "Let `shelf sync` apply library updates automatically",
@@ -38,17 +50,20 @@ export const borrowCommand = shelfCommand({
   },
   async run(ctx, args) {
     const results = await borrow(ctx, positionals(args), {
-      days: parseDays(args.days, ctx.config.loanDays),
+      ...daysOption(args.days),
       policy: args.follow ? "follow" : "pinned",
       ...(args.link ? { mode: "link" as const } : {}),
+      ...(args.keep ? { keep: true } : {}),
     });
+    const until = (result: (typeof results)[number]) =>
+      result.kept ? "kept, never expires" : `due ${formatDate(result.dueAt)}`;
     return {
       data: { skills: results },
       text: lines(
         ...results.map((result) =>
           result.status === "borrowed"
-            ? `Borrowed ${result.skill} until ${formatDate(result.dueAt)} → ${result.targets.join(", ")}`
-            : `${result.skill} is already borrowed (due ${formatDate(result.dueAt)})`,
+            ? `Borrowed ${result.skill} (${until(result)}) → ${result.targets.join(", ")}`
+            : `${result.skill} is already borrowed (${until(result)})`,
         ),
       ),
     };
@@ -60,15 +75,42 @@ export const renewCommand = shelfCommand({
   description: "Extend a loan (from its due date, or from today if overdue)",
   args: {
     skill: { type: "positional", required: true, description: "Skill name" },
-    days: { type: "string", description: "Days to extend by (default: config loanDays)" },
+    days: {
+      type: "string",
+      description: "Days to extend by (default: the skill's loan length, else config loanDays)",
+    },
     reason: reasonArg,
   },
   async run(ctx, args) {
     const change = await renew(ctx, args.skill, {
-      days: parseDays(args.days, ctx.config.loanDays),
+      ...daysOption(args.days),
       ...(args.reason ? { reason: args.reason } : {}),
     });
     return { data: change, text: `${change.skill} is now due ${formatDate(change.dueAt)}` };
+  },
+});
+
+export const keepCommand = shelfCommand({
+  name: "keep",
+  description: "Keep borrowed skills: they never expire (--off to stop keeping)",
+  args: {
+    skill: { type: "positional", required: true, description: "One or more skill names" },
+    off: { type: "boolean", description: "Stop keeping: the loan comes due again if unused" },
+  },
+  async run(ctx, args) {
+    const results = await keep(ctx, positionals(args), { keep: !args.off });
+    return {
+      data: { skills: results },
+      text: lines(
+        ...results.map((result) =>
+          result.kept
+            ? `${result.skill}${result.changed ? " is now" : " was already"} kept; it never expires`
+            : result.changed
+              ? `Stopped keeping ${result.skill}; due ${formatDate(result.dueAt)} unless used`
+              : `${result.skill} was not kept (due ${formatDate(result.dueAt)})`,
+        ),
+      ),
+    };
   },
 });
 

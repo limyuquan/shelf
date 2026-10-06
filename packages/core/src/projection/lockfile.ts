@@ -17,6 +17,8 @@ const LockedSkillSchema = z.object({
   targets: z.array(z.string()).min(1),
   /** Omitted for the default, `copy`. */
   mode: z.literal("link").optional(),
+  /** The loan never expires (`shelf keep`). A project decision, so every clone shares it. */
+  keep: z.literal(true).optional(),
 });
 
 const LockfileSchema = z.object({

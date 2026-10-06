@@ -1,4 +1,5 @@
 import { ShelfError } from "../errors.ts";
+import type { Skill } from "./types.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RELATIVE = /^([+-])(\d+)([dw])$/;
@@ -6,6 +7,17 @@ const ABSOLUTE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * DAY_MS);
+}
+
+/**
+ * A skill's loan length: its own setting, else the configured default. Capped at
+ * the loan limit, which may have been lowered since the skill's length was set.
+ */
+export function effectiveLoanDays(
+  skill: Pick<Skill, "loanDays">,
+  config: { readonly loanDays: number; readonly maxLoanDays: number },
+): number {
+  return Math.min(skill.loanDays ?? config.loanDays, config.maxLoanDays);
 }
 
 /**

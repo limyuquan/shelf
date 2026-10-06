@@ -7,6 +7,7 @@ import {
   FolderPlus,
   Link2,
   PenLine,
+  Pin,
   Undo2,
   Zap,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const ICONS: Partial<Record<ActivityEvent["type"], ReactNode>> = {
   "loan.borrowed": <BookPlus />,
   "loan.adopted": <BookPlus />,
   "loan.due-changed": <Clock />,
+  "loan.kept": <Pin />,
   "loan.updated": <ArrowUpCircle />,
   "loan.returned": <Undo2 />,
   "loan.expired": <Undo2 />,

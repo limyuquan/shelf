@@ -7,7 +7,7 @@ export function describeAttention(item: AttentionItem, now = Date.now()): string
     : "Never used since borrowed";
   switch (item.reasons[0]) {
     case "overdue":
-      return `Overdue by ${-item.daysLeft} day${item.daysLeft === -1 ? "" : "s"}, kept because it has local edits`;
+      return `Overdue by ${-item.daysLeft} day${item.daysLeft === -1 ? "" : "s"}, not returned because it has local edits`;
     case "diverged":
       return "Edited in the project and in the library";
     case "modified":

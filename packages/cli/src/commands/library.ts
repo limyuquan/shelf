@@ -3,12 +3,16 @@ import {
   createSkill,
   diffSkill,
   type PropagateResult,
+  parsePositiveInt,
   propagate,
   restoreRevision,
+  ShelfError,
+  setSkillLoanDays,
   shortHash,
   showRevision,
   showSkill,
   skillHistory,
+  skillLoanDays,
 } from "@shelf/core";
 import { positionals, shelfCommand } from "../command.ts";
 import { formatDate, lines, table, truncate } from "../format.ts";
@@ -202,3 +206,29 @@ export function renderPropagation(result: PropagateResult): string {
     ...result.projects.map((entry) => `  ${entry.project}: ${describe[entry.status]}`),
   );
 }
+
+export const loanDaysCommand = shelfCommand({
+  name: "loan-days",
+  description: "Show or set a skill's loan length (how long loans and renewals last)",
+  args: {
+    skill: { type: "positional", required: true, description: "Skill name" },
+    days: { type: "positional", required: false, description: "New loan length in days" },
+    reset: { type: "boolean", description: "Use the config's loanDays again" },
+  },
+  async run(ctx, args) {
+    if (args.reset && args.days !== undefined) {
+      throw new ShelfError("INVALID_ARGUMENT", "Give a number of days or --reset, not both");
+    }
+    const result = args.reset
+      ? await setSkillLoanDays(ctx, args.skill, null)
+      : args.days === undefined
+        ? await skillLoanDays(ctx, args.skill)
+        : await setSkillLoanDays(ctx, args.skill, parsePositiveInt(args.days, 0, "days"));
+    const source =
+      result.customLoanDays === null ? "the default, config loanDays" : "set for this skill";
+    return {
+      data: result,
+      text: `${result.skill}: loans last ${result.loanDays} days (${source})`,
+    };
+  },
+});

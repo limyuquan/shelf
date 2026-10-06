@@ -22,7 +22,7 @@ export async function listProjectOverviews(ctx: Context): Promise<ProjectOvervie
   return Promise.all(
     listProjects(ctx.db).map(async (project) => {
       const states = listActiveLoans(ctx.db, project.id).map((loan) =>
-        dueState(loan.dueAt, now, ctx.config.dueSoonDays),
+        loan.keep ? "active" : dueState(loan.dueAt, now, ctx.config.dueSoonDays),
       );
       return {
         id: project.id,

@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, Copy, Plus } from "lucide-react";
+import { BookOpen, Copy, Pin, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -206,12 +206,21 @@ function LoanRow({
               <span>{pill}</span>
             )}
           </Tooltip>
-          <span
-            className={cn("shrink-0 md:w-28 md:text-right", toneText(due.tone))}
-            title={`Due ${shortDate(loan.dueAt)}`}
-          >
-            {dueLabel(loan.daysLeft)}
-          </span>
+          {loan.kept ? (
+            <Tooltip label="Kept: never expires, even when unused">
+              <span className="flex shrink-0 items-center gap-1 text-fg-muted md:w-28 md:justify-end">
+                <Pin className="size-3" />
+                Kept
+              </span>
+            </Tooltip>
+          ) : (
+            <span
+              className={cn("shrink-0 md:w-28 md:text-right", toneText(due.tone))}
+              title={`Due ${shortDate(loan.dueAt)}`}
+            >
+              {dueLabel(loan.daysLeft)}
+            </span>
+          )}
           <span className="shrink-0 truncate text-fg-subtle md:w-28 md:text-right">
             {loan.lastUsedAt ? `used ${timeAgo(loan.lastUsedAt)}` : "never used"}
           </span>
@@ -222,6 +231,8 @@ function LoanRow({
         projectName={projectName}
         skill={loan.skill}
         content={loan.content}
+        kept={loan.kept}
+        loanDays={loan.loanDays}
       />
     </div>
   );

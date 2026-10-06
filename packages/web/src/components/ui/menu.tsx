@@ -60,10 +60,13 @@ export function MenuRadioGroup<T extends string>({
   value,
   onChange,
   options,
+  closeOnClick = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string; icon?: ReactNode }[];
+  /** Close after a choice, like a select (by default the menu stays open). */
+  closeOnClick?: boolean;
 }) {
   return (
     <BaseMenu.RadioGroup value={value} onValueChange={(next) => onChange(next as T)}>
@@ -71,6 +74,7 @@ export function MenuRadioGroup<T extends string>({
         <BaseMenu.RadioItem
           key={option.value}
           value={option.value}
+          closeOnClick={closeOnClick}
           className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] text-fg outline-none data-[highlighted]:bg-surface-hover [&_svg]:size-3.5 pointer-coarse:h-11 pointer-coarse:text-[15px]"
         >
           {option.icon && <span className="text-fg-muted">{option.icon}</span>}

@@ -74,6 +74,30 @@ describe("activity grouping", () => {
     });
   });
 
+  test("keeping a loan, on and off", () => {
+    const kept = (detail: ActivityEvent["detail"]) =>
+      describeGroup(groupEvents([event({ type: "loan.kept", actor: "user", detail })])[0] as never);
+    expect(kept({ keep: true })).toMatchObject({
+      actor: "you",
+      verb: "kept",
+      preposition: "in",
+      detail: "never expires",
+    });
+    expect(kept({ keep: false })).toMatchObject({ verb: "stopped keeping", detail: null });
+    expect(kept({ keep: true, source: "lockfile" })).toMatchObject({
+      verb: "kept",
+      detail: "from the lockfile",
+    });
+    // Stopping right after keeping reads as two entries, not one.
+    const toggled = groupEvents([
+      event({ type: "loan.kept", skill: "a", detail: { keep: false } }),
+      event({ type: "loan.kept", skill: "b", detail: { keep: true } }),
+    ]);
+    expect(toggled.map((group) => describeGroup(group).verb)).toEqual(["stopped keeping", "kept"]);
+    const [borrowed] = groupEvents([event({ type: "loan.borrowed", detail: { keep: true } })]);
+    expect(describeGroup(borrowed as never).detail).toBe("kept, never expires");
+  });
+
   test("day headings", () => {
     const now = new Date("2026-10-06T15:00:00");
     expect(dayLabel(new Date("2026-10-06T09:00:00").toISOString(), now)).toBe("Today");

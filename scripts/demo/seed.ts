@@ -17,7 +17,9 @@ import {
   createContext,
   createSkill,
   initProject,
+  keep,
   refreshLibrary,
+  setSkillLoanDays,
   update,
   used,
 } from "@shelf/core";
@@ -116,6 +118,10 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
     await initProject(ctx);
     await borrow(ctx, ["api-design", "sql-migrations", "git-hygiene", "release-notes"]);
   });
+  // The API is what billing-api is: keep its design skill for good. Migrations
+  // are rare, so that skill gets longer loans everywhere.
+  await as("user", 11, project("billing-api"), (ctx) => keep(ctx, ["api-design"], { keep: true }));
+  await as("user", 11, root, (ctx) => setSkillLoanDays(ctx, "sql-migrations", 60));
   await as("agent:codex", 5, project("billing-api"), (ctx) => used(ctx, ["sql-migrations"]));
   await appendFile(
     join(project("billing-api"), ".agents/skills/git-hygiene/SKILL.md"),

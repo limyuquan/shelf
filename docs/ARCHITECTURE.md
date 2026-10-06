@@ -128,10 +128,22 @@ earlier revision of the library skill, or when `--unedited` declares it one
 
 ## Renew on use
 
-A loan's due date slides to `loanDays` from now whenever the skill is used
-(`recordUse` in `services/usage.ts`), so expiry means "unused for a loan
-period". Uses are written at most once an hour per loan (`last_used_at`) and
-logged as `loan.used` at most once a day.
+A loan's due date slides to the skill's loan length from now whenever the
+skill is used (`recordUse` in `services/usage.ts`), so expiry means "unused for
+a loan period". The loan length is the skill's `loan_days` (a machine-local
+library setting, `shelf loan-days`) or else the config's `loanDays`, capped at
+`maxLoanDays`; it is also the default for `borrow` and `renew` and the initial
+period of adopted loans. Uses are written at most once an hour per loan
+(`last_used_at`) and logged as `loan.used` at most once a day.
+
+A kept loan (`loans.keep`, `shelf keep`) never comes due: its due state is
+always `active`, so nothing expires it and Attention never lists it for its
+due date (content states still apply), while uses are still recorded. Keeping
+is a project decision, so it is written to the lockfile (`keep: true`) and
+taken from it when a project is opened, which carries it to clones on other
+machines. Only the user may keep a loan: services refuse actors starting with
+`agent:`. A loan that stops being kept gets at least a fresh loan period, so it
+doesn't expire the moment it stops being kept.
 
 Uses come from harness hooks that `shelf setup` installs (`services/hooks.ts`)
 in Claude Code's `settings.json` and Codex's `hooks.json`:

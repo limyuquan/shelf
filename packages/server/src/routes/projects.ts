@@ -2,6 +2,7 @@ import {
   activity,
   borrow,
   diffSkill,
+  keep,
   listProjectOverviews,
   projectReport,
   promote,
@@ -20,6 +21,7 @@ import {
   diffQuery,
   dueBody,
   forceBody,
+  keepBody,
   loanParams,
   projectParams,
   promoteBody,
@@ -47,9 +49,21 @@ export const projectRoutes = new Hono<AppEnv>()
 
   .post("/:id/loans", validate("param", projectParams), validate("json", borrowBody), async (c) => {
     const { ctx } = inProject(c.get("ctx"), c.req.valid("param").id);
-    const { skills, days } = c.req.valid("json");
-    return c.json(await borrow(ctx, skills, defined({ days })));
+    const { skills, ...options } = c.req.valid("json");
+    return c.json(await borrow(ctx, skills, defined(options)));
   })
+
+  /** Keeps a loan (it never expires) or stops keeping it. */
+  .post(
+    "/:id/loans/:skill/keep",
+    validate("param", loanParams),
+    validate("json", keepBody),
+    async (c) => {
+      const { id, skill } = c.req.valid("param");
+      const [result] = await keep(inProject(c.get("ctx"), id).ctx, [skill], c.req.valid("json"));
+      return c.json(result);
+    },
+  )
 
   .post(
     "/:id/loans/:skill/renew",

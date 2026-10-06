@@ -9,6 +9,7 @@ import {
   restoreRevision,
   saveLibraryFile,
   saveSkillContent,
+  setSkillLoanDays,
   showRevision,
   showSkill,
   skillHistory,
@@ -20,6 +21,7 @@ import {
   defined,
   diffQuery,
   fileQuery,
+  loanDaysBody,
   propagateBody,
   pullBody,
   revisionParams,
@@ -55,6 +57,21 @@ export const skillRoutes = new Hono<AppEnv>()
     await saveSkillContent(atHome(c.get("ctx")), name, c.req.valid("json").content);
     return c.json(await skillPage(c.get("ctx"), name));
   })
+
+  /** This machine's loan length for the skill; `null` uses the config's loanDays. */
+  .put(
+    "/:name/loan-days",
+    validate("param", skillParams),
+    validate("json", loanDaysBody),
+    async (c) =>
+      c.json(
+        await setSkillLoanDays(
+          atHome(c.get("ctx")),
+          c.req.valid("param").name,
+          c.req.valid("json").days,
+        ),
+      ),
+  )
 
   .post(
     "/:name/propagate",

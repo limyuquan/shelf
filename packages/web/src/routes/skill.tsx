@@ -14,6 +14,7 @@ import { Kbd } from "../components/ui/kbd.tsx";
 import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { Borrowers } from "../features/skills/borrowers.tsx";
+import { LoanLength } from "../features/skills/loan-length.tsx";
 import { PullDialog } from "../features/skills/pull-dialog.tsx";
 import {
   skillFileQuery,
@@ -23,6 +24,7 @@ import {
 } from "../features/skills/queries.ts";
 import { RevisionHistory } from "../features/skills/revision-history.tsx";
 import { languageFor, SkillEditor } from "../features/skills/skill-editor.tsx";
+import { systemQuery } from "../features/system/queries.ts";
 import { cn } from "../lib/cn.ts";
 import { shortHash, shortPath, sourceLabel } from "../lib/format.ts";
 
@@ -33,8 +35,11 @@ export const skillRoute = createRoute({
   path: "/library/$skillName",
   // `?file=references/x.md` opens a reference file instead of SKILL.md.
   validateSearch: z.object({ file: z.string().optional() }),
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(skillQuery(params.skillName)),
+  loader: ({ context, params }) => {
+    // The loan length menu needs the config; don't hold the page for it.
+    void context.queryClient.prefetchQuery(systemQuery());
+    return context.queryClient.ensureQueryData(skillQuery(params.skillName));
+  },
   component: SkillPage,
 });
 
@@ -231,6 +236,9 @@ function SkillProperties({ page }: { page: SkillPageData }) {
         </Property>
         <Property label="Revisions">{detail.revisions}</Property>
         <Property label="Tokens">~{detail.tokens.toLocaleString()}</Property>
+        <Property label="Loan length">
+          <LoanLength detail={detail} />
+        </Property>
         <Property label="Source">
           {detail.source ? (
             <span className="flex items-center gap-1.5" title={detail.source}>

@@ -6,7 +6,8 @@ export type LoanAction =
   | { kind: "renew"; reason?: string }
   | { kind: "due"; when: string }
   | { kind: "update"; force?: boolean }
-  | { kind: "return"; force?: boolean };
+  | { kind: "return"; force?: boolean }
+  | { kind: "keep"; keep: boolean };
 
 interface Target {
   readonly projectId: string;
@@ -27,18 +28,28 @@ function run({ projectId, skill }: Target, action: LoanAction) {
       return unwrap(loan.update.$post({ param, json: { force: action.force ?? false } }));
     case "return":
       return unwrap(loan.return.$post({ param, json: { force: action.force ?? false } }));
+    case "keep":
+      return unwrap(loan.keep.$post({ param, json: { keep: action.keep } }));
   }
 }
 
-const DONE: Record<LoanAction["kind"], (skill: string) => string> = {
-  renew: (skill) => `Renewed ${skill}`,
-  due: (skill) => `Moved the due date of ${skill}`,
-  update: (skill) => `Updated ${skill} to the latest revision`,
-  return: (skill) => `Returned ${skill}`,
-};
+function done(skill: string, action: LoanAction): string {
+  switch (action.kind) {
+    case "renew":
+      return `Renewed ${skill}`;
+    case "due":
+      return `Moved the due date of ${skill}`;
+    case "update":
+      return `Updated ${skill} to the latest revision`;
+    case "return":
+      return `Returned ${skill}`;
+    case "keep":
+      return action.keep ? `Keeping ${skill}: it never expires` : `Stopped keeping ${skill}`;
+  }
+}
 
 /**
- * Renew, move, update or return a loan. Every view reads from the same few
+ * Renew, move, update, keep or return a loan. Every view reads from the same few
  * queries, so a mutation simply refreshes them all.
  */
 export function useLoanAction() {
@@ -47,7 +58,7 @@ export function useLoanAction() {
     mutationFn: ({ target, action }: { target: Target; action: LoanAction }) => run(target, action),
     onSuccess: (_result, { target, action }) => {
       void queryClient.invalidateQueries();
-      toast.success(DONE[action.kind](target.skill));
+      toast.success(done(target.skill, action));
     },
   });
 }
@@ -92,8 +103,22 @@ export function usePromote() {
 export function useBorrow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ projectId, skills }: { projectId: string; skills: string[] }) =>
-      unwrap(api.projects[":id"].loans.$post({ param: { id: projectId }, json: { skills } })),
+    mutationFn: ({
+      projectId,
+      skills,
+      keep,
+    }: {
+      projectId: string;
+      skills: string[];
+      /** Never expires. */
+      keep?: boolean;
+    }) =>
+      unwrap(
+        api.projects[":id"].loans.$post({
+          param: { id: projectId },
+          json: keep ? { skills, keep } : { skills },
+        }),
+      ),
     onSuccess: (results) => {
       void queryClient.invalidateQueries();
       const names = results.filter((r) => r.status === "borrowed").map((r) => r.skill);

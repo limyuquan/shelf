@@ -1,4 +1,4 @@
-import { addDays } from "../domain/due.ts";
+import { addDays, effectiveLoanDays } from "../domain/due.ts";
 import type { Project } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import { type Lockfile, readLockfile } from "../projection/lockfile.ts";
@@ -6,13 +6,16 @@ import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { findActiveLoan, setLoanUsed } from "../store/loans.ts";
 import { findProjectById } from "../store/projects.ts";
+import { findSkillByName } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { findProjectRoot, requireProject } from "./project.ts";
 
 /**
- * Loans renew on use: each recorded use slides the due date to `loanDays` from
- * now, so a loan only expires after going unused for that long. Uses arrive from
- * harness hooks (`shelf hook skill-use`) or from `shelf used`.
+ * Loans renew on use: each recorded use slides the due date to the skill's loan
+ * length (`loanDays` unless set per skill) from now, so a loan only expires after
+ * going unused for that long. Uses arrive from harness hooks (`shelf hook
+ * skill-use`) or from `shelf used`. Kept loans never expire, but uses are still
+ * recorded, so the project shows what it actually uses.
  */
 
 /** Uses closer together than this are not written again. */
@@ -52,7 +55,8 @@ export function recordUse(ctx: Context, project: Project, names: readonly string
         results.push({ skill: name, status: "recent", dueAt: loan.dueAt });
         continue;
       }
-      const slid = addDays(now, ctx.config.loanDays);
+      const skill = findSkillByName(ctx.db, name);
+      const slid = addDays(now, skill ? effectiveLoanDays(skill, ctx.config) : ctx.config.loanDays);
       const dueAt = slid > loan.dueAt ? slid : loan.dueAt;
       setLoanUsed(ctx.db, loan.id, now, dueAt);
       // One activity entry per skill per day is enough to see what is in use.

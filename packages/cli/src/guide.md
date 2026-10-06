@@ -30,7 +30,8 @@ unless the user asks you to start using shelf there. Otherwise read
 - `diverged` — edited here and in the library. Review both before choosing.
 - `missing`  — copies were deleted. `shelf sync` restores them.
 
-`due`: `active`, `due-soon` (within 7 days by default), `overdue`.
+`due`: `active`, `due-soon` (within 7 days by default), `overdue`. Kept
+loans (`kept: true`) are always `active`: they never expire.
 
 ## Choosing skills
 
@@ -43,13 +44,26 @@ unless the user asks you to start using shelf there. Otherwise read
 ## Due dates
 
 - Using a borrowed skill (the Skill tool, reading its files, or the user
-  invoking it) moves its due date to 30 days from now. The hooks record this;
-  in harnesses without hooks, run `shelf used <name>` after using a skill.
+  invoking it) moves its due date to the skill's loan length from now (30 days
+  unless the user set one with `shelf loan-days`). The hooks record this; in
+  harnesses without hooks, run `shelf used <name>` after using a skill.
 - A `due-soon` skill has gone unused for a while. `shelf renew <name> [--days N]
   --reason "<why>"` keeps it if the project still needs it; otherwise
   `shelf return <name>`. Give a reason: the user reviews it in the activity log.
 - `shelf due <name> <+14d|-7d|+2w|2026-12-01>` moves a due date either way.
 - Loans cannot extend past the configured limit (90 days by default).
+
+## Kept skills
+
+`shelf keep <name>` makes a loan never expire, for skills the project always
+needs (e.g. the framework it is built on). It is recorded in the lockfile, so
+every clone keeps the same skills. Keeping is the user's decision: don't keep
+skills on your own (shelf refuses agents). If a skill looks essential to the
+project, ask the user whether to keep it and give them the command
+(`shelf keep <name>`, or `shelf borrow <name> --keep`). You may run
+`shelf keep <name> --off` when the user asks; the loan then comes due again if
+unused. `shelf loan-days <name> [days]` shows or sets a skill's loan length in
+the library; change it only when asked.
 
 ## Changing skills everywhere
 

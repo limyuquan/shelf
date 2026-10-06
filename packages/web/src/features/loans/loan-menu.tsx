@@ -3,6 +3,8 @@ import {
   CalendarClock,
   FileDiff,
   MoreHorizontal,
+  Pin,
+  PinOff,
   RotateCcw,
   Undo2,
 } from "lucide-react";
@@ -19,11 +21,17 @@ export function LoanMenu({
   projectName,
   skill,
   content,
+  kept,
+  loanDays,
 }: {
   projectId: string;
   projectName: string;
   skill: string;
   content: ContentState;
+  /** Kept loans never come due, so renewing them is pointless. */
+  kept: boolean;
+  /** How far a renewal moves the due date. */
+  loanDays: number;
 }) {
   const action = useLoanAction();
   const [reviewing, setReviewing] = useState(false);
@@ -44,17 +52,27 @@ export function LoanMenu({
             {edited ? "Review edits…" : "Review library changes…"}
           </MenuItem>
         )}
+        {!kept && (
+          <>
+            <MenuItem
+              icon={<RotateCcw />}
+              onClick={() => action.mutate({ target, action: { kind: "renew" } })}
+            >
+              Renew for {loanDays} days
+            </MenuItem>
+            <MenuItem
+              icon={<CalendarClock />}
+              onClick={() => action.mutate({ target, action: { kind: "due", when: "+7d" } })}
+            >
+              Extend by a week
+            </MenuItem>
+          </>
+        )}
         <MenuItem
-          icon={<RotateCcw />}
-          onClick={() => action.mutate({ target, action: { kind: "renew" } })}
+          icon={kept ? <PinOff /> : <Pin />}
+          onClick={() => action.mutate({ target, action: { kind: "keep", keep: !kept } })}
         >
-          Renew for 30 days
-        </MenuItem>
-        <MenuItem
-          icon={<CalendarClock />}
-          onClick={() => action.mutate({ target, action: { kind: "due", when: "+7d" } })}
-        >
-          Extend by a week
+          {kept ? "Stop keeping" : "Keep — never expires"}
         </MenuItem>
         {content === "behind" && (
           <MenuItem

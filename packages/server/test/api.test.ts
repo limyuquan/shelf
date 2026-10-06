@@ -166,6 +166,49 @@ describe("insights", () => {
   });
 });
 
+describe("keep and loan length", () => {
+  test("a kept loan never comes due; a skill's loan length sets new due dates", async () => {
+    const { env, client, projectId } = await setup(["pdf", "git"]);
+    const lengths = await ok(
+      client.skills[":name"]["loan-days"].$put({ param: { name: "git" }, json: { days: 14 } }),
+    );
+    expect(lengths).toEqual({ skill: "git", loanDays: 14, customLoanDays: 14 });
+    const tooLong = await client.skills[":name"]["loan-days"].$put({
+      param: { name: "git" },
+      json: { days: 365 },
+    });
+    expect(tooLong.status).toBe(422);
+
+    const loans = client.projects[":id"].loans;
+    const borrowed = await ok(
+      loans.$post({ param: { id: projectId }, json: { skills: ["pdf", "git"], keep: true } }),
+    );
+    expect(borrowed.map((loan) => [loan.skill, loan.kept])).toEqual([
+      ["pdf", true],
+      ["git", true],
+    ]);
+    const param = { id: projectId, skill: "git" };
+    expect(await ok(loans[":skill"].keep.$post({ param, json: { keep: false } }))).toMatchObject({
+      skill: "git",
+      kept: false,
+      changed: true,
+    });
+
+    env.clock.advanceDays(10);
+    const page = await ok(client.projects[":id"].$get({ param: { id: projectId } }));
+    expect(page.report.loans.map((loan) => [loan.skill, loan.kept, loan.due])).toEqual([
+      ["git", false, "due-soon"],
+      ["pdf", true, "active"],
+    ]);
+    expect((await ok(client.attention.$get())).map((item) => item.skill)).toEqual(["git"]);
+    const catalog = await ok(client.skills.$get({ query: {} }));
+    expect(catalog.map((skill) => [skill.name, skill.loanDays, skill.customLoanDays])).toEqual([
+      ["git", 14, 14],
+      ["pdf", 30, null],
+    ]);
+  });
+});
+
 describe("library", () => {
   test("saving a skill records a revision and previews who an update reaches", async () => {
     const { env, ctx, client } = await setup();

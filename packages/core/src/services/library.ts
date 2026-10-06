@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { isAbsolute, join, normalize, sep } from "node:path";
+import { effectiveLoanDays } from "../domain/due.ts";
 import { assertSkillName } from "../domain/skill-name.ts";
 import type { RevisionHash, Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
@@ -22,6 +23,7 @@ import {
   insertRevision,
   insertSkill,
   listSkills,
+  setSkillLoanDays as storeSkillLoanDays,
   updateSkillHead,
 } from "../store/skills.ts";
 import { findSkillSource } from "../store/sources.ts";
@@ -164,6 +166,10 @@ export interface CatalogEntry {
   readonly borrowers: number;
   /** Where `shelf pull` fetches updates from, if the skill is linked to a source. */
   readonly source: string | null;
+  /** Loan length for new loans, uses and renewals: `customLoanDays` or the config's. */
+  readonly loanDays: number;
+  /** This machine's loan length for the skill; null to use the config's `loanDays`. */
+  readonly customLoanDays: number | null;
 }
 
 /** Library skills, optionally filtered: every whitespace-separated term must match. */
@@ -190,7 +196,56 @@ function catalogEntry(ctx: Context, skill: Skill, content: string): CatalogEntry
     tokens: Math.ceil(content.length / 4),
     borrowers: listActiveLoansForSkill(ctx.db, skill.id).length,
     source: findSkillSource(ctx.db, skill.id)?.url ?? null,
+    ...skillLoanLength(ctx, skill),
   };
+}
+
+export interface SkillLoanDays {
+  readonly skill: string;
+  readonly loanDays: number;
+  readonly customLoanDays: number | null;
+}
+
+function skillLoanLength(ctx: Context, skill: Skill) {
+  return { loanDays: effectiveLoanDays(skill, ctx.config), customLoanDays: skill.loanDays };
+}
+
+/** A skill's loan length on this machine. */
+export async function skillLoanDays(ctx: Context, name: string): Promise<SkillLoanDays> {
+  await refreshLibrary(ctx);
+  const skill = requireSkill(ctx, name);
+  return { skill: name, ...skillLoanLength(ctx, skill) };
+}
+
+/**
+ * Sets how long loans of a skill last (and how far a use or renewal moves the due
+ * date), or `null` to use the config's `loanDays`. A machine-local library setting:
+ * existing due dates are unchanged until the skill is next used or renewed.
+ */
+export async function setSkillLoanDays(
+  ctx: Context,
+  name: string,
+  days: number | null,
+): Promise<SkillLoanDays> {
+  if (days !== null) {
+    if (!Number.isInteger(days) || days < 1) {
+      throw new ShelfError(
+        "INVALID_ARGUMENT",
+        `Loan length must be a whole number of days, at least 1 (got ${days})`,
+      );
+    }
+    if (days > ctx.config.maxLoanDays) {
+      throw new ShelfError(
+        "LOAN_LIMIT",
+        `${days} days exceeds the ${ctx.config.maxLoanDays}-day loan limit`,
+        `Use ${ctx.config.maxLoanDays} days or less, or raise maxLoanDays in the config`,
+      );
+    }
+  }
+  await refreshLibrary(ctx);
+  const skill = requireSkill(ctx, name);
+  writeTransaction(ctx.db, () => storeSkillLoanDays(ctx.db, skill.id, days));
+  return skillLoanDays(ctx, name);
 }
 
 export interface SkillDetail extends CatalogEntry {

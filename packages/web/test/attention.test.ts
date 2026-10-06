@@ -12,6 +12,8 @@ function item(overrides: Partial<AttentionItem>): AttentionItem {
     dueAt: "2026-10-10T12:00:00.000Z",
     daysLeft: 4,
     lastUsedAt: null,
+    kept: false,
+    loanDays: 30,
     policy: "pinned",
     revision: "sha256:a",
     latestRevision: "sha256:a",
@@ -34,7 +36,7 @@ describe("attention descriptions", () => {
 
   test("the most urgent reason wins", () => {
     expect(describeAttention(item({ reasons: ["overdue", "modified"], daysLeft: -3 }), NOW)).toBe(
-      "Overdue by 3 days, kept because it has local edits",
+      "Overdue by 3 days, not returned because it has local edits",
     );
   });
 });

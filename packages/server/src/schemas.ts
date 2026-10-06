@@ -16,7 +16,13 @@ const days = z.number().int().positive();
 export const borrowBody = z.object({
   skills: z.array(z.string().min(1)).min(1),
   days: days.optional(),
+  /** Never expires. */
+  keep: z.boolean().optional(),
 });
+
+export const keepBody = z.object({ keep: z.boolean() });
+/** `null` uses the config's loanDays again. */
+export const loanDaysBody = z.object({ days: days.nullable() });
 
 export const renewBody = z.object({ days: days.optional(), reason: z.string().optional() });
 export const dueBody = z.object({ when: z.string().min(1), reason: z.string().optional() });
