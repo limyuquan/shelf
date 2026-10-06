@@ -1,8 +1,11 @@
 import { spawn } from "node:child_process";
 import { createContext, parsePositiveInt } from "@shelf/core";
 import { startServer } from "@shelf/server";
+import bundledSkill from "@shelf/skill/SKILL.md" with { type: "text" };
 import page from "@shelf/web/index.html";
 import { defineCommand } from "citty";
+import pkg from "../../package.json" with { type: "json" };
+import { resolveHookCommand } from "../hook-command.ts";
 import { printFailure, printSuccess } from "../output.ts";
 
 /** Long-running, so it manages its own context instead of using `shelfCommand`. */
@@ -18,7 +21,11 @@ export const uiCommand = defineCommand({
     try {
       const ctx = await createContext({ actor: "user:dashboard" });
       const port = args.port === undefined ? 0 : parsePositiveInt(args.port, 0, "--port");
-      const dashboard = startServer(ctx, { page, port });
+      const dashboard = startServer(ctx, {
+        page,
+        port,
+        system: { version: pkg.version, bundledSkill, hookCommand: resolveHookCommand() },
+      });
       printSuccess(
         {
           data: { url: dashboard.url },

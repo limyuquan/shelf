@@ -1,5 +1,5 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { isAbsolute, join, normalize, sep } from "node:path";
 import { assertSkillName } from "../domain/skill-name.ts";
 import type { RevisionHash, Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
@@ -167,7 +167,9 @@ export async function catalog(ctx: Context, query = ""): Promise<CatalogEntry[]>
     return terms.every((term) => haystack.includes(term));
   });
   return Promise.all(
-    matches.map(async (skill) => catalogEntry(ctx, skill, await readSkillFile(ctx, skill.name))),
+    matches.map(async (skill) =>
+      catalogEntry(ctx, skill, await readSkillMarkdown(ctx, skill.name)),
+    ),
   );
 }
 
@@ -193,7 +195,7 @@ export async function showSkill(ctx: Context, name: string): Promise<SkillDetail
   await refreshLibrary(ctx);
   const skill = requireSkill(ctx, name);
   const dir = librarySkillPath(ctx.paths, name);
-  const content = await readSkillFile(ctx, name);
+  const content = await readSkillMarkdown(ctx, name);
   const files = (await readdir(dir, { recursive: true, withFileTypes: true }))
     .filter((entry) => entry.isFile())
     .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1))
@@ -206,6 +208,75 @@ export async function showSkill(ctx: Context, name: string): Promise<SkillDetail
   };
 }
 
-function readSkillFile(ctx: Context, name: string): Promise<string> {
+function readSkillMarkdown(ctx: Context, name: string): Promise<string> {
   return readFile(join(librarySkillPath(ctx.paths, name), SKILL_FILE), "utf8");
+}
+
+/** Largest file the dashboard opens; skills are small, so anything bigger is a mistake. */
+const MAX_FILE_BYTES = 1024 * 1024;
+
+export interface LibraryFile {
+  readonly skill: string;
+  /** Relative to the skill directory, with forward slashes. */
+  readonly path: string;
+  /** Null for binary or oversized files, which are listed but not shown. */
+  readonly content: string | null;
+  readonly size: number;
+}
+
+/** One file of a library skill (e.g. `references/patterns.md`). */
+export async function readLibraryFile(
+  ctx: Context,
+  name: string,
+  path: string,
+): Promise<LibraryFile> {
+  const file = await resolveLibraryFile(ctx, name, path);
+  const bytes = new Uint8Array(await readFile(file.absolute));
+  const binary = bytes.length > MAX_FILE_BYTES || bytes.includes(0);
+  return {
+    skill: name,
+    path: file.relative,
+    content: binary ? null : new TextDecoder().decode(bytes),
+    size: bytes.length,
+  };
+}
+
+/**
+ * Replaces an existing text file of a library skill and records the new revision.
+ * SKILL.md goes through `saveSkillContent`, which validates its frontmatter.
+ */
+export async function saveLibraryFile(
+  ctx: Context,
+  name: string,
+  path: string,
+  content: string,
+): Promise<LibraryFile> {
+  const file = await resolveLibraryFile(ctx, name, path);
+  if (file.relative === SKILL_FILE) {
+    await saveSkillContent(ctx, name, content);
+  } else {
+    if ((await readLibraryFile(ctx, name, file.relative)).content === null) {
+      throw new ShelfError("INVALID_ARGUMENT", `${file.relative} is not a text file`);
+    }
+    await writeFileAtomic(file.absolute, content);
+    await refreshLibrary(ctx);
+  }
+  return readLibraryFile(ctx, name, file.relative);
+}
+
+/** Only existing files inside the skill directory: no traversal, no new files. */
+async function resolveLibraryFile(ctx: Context, name: string, path: string) {
+  requireSkill(ctx, name);
+  const dir = librarySkillPath(ctx.paths, name);
+  const relative = normalize(path).split(sep).join("/");
+  const absolute = join(dir, relative);
+  const inside = absolute.startsWith(dir + sep) && !relative.split("/").includes("..");
+  if (!inside || isAbsolute(path) || !(await stat(absolute).catch(() => null))?.isFile()) {
+    throw new ShelfError(
+      "INVALID_ARGUMENT",
+      `"${path}" is not a file of ${name}`,
+      `Run \`shelf show ${name}\` to list its files`,
+    );
+  }
+  return { absolute, relative };
 }

@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createRoute, Link } from "@tanstack/react-router";
+import { createRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FolderGit2 } from "lucide-react";
 import { rootRoute } from "../app/root-route.tsx";
 import { PageBody, PageHeader } from "../components/layout/page.tsx";
@@ -7,7 +7,9 @@ import { ProjectAvatar } from "../components/project-avatar.tsx";
 import { EmptyState } from "../components/ui/empty-state.tsx";
 import { StatusPill } from "../components/ui/status.tsx";
 import { projectsQuery } from "../features/projects/queries.ts";
+import { cn } from "../lib/cn.ts";
 import { shortPath, timeAgo } from "../lib/format.ts";
+import { navigableRow, useListNavigation } from "../lib/hotkeys.ts";
 
 export const projectsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -18,6 +20,11 @@ export const projectsRoute = createRoute({
 
 function ProjectsPage() {
   const { data: projects } = useSuspenseQuery(projectsQuery());
+  const navigate = useNavigate();
+  const { rowProps } = useListNavigation(projects, {
+    onOpen: (project) =>
+      void navigate({ to: "/projects/$projectId", params: { projectId: project.id } }),
+  });
   return (
     <>
       <PageHeader crumbs={[{ label: "Projects" }]} />
@@ -27,12 +34,16 @@ function ProjectsPage() {
             Run `shelf init` inside a project to start borrowing skills into it.
           </EmptyState>
         ) : (
-          projects.map((project) => (
+          projects.map((project, index) => (
             <Link
               key={project.id}
               to="/projects/$projectId"
               params={{ projectId: project.id }}
-              className="flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover"
+              {...rowProps(index)}
+              className={cn(
+                "flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+                navigableRow,
+              )}
             >
               <ProjectAvatar name={project.name} className="size-6 rounded-md text-[11px]" />
               <div className="min-w-0 flex-1">

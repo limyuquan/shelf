@@ -84,7 +84,7 @@ export function renderSkill(skill: DemoSkill): string {
     .join(" ");
   return `---
 name: ${skill.name}
-description: ${skill.description}
+description: ${JSON.stringify(skill.description)}
 ---
 
 # ${title}

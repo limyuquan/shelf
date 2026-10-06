@@ -1,7 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
-import { Activity, BookOpen, FolderGit2, Inbox, Moon, Search, Sun } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  FolderGit2,
+  Inbox,
+  Moon,
+  Plus,
+  Search,
+  Settings,
+  Sun,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { projectsQuery } from "../../features/projects/queries.ts";
 import { skillsQuery } from "../../features/skills/queries.ts";
@@ -52,7 +62,30 @@ export function CommandMenu({
             <Item icon={<Activity />} onSelect={go(() => navigate({ to: "/activity" }))}>
               Activity
             </Item>
+            <Item icon={<Settings />} onSelect={go(() => navigate({ to: "/settings" }))}>
+              Settings
+            </Item>
           </Group>
+          {projects.data && projects.data.length > 0 && (
+            <Group heading="Borrow">
+              {projects.data.map((project) => (
+                <Item
+                  key={project.id}
+                  value={`borrow skills into ${project.name}`}
+                  icon={<Plus />}
+                  onSelect={go(() =>
+                    navigate({
+                      to: "/projects/$projectId",
+                      params: { projectId: project.id },
+                      search: { borrow: true },
+                    }),
+                  )}
+                >
+                  Borrow skills into {project.name}
+                </Item>
+              ))}
+            </Group>
+          )}
           {projects.data && projects.data.length > 0 && (
             <Group heading="Projects">
               {projects.data.map((project) => (

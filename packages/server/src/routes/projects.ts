@@ -1,8 +1,11 @@
 import {
   activity,
   borrow,
+  diffSkill,
   listProjectOverviews,
   projectReport,
+  promote,
+  propagate,
   renew,
   returnSkill,
   setDue,
@@ -14,13 +17,15 @@ import type { AppEnv } from "../env.ts";
 import {
   borrowBody,
   defined,
+  diffQuery,
   dueBody,
   forceBody,
   loanParams,
   projectParams,
+  promoteBody,
   renewBody,
 } from "../schemas.ts";
-import { inProject } from "../scope.ts";
+import { atHome, inProject } from "../scope.ts";
 import { validate } from "../validate.ts";
 
 /** Projects and the loans inside them. Writes go through the same services as the CLI. */
@@ -83,6 +88,33 @@ export const projectRoutes = new Hono<AppEnv>()
         defined(c.req.valid("json")),
       );
       return c.json(result);
+    },
+  )
+
+  .post(
+    "/:id/loans/:skill/promote",
+    validate("param", loanParams),
+    validate("json", promoteBody),
+    async (c) => {
+      const { id, skill } = c.req.valid("param");
+      const { force, propagate: everywhere } = c.req.valid("json");
+      const result = await promote(inProject(c.get("ctx"), id).ctx, skill, defined({ force }));
+      return c.json({
+        ...result,
+        propagation: everywhere ? await propagate(atHome(c.get("ctx")), skill) : null,
+      });
+    },
+  )
+
+  /** Defaults to this project's edits, or pending library changes when there are none. */
+  .get(
+    "/:id/loans/:skill/diff",
+    validate("param", loanParams),
+    validate("query", diffQuery),
+    async (c) => {
+      const { id, skill } = c.req.valid("param");
+      const { ctx } = inProject(c.get("ctx"), id);
+      return c.json(await diffSkill(ctx, skill, defined(c.req.valid("query"))));
     },
   )
 

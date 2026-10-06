@@ -54,6 +54,11 @@ packages/web/src/
   (`ensureQueryData`); components read it with `useSuspenseQuery`. Mutations
   invalidate everything: the data is local and cheap, and it keeps every view
   consistent without per-mutation cache surgery.
+- **Binary-provided values.** Core cannot know the running binary's version,
+  bundled skill or hook command, so the CLI passes them to the server
+  (`SystemOptions`) for the settings page and repairs.
+- **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
+  navigation; both stand down while typing or while a dialog or menu is open.
 - **Styling.** Components use semantic tokens (`bg-surface`, `text-fg-muted`,
   `border-border`), never raw colours. `tokens.css` defines them per theme;
   `data-theme` on `<html>` switches dark and light (default: follow the OS).

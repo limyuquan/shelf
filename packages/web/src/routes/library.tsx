@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BookOpen, Link2, Search } from "lucide-react";
+import { useRef } from "react";
 import { z } from "zod";
 import { rootRoute } from "../app/root-route.tsx";
 import { PageBody, PageHeader } from "../components/layout/page.tsx";
@@ -8,7 +9,9 @@ import { EmptyState } from "../components/ui/empty-state.tsx";
 import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { skillsQuery } from "../features/skills/queries.ts";
+import { cn } from "../lib/cn.ts";
 import { sourceLabel } from "../lib/format.ts";
+import { navigableRow, useHotkeys, useListNavigation } from "../lib/hotkeys.ts";
 
 export const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -23,6 +26,12 @@ function LibraryPage() {
   const { q = "" } = libraryRoute.useSearch();
   const navigate = useNavigate({ from: libraryRoute.fullPath });
   const skills = useQuery({ ...skillsQuery(q), placeholderData: (previous) => previous });
+  const filter = useRef<HTMLInputElement>(null);
+  useHotkeys({ "/": () => filter.current?.focus() });
+  const { rowProps } = useListNavigation(skills.data ?? [], {
+    onOpen: (skill) =>
+      void navigate({ to: "/library/$skillName", params: { skillName: skill.name } }),
+  });
 
   return (
     <>
@@ -30,14 +39,16 @@ function LibraryPage() {
       <div className="flex h-11 shrink-0 items-center gap-2.5 border-border-subtle border-b px-5">
         <Search className="size-3.5 text-fg-subtle" />
         <input
+          ref={filter}
           value={q}
+          onKeyDown={(event) => event.key === "Escape" && event.currentTarget.blur()}
           onChange={(event) =>
             void navigate({
               search: event.target.value ? { q: event.target.value } : {},
               replace: true,
             })
           }
-          placeholder="Filter skills by name or description"
+          placeholder="Filter skills by name or description   /"
           className="h-full flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-fg-subtle"
         />
         {skills.data && (
@@ -60,12 +71,16 @@ function LibraryPage() {
               : "Create one with `shelf new`, or bring existing ones in with `shelf adopt`."}
           </EmptyState>
         ) : (
-          skills.data.map((skill) => (
+          skills.data.map((skill, index) => (
             <Link
               key={skill.name}
               to="/library/$skillName"
               params={{ skillName: skill.name }}
-              className="flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover"
+              {...rowProps(index)}
+              className={cn(
+                "flex h-14 items-center gap-4 border-border-subtle border-b px-5 transition-colors hover:bg-surface-hover",
+                navigableRow,
+              )}
             >
               <BookOpen className="size-4 shrink-0 text-fg-subtle" />
               <div className="min-w-0 flex-1">

@@ -104,12 +104,17 @@ their calendar due dates: agents renew with `shelf renew` or `shelf used`.
 `shelf ui` opens a local dashboard:
 
 - **Attention**: every loan across your projects that needs you — due soon,
-  edited, behind the library, overdue — with one-click renew and update.
-- **Projects** and **Library**: borrowed skills with their state and last use;
-  a SKILL.md editor with revision history and "update these borrowers".
+  edited, behind the library, overdue — with one-click renew, update, and a
+  diff to review edits before promoting or discarding them.
+- **Projects**: borrow skills, see each loan's state and last use.
+- **Library**: edit SKILL.md and reference files, see revisions and borrowers,
+  push updates to chosen projects, and pull reviewed updates from a skill's
+  upstream source.
 - **Activity**: what your agents did, as a timeline ("codex used api-design in
   billing-api · 2m ago").
-- ⌘K to jump anywhere, and dark and light themes.
+- **Settings**: hook status per harness, health checks with one-click repair.
+- ⌘K to jump anywhere, keyboard navigation (`?` lists shortcuts), dark and
+  light themes.
 
 It listens on 127.0.0.1 only and requires the one-time token in the URL it
 prints. Everything is built into the binary: no Node, no CDN, works offline.

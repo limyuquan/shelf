@@ -5,9 +5,11 @@ import {
   BookOpen,
   FolderGit2,
   Inbox,
+  Keyboard,
   Monitor,
   Moon,
   Search,
+  Settings,
   Sun,
   SunMoon,
 } from "lucide-react";
@@ -21,7 +23,13 @@ import { Kbd } from "../ui/kbd.tsx";
 import { Menu, MenuRadioGroup } from "../ui/menu.tsx";
 import { Tooltip } from "../ui/tooltip.tsx";
 
-export function Sidebar({ onSearch }: { onSearch: () => void }) {
+export function Sidebar({
+  onSearch,
+  onShortcuts,
+}: {
+  onSearch: () => void;
+  onShortcuts: () => void;
+}) {
   const attention = useQuery(attentionQuery());
   const projects = useQuery(projectsQuery());
 
@@ -64,15 +72,25 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
         ))}
       </nav>
 
-      <div className="mt-auto flex items-center justify-between px-1 pt-3">
-        <button
-          type="button"
-          onClick={onSearch}
-          className="flex h-7 items-center gap-2 rounded-md px-1.5 text-[12px] text-fg-subtle hover:text-fg-muted"
-        >
-          <Kbd>⌘K</Kbd> Commands
-        </button>
-        <ThemeMenu />
+      <div className="mt-auto flex flex-col gap-px pt-3">
+        <NavItem to="/settings" icon={<Settings />} label="Settings" />
+        <div className="mt-1 flex items-center justify-between px-1">
+          <button
+            type="button"
+            onClick={onSearch}
+            className="flex h-7 items-center gap-2 rounded-md px-1.5 text-[12px] text-fg-subtle hover:text-fg-muted"
+          >
+            <Kbd>⌘K</Kbd> Commands
+          </button>
+          <div className="flex items-center">
+            <Tooltip label="Keyboard shortcuts" shortcut="?" side="top">
+              <IconButton label="Keyboard shortcuts" onClick={onShortcuts}>
+                <Keyboard />
+              </IconButton>
+            </Tooltip>
+            <ThemeMenu />
+          </div>
+        </div>
       </div>
     </aside>
   );
@@ -84,7 +102,7 @@ function NavItem({
   label,
   count,
 }: {
-  to: "/" | "/projects" | "/library" | "/activity";
+  to: "/" | "/projects" | "/library" | "/activity" | "/settings";
   icon: ReactNode;
   label: string;
   count?: number | undefined;

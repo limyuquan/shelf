@@ -1,23 +1,37 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createRoute } from "@tanstack/react-router";
-import { Copy, FileText, GitBranch, Link2 } from "lucide-react";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { createRoute, Link, useBlocker } from "@tanstack/react-router";
+import { Copy, FileText, GitBranch, Link2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import type { SkillPage as SkillPageData } from "../api/types.ts";
 import { rootRoute } from "../app/root-route.tsx";
 import { PageBody, PageHeader } from "../components/layout/page.tsx";
 import { PropertiesPanel, Property, PropertyGroup } from "../components/layout/properties.tsx";
 import { Button, IconButton } from "../components/ui/button.tsx";
+import { Dialog, DialogLayout } from "../components/ui/dialog.tsx";
 import { Kbd } from "../components/ui/kbd.tsx";
+import { Skeleton } from "../components/ui/skeleton.tsx";
 import { Tooltip } from "../components/ui/tooltip.tsx";
 import { Borrowers } from "../features/skills/borrowers.tsx";
-import { skillQuery, useSaveSkill } from "../features/skills/queries.ts";
-import { SkillEditor } from "../features/skills/skill-editor.tsx";
+import { PullDialog } from "../features/skills/pull-dialog.tsx";
+import {
+  skillFileQuery,
+  skillQuery,
+  useSaveFile,
+  useSaveSkill,
+} from "../features/skills/queries.ts";
+import { languageFor, SkillEditor } from "../features/skills/skill-editor.tsx";
+import { cn } from "../lib/cn.ts";
 import { shortDate, shortHash, shortPath, sourceLabel } from "../lib/format.ts";
+
+const SKILL_FILE = "SKILL.md";
 
 export const skillRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/library/$skillName",
+  // `?file=references/x.md` opens a reference file instead of SKILL.md.
+  validateSearch: z.object({ file: z.string().optional() }),
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(skillQuery(params.skillName)),
   component: SkillPage,
@@ -25,35 +39,35 @@ export const skillRoute = createRoute({
 
 function SkillPage() {
   const { skillName } = skillRoute.useParams();
+  const { file = SKILL_FILE } = skillRoute.useSearch();
   const { data: page } = useSuspenseQuery(skillQuery(skillName));
   const { detail } = page;
-  const [draft, setDraft] = useState(detail.content);
-  const save = useSaveSkill(skillName);
-  const dirty = draft !== detail.content;
-
-  // A refetch after saving (or an edit elsewhere) brings new content: adopt it.
-  useEffect(() => setDraft(detail.content), [detail.content]);
-
-  const onSave = () => {
-    if (draft !== detail.content && !save.isPending) save.mutate(draft);
-  };
+  const [pulling, setPulling] = useState(false);
 
   return (
     <>
       <PageHeader
         crumbs={[{ label: "Library", to: "/library" }, { label: detail.name }]}
         actions={
-          <Tooltip label="Copy library path">
-            <IconButton
-              label="Copy library path"
-              onClick={() => {
-                void navigator.clipboard.writeText(detail.path);
-                toast.success("Copied the library path");
-              }}
-            >
-              <Copy />
-            </IconButton>
-          </Tooltip>
+          <>
+            <Tooltip label="Copy library path">
+              <IconButton
+                label="Copy library path"
+                onClick={() => {
+                  void navigator.clipboard.writeText(detail.path);
+                  toast.success("Copied the library path");
+                }}
+              >
+                <Copy />
+              </IconButton>
+            </Tooltip>
+            {detail.source && (
+              <Button onClick={() => setPulling(true)}>
+                <RefreshCw />
+                Check for updates
+              </Button>
+            )}
+          </>
         }
       />
       <div className="flex min-h-0 flex-1">
@@ -63,35 +77,140 @@ function SkillPage() {
             <p className="mt-2 max-w-[640px] text-[14px] text-fg-muted leading-relaxed">
               {detail.description}
             </p>
-
-            <div className="mt-7 flex items-center gap-2 border-border-subtle border-b pb-2.5">
-              <span className="flex items-center gap-1.5 font-medium text-[12.5px] text-fg">
-                <FileText className="size-3.5 text-fg-muted" />
-                SKILL.md
-              </span>
-              <span className="text-[12px] text-fg-subtle">
-                ~{detail.tokens.toLocaleString()} tokens when loaded
-              </span>
-            </div>
-            <div className="-mx-2 mt-1">
-              <SkillEditor value={draft} onChange={setDraft} onSave={onSave} />
-            </div>
+            <FileTabs skill={detail.name} files={detail.files} active={file} />
+            {file === SKILL_FILE ? (
+              <FileEditor
+                key={SKILL_FILE}
+                skill={detail.name}
+                path={SKILL_FILE}
+                content={detail.content}
+              />
+            ) : (
+              <ReferenceFile key={file} skill={detail.name} path={file} />
+            )}
           </div>
-
-          {dirty && (
-            <div className="-translate-x-1/2 sticky bottom-5 left-1/2 z-20 flex w-fit items-center gap-3 rounded-lg bg-surface-overlay py-1.5 pr-1.5 pl-3.5 shadow-popup">
-              <span className="text-[13px] text-fg-muted">Unsaved changes</span>
-              <Button variant="ghost" onClick={() => setDraft(detail.content)}>
-                Discard
-              </Button>
-              <Button variant="primary" onClick={onSave} disabled={save.isPending}>
-                Save <Kbd className="border-white/25 bg-white/10 text-white/80">⌘S</Kbd>
-              </Button>
-            </div>
-          )}
         </PageBody>
         <SkillProperties page={page} />
       </div>
+      {detail.source && (
+        <PullDialog
+          open={pulling}
+          onOpenChange={setPulling}
+          skill={detail.name}
+          source={detail.source}
+        />
+      )}
+    </>
+  );
+}
+
+/** SKILL.md first, then the skill's other files. */
+function FileTabs({ skill, files, active }: { skill: string; files: string[]; active: string }) {
+  const others = files.filter((file) => file !== SKILL_FILE);
+  return (
+    <div className="mt-7 flex items-center gap-1 overflow-x-auto border-border-subtle border-b">
+      {[SKILL_FILE, ...others].map((file) => (
+        <Tooltip key={file} label={file}>
+          <Link
+            to="/library/$skillName"
+            params={{ skillName: skill }}
+            search={file === SKILL_FILE ? {} : { file }}
+            className={cn(
+              "-mb-px flex h-9 shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12.5px] transition-colors",
+              file === active
+                ? "border-accent font-medium text-fg"
+                : "border-transparent text-fg-muted hover:text-fg",
+            )}
+          >
+            <FileText className="size-3.5 text-fg-subtle" />
+            {file.split("/").at(-1)}
+          </Link>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
+function ReferenceFile({ skill, path }: { skill: string; path: string }) {
+  const file = useQuery(skillFileQuery(skill, path));
+  if (file.isError) return <p className="mt-6 text-red">{file.error.message}</p>;
+  if (!file.data) return <Skeleton className="mt-4 h-80" />;
+  if (file.data.content === null) {
+    return (
+      <p className="mt-8 text-center text-fg-muted">
+        {path} is a binary file ({Math.ceil(file.data.size / 1024)} KB) and can't be shown.
+      </p>
+    );
+  }
+  return <FileEditor skill={skill} path={path} content={file.data.content} />;
+}
+
+/** The editor for one file, with a save bar while it has unsaved changes. */
+function FileEditor({ skill, path, content }: { skill: string; path: string; content: string }) {
+  const [draft, setDraft] = useState(content);
+  const saveSkill = useSaveSkill(skill);
+  const saveFile = useSaveFile(skill);
+  const saving = saveSkill.isPending || saveFile.isPending;
+  const dirty = draft !== content;
+  // Switching files, leaving the page or closing the tab would lose the edits.
+  const blocker = useBlocker({
+    shouldBlockFn: () => dirty,
+    enableBeforeUnload: dirty,
+    withResolver: true,
+  });
+
+  // A refetch after saving (or an edit elsewhere) brings new content: adopt it.
+  useEffect(() => setDraft(content), [content]);
+
+  const onSave = () => {
+    if (!dirty || saving) return;
+    if (path === SKILL_FILE) saveSkill.mutate(draft);
+    else saveFile.mutate({ path, content: draft });
+  };
+
+  return (
+    <>
+      <div className="-mx-2 mt-1">
+        <SkillEditor
+          value={draft}
+          onChange={setDraft}
+          onSave={onSave}
+          language={languageFor(path)}
+        />
+      </div>
+      {dirty && (
+        <div className="-translate-x-1/2 sticky bottom-5 left-1/2 z-20 flex w-fit items-center gap-3 rounded-lg bg-surface-overlay py-1.5 pr-1.5 pl-3.5 shadow-popup">
+          <span className="text-[13px] text-fg-muted">Unsaved changes to {path}</span>
+          <Button variant="ghost" onClick={() => setDraft(content)}>
+            Discard
+          </Button>
+          <Button variant="primary" onClick={onSave} disabled={saving}>
+            Save <Kbd className="border-white/25 bg-white/10 text-white/80">⌘S</Kbd>
+          </Button>
+        </div>
+      )}
+      <Dialog
+        open={blocker.status === "blocked"}
+        onOpenChange={(open) => !open && blocker.reset?.()}
+        className="w-[min(440px,calc(100vw-32px))]"
+      >
+        <DialogLayout
+          title="Discard unsaved changes?"
+          description={`Your edits to ${path} haven't been saved.`}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => blocker.reset?.()}>
+                Keep editing
+              </Button>
+              <Button variant="primary" onClick={() => blocker.proceed?.()}>
+                Discard changes
+              </Button>
+            </>
+          }
+        >
+          <p className="text-[13px] text-fg-muted">Save first with ⌘S to keep them.</p>
+        </DialogLayout>
+      </Dialog>
     </>
   );
 }
@@ -142,17 +261,6 @@ function SkillProperties({ page }: { page: SkillPageData }) {
           </div>
         ))}
       </PropertyGroup>
-
-      {detail.files.length > 1 && (
-        <PropertyGroup title={`Files ${detail.files.length}`}>
-          {detail.files.map((file) => (
-            <div key={file} className="flex h-7 items-center gap-2 text-[12.5px] text-fg-muted">
-              <FileText className="size-3.5 shrink-0 text-fg-subtle" />
-              <span className="truncate">{file}</span>
-            </div>
-          ))}
-        </PropertyGroup>
-      )}
     </PropertiesPanel>
   );
 }

@@ -4,6 +4,7 @@ import { attentionRoute } from "../routes/attention.tsx";
 import { libraryRoute } from "../routes/library.tsx";
 import { projectRoute } from "../routes/project.tsx";
 import { projectsRoute } from "../routes/projects.tsx";
+import { settingsRoute } from "../routes/settings.tsx";
 import { skillRoute } from "../routes/skill.tsx";
 import { queryClient } from "./query-client.ts";
 import { rootRoute } from "./root-route.tsx";
@@ -15,6 +16,7 @@ const routeTree = rootRoute.addChildren([
   libraryRoute,
   skillRoute,
   activityRoute,
+  settingsRoute,
 ]);
 
 export const router = createRouter({

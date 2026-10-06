@@ -9,6 +9,7 @@ import { appendFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  addSkill,
   borrow,
   type Clock,
   type Context,
@@ -62,6 +63,43 @@ export async function seedDemo(root = join(tmpdir(), "shelf-demo")): Promise<Dem
     }
     await refreshLibrary(ctx);
   });
+
+  // Reference files, shown as tabs on the skill page.
+  await as("user", 40, root, async (ctx) => {
+    const references = join(env.SHELF_HOME, "library/api-design/references");
+    await mkdir(references, { recursive: true });
+    await writeFile(
+      join(references, "errors.md"),
+      '# Error envelope\n\n```json\n{ "error": { "code": "NOT_FOUND", "message": "…" } }\n```\n',
+    );
+    await writeFile(
+      join(references, "pagination.md"),
+      "# Cursor pagination\n\n- Opaque cursors\n- `limit` capped at 100\n",
+    );
+    await refreshLibrary(ctx);
+  });
+
+  // A skill imported from an upstream source that has since moved on.
+  const upstream = join(root, "upstream", "commit-messages");
+  await mkdir(upstream, { recursive: true });
+  const commitSkill = (rules: string[]) =>
+    `---\nname: commit-messages\ndescription: Write conventional commit messages that explain why, not what.\n---\n\n# Commit messages\n\n${rules.map((rule) => `- ${rule}`).join("\n")}\n`;
+  await writeFile(
+    join(upstream, "SKILL.md"),
+    commitSkill(["Use the imperative mood", "Keep the subject under 72 characters"]),
+  );
+  await as("user", 30, root, (ctx) => addSkill(ctx, upstream, { yes: true }));
+  await writeFile(
+    join(upstream, "SKILL.md"),
+    commitSkill([
+      "Use the imperative mood",
+      "Keep the subject under 50 characters",
+      "Explain why in the body; the diff shows what",
+    ]),
+  );
+
+  // A Claude Code install without shelf's hooks, so the dashboard warns about it.
+  await mkdir(join(root, ".claude"), { recursive: true });
 
   // storefront: actively used; two loans going stale.
   await as("agent:claude-code", 26, project("storefront"), async (ctx) => {

@@ -3,6 +3,9 @@ import {
   catalog,
   diffSkill,
   propagate,
+  pullSkill,
+  readLibraryFile,
+  saveLibraryFile,
   saveSkillContent,
   showSkill,
   skillHistory,
@@ -13,7 +16,10 @@ import {
   catalogQuery,
   defined,
   diffQuery,
+  fileQuery,
   propagateBody,
+  pullBody,
+  saveFileBody,
   saveSkillBody,
   skillParams,
 } from "../schemas.ts";
@@ -55,6 +61,34 @@ export const skillRoutes = new Hono<AppEnv>()
       return c.json(await propagate(atHome(c.get("ctx")), name, defined(c.req.valid("json"))));
     },
   )
+
+  /** Fetches and audits the linked source; changes the library only with `yes`. */
+  .post("/:name/pull", validate("param", skillParams), validate("json", pullBody), async (c) =>
+    c.json(
+      await pullSkill(
+        atHome(c.get("ctx")),
+        c.req.valid("param").name,
+        defined(c.req.valid("json")),
+      ),
+    ),
+  )
+
+  .get("/:name/file", validate("param", skillParams), validate("query", fileQuery), async (c) =>
+    c.json(
+      await readLibraryFile(
+        atHome(c.get("ctx")),
+        c.req.valid("param").name,
+        c.req.valid("query").path,
+      ),
+    ),
+  )
+
+  .put("/:name/file", validate("param", skillParams), validate("json", saveFileBody), async (c) => {
+    const { path, content } = c.req.valid("json");
+    return c.json(
+      await saveLibraryFile(atHome(c.get("ctx")), c.req.valid("param").name, path, content),
+    );
+  })
 
   .get("/:name/diff", validate("param", skillParams), validate("query", diffQuery), async (c) =>
     c.json(

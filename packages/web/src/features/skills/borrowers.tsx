@@ -6,6 +6,7 @@ import { ProjectAvatar } from "../../components/project-avatar.tsx";
 import { Button } from "../../components/ui/button.tsx";
 import { Checkbox } from "../../components/ui/checkbox.tsx";
 import { StatusDot, type Tone } from "../../components/ui/status.tsx";
+import { BorrowInto } from "./borrow-into.tsx";
 import { usePropagate } from "./queries.ts";
 
 type Status = SkillPage["propagation"]["projects"][number]["status"];
@@ -27,7 +28,15 @@ export function Borrowers({ page }: { page: SkillPage }) {
   const chosen = selected.filter((name) => behind.includes(name));
 
   return (
-    <PropertyGroup title={`Borrowed by ${propagation.projects.length}`}>
+    <PropertyGroup
+      title={`Borrowed by ${propagation.projects.length}`}
+      action={
+        <BorrowInto
+          skill={page.detail.name}
+          borrowers={propagation.projects.map((project) => project.project)}
+        />
+      }
+    >
       {propagation.projects.length === 0 && (
         <p className="text-[13px] text-fg-subtle">No project borrows this skill.</p>
       )}

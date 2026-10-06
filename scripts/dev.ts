@@ -8,6 +8,8 @@
 import { parseArgs } from "node:util";
 import { createContext } from "@shelf/core";
 import { startServer } from "@shelf/server";
+import pkg from "../packages/cli/package.json" with { type: "json" };
+import bundledSkill from "../packages/skill/SKILL.md" with { type: "text" };
 import page from "../packages/web/index.html";
 import { seedDemo } from "./demo/seed.ts";
 
@@ -21,5 +23,6 @@ const server = startServer(ctx, {
   page,
   port: values.port ? Number(values.port) : 4173,
   development: true,
+  system: { version: pkg.version, bundledSkill, hookCommand: "shelf" },
 });
 console.log(`shelf dashboard (${values.real ? "real ~/.shelf" : "demo data"}): ${server.url}`);

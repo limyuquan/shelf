@@ -44,8 +44,11 @@ export {
   type CatalogEntry,
   catalog,
   createSkill,
+  type LibraryFile,
+  readLibraryFile,
   refreshLibrary,
   type SkillDetail,
+  saveLibraryFile,
   saveSkillContent,
   showSkill,
 } from "./services/library.ts";
@@ -78,6 +81,12 @@ export {
   sweep,
   sync,
 } from "./services/status.ts";
+export {
+  repairSystem,
+  type SystemOptions,
+  type SystemReport,
+  systemReport,
+} from "./services/system.ts";
 export {
   changeTargets,
   describeTargets,

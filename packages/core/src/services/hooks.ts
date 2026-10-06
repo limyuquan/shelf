@@ -207,3 +207,37 @@ function merge(base: HookConfig, extra: HookConfig): HookConfig {
   }
   return result;
 }
+
+export interface HookStatus {
+  readonly harness: HookHarness;
+  readonly label: string;
+  readonly file: string;
+  /**
+   * `absent`: the harness is not installed. `missing`/`outdated`: shelf's hooks are
+   * not there, or point at another binary. `invalid`: the settings file is not JSON.
+   */
+  readonly status: "installed" | "missing" | "outdated" | "invalid" | "absent";
+  readonly needsTrust: boolean;
+}
+
+/** The state of shelf's hooks in every harness shelf knows. */
+export async function describeHooks(ctx: Context, command: string): Promise<HookStatus[]> {
+  return Promise.all(
+    harnesses(ctx).map(async (target): Promise<HookStatus> => {
+      const base = {
+        harness: target.harness,
+        label: target.label,
+        file: target.file,
+        needsTrust: target.needsTrust,
+      };
+      if (!(await pathExists(target.dir))) return { ...base, status: "absent" };
+      const read = await readSettings(target.file);
+      if ("problem" in read) return { ...base, status: "invalid" };
+      const hooks = (read.settings.hooks ?? {}) as HookConfig;
+      const wanted = merge(withoutShelf(hooks), desiredHooks(target, command));
+      if (JSON.stringify(wanted) === JSON.stringify(hooks)) return { ...base, status: "installed" };
+      const present = Object.values(hooks).some((groups) => groups.some(isShelfGroup));
+      return { ...base, status: present ? "outdated" : "missing" };
+    }),
+  );
+}

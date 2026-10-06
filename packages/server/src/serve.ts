@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { Context } from "@shelf/core";
+import type { Context, SystemOptions } from "@shelf/core";
 import type { HTMLBundle } from "bun";
 import { createApi } from "./app.ts";
 
@@ -12,6 +12,8 @@ export interface DashboardServer {
 export interface ServeOptions {
   /** The web app's `index.html`, imported by the caller (`import page from "…/index.html"`). */
   readonly page: HTMLBundle;
+  /** Version, bundled skill and hook command, for the settings page and repairs. */
+  readonly system: SystemOptions;
   readonly port?: number;
   /** Rebuild the web app on every reload, for working on it (`bun run dev`). */
   readonly development?: boolean;
@@ -29,7 +31,7 @@ const CHECKPOINT_INTERVAL_MS = 10 * 60 * 1000;
 export function startServer(ctx: Context, options: ServeOptions): DashboardServer {
   const token = randomBytes(24).toString("base64url");
   let allowedHosts: ReadonlySet<string> = new Set();
-  const api = createApi(ctx, { token, allowedHosts: () => allowedHosts });
+  const api = createApi(ctx, { token, allowedHosts: () => allowedHosts }, options.system);
 
   const server = Bun.serve({
     hostname: "127.0.0.1",

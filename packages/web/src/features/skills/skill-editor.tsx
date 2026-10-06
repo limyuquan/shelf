@@ -1,6 +1,7 @@
 import { markdown } from "@codemirror/lang-markdown";
-import { yamlFrontmatter } from "@codemirror/lang-yaml";
+import { yaml, yamlFrontmatter } from "@codemirror/lang-yaml";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import type { Extension } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 import { basicSetup, EditorView } from "codemirror";
 import { useEffect, useRef } from "react";
@@ -46,14 +47,32 @@ const highlight = HighlightStyle.define([
  * CodeMirror editing the raw SKILL.md. It edits text byte for byte (unlike WYSIWYG
  * editors), so frontmatter and hashes are never altered behind the user.
  */
+export type EditorLanguage = "markdown" | "yaml" | "plain";
+
+/** Syntax highlighting by file extension. */
+export function languageFor(path: string): EditorLanguage {
+  if (/\.(md|markdown)$/i.test(path)) return "markdown";
+  if (/\.ya?ml$/i.test(path)) return "yaml";
+  return "plain";
+}
+
+const LANGUAGES: Record<EditorLanguage, () => Extension[]> = {
+  markdown: () => [yamlFrontmatter({ content: markdown() })],
+  yaml: () => [yaml()],
+  plain: () => [],
+};
+
 export function SkillEditor({
   value,
   onChange,
   onSave,
+  language = "markdown",
 }: {
   value: string;
   onChange: (next: string) => void;
   onSave: () => void;
+  /** Fixed for the editor's lifetime; give the component a new `key` to change it. */
+  language?: EditorLanguage;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -71,7 +90,7 @@ export function SkillEditor({
         basicSetup,
         theme,
         syntaxHighlighting(highlight),
-        yamlFrontmatter({ content: markdown() }),
+        ...LANGUAGES[language](),
         EditorView.lineWrapping,
         EditorView.domEventHandlers({
           keydown: (event) => {

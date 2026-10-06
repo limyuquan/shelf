@@ -19,8 +19,16 @@ export const borrowBody = z.object({
 export const renewBody = z.object({ days: days.optional(), reason: z.string().optional() });
 export const dueBody = z.object({ when: z.string().min(1), reason: z.string().optional() });
 export const forceBody = z.object({ force: z.boolean().optional() });
+export const promoteBody = z.object({
+  force: z.boolean().optional(),
+  /** Also update every other project borrowing the skill. */
+  propagate: z.boolean().optional(),
+});
+export const pullBody = z.object({ yes: z.boolean().optional(), force: z.boolean().optional() });
 
 export const saveSkillBody = z.object({ content: z.string() });
+export const fileQuery = z.object({ path: z.string().min(1) });
+export const saveFileBody = z.object({ path: z.string().min(1), content: z.string() });
 export const propagateBody = z.object({ projects: z.array(z.string()).optional() });
 
 export const catalogQuery = z.object({ q: z.string().optional() });

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type ClientResponse, hc } from "hono/client";
+import { addSkill } from "../../core/src/services/import.ts";
 import { borrow } from "../../core/src/services/loans.ts";
 import { initProject } from "../../core/src/services/project.ts";
 import { appendToFile, createTestEnv, setupProject } from "../../core/test/helpers.ts";
@@ -27,6 +28,7 @@ async function ok<R extends ClientResponse<unknown, number, "json">>(
 }
 
 const HOST = "127.0.0.1:4100";
+const SYSTEM = { version: "0.0.0-test", bundledSkill: "skill", hookCommand: "/bin/shelf" };
 const TOKEN = "test-token";
 
 /**
@@ -36,7 +38,7 @@ const TOKEN = "test-token";
 async function setup(skills: string[] = ["pdf"]) {
   const env = await createTestEnv();
   const ctx = await setupProject(env, skills);
-  const app = createApi(ctx, { token: TOKEN, allowedHosts: () => new Set([HOST]) });
+  const app = createApi(ctx, { token: TOKEN, allowedHosts: () => new Set([HOST]) }, SYSTEM);
   const client = hc<Api>(`http://${HOST}`, {
     headers: { [TOKEN_HEADER]: TOKEN },
     fetch: (input: RequestInfo | URL, init?: RequestInit) => app.request(input, init),
@@ -180,6 +182,108 @@ describe("library", () => {
   });
 });
 
+describe("promote and diff", () => {
+  test("shows a project's edits, then promotes them and updates other borrowers", async () => {
+    const { env, ctx, client, projectId } = await setup();
+    await borrow(ctx, ["pdf"]);
+    const other = await env.context(join(env.root, "other"));
+    await mkdir(join(other.cwd, ".git"), { recursive: true });
+    await initProject(other);
+    await borrow(other, ["pdf"]);
+    await appendToFile(join(env.projectDir, ".agents/skills/pdf/SKILL.md"), "Better guidance.");
+
+    const loan = client.projects[":id"].loans[":skill"];
+    const param = { id: projectId, skill: "pdf" };
+    const diff = await ok(loan.diff.$get({ param, query: {} }));
+    expect(diff.files[0]?.patch).toContain("+Better guidance.");
+
+    const promoted = await ok(loan.promote.$post({ param, json: { propagate: true } }));
+    expect(promoted.revision).not.toBe(promoted.previousRevision);
+    expect(promoted.propagation?.projects).toEqual(
+      expect.arrayContaining([expect.objectContaining({ project: "other", status: "updated" })]),
+    );
+  });
+});
+
+describe("skill files", () => {
+  test("reads and saves reference files, recording a revision", async () => {
+    const { env, client } = await setup();
+    await mkdir(join(env.shelfHome, "library/pdf/references"));
+    await writeFile(join(env.shelfHome, "library/pdf/references/tables.md"), "# Tables\n");
+
+    const file = client.skills[":name"].file;
+    const read = await ok(
+      file.$get({ param: { name: "pdf" }, query: { path: "references/tables.md" } }),
+    );
+    expect(read).toMatchObject({ path: "references/tables.md", content: "# Tables\n" });
+
+    await ok(
+      file.$put({
+        param: { name: "pdf" },
+        json: { path: "references/tables.md", content: "# Tables\nUse pdfplumber.\n" },
+      }),
+    );
+    const page = await ok(client.skills[":name"].$get({ param: { name: "pdf" } }));
+    expect(page.history.revisions).toHaveLength(2);
+  });
+
+  test("refuses paths outside the skill and files that do not exist", async () => {
+    const { client } = await setup();
+    const file = client.skills[":name"].file;
+    for (const path of ["../../config.json", "/etc/passwd", "missing.md"]) {
+      const response = await file.$get({ param: { name: "pdf" }, query: { path } });
+      expect(response.status).toBe(400);
+    }
+    const write = await file.$put({
+      param: { name: "pdf" },
+      json: { path: "new-file.md", content: "x" },
+    });
+    expect(write.status).toBe(400);
+  });
+
+  test("binary files are listed but not opened", async () => {
+    const { env, client } = await setup();
+    await writeFile(join(env.shelfHome, "library/pdf/logo.png"), new Uint8Array([137, 80, 0, 1]));
+    const read = await ok(
+      client.skills[":name"].file.$get({ param: { name: "pdf" }, query: { path: "logo.png" } }),
+    );
+    expect(read).toMatchObject({ content: null, size: 4 });
+  });
+});
+
+describe("pull", () => {
+  test("reviews upstream changes, then applies them", async () => {
+    const { env, ctx, client } = await setup([]);
+    const upstream = join(env.root, "upstream", "notes");
+    await mkdir(upstream, { recursive: true });
+    await writeFile(join(upstream, "SKILL.md"), "---\nname: notes\ndescription: Notes\n---\nv1\n");
+    await addSkill(ctx, upstream, { yes: true });
+    await writeFile(join(upstream, "SKILL.md"), "---\nname: notes\ndescription: Notes\n---\nv2\n");
+
+    const pull = client.skills[":name"].pull;
+    const review = await ok(pull.$post({ param: { name: "notes" }, json: {} }));
+    expect(review.status).toBe("review");
+    expect(review.diff[0]?.patch).toContain("+v2");
+    const applied = await ok(pull.$post({ param: { name: "notes" }, json: { yes: true } }));
+    expect(applied.status).toBe("imported");
+  });
+});
+
+describe("system", () => {
+  test("reports hooks, config and health, and repairs what it can", async () => {
+    const { env, client } = await setup();
+    await mkdir(join(env.root, ".claude"));
+
+    const report = await ok(client.system.$get());
+    expect(report.version).toBe("0.0.0-test");
+    expect(report.hooks.find((hook) => hook.harness === "claude-code")?.status).toBe("missing");
+    expect(report.checks.find((check) => check.id === "hooks")?.status).toBe("warn");
+
+    const repaired = await ok(client.system.repair.$post());
+    expect(repaired.hooks.find((hook) => hook.harness === "claude-code")?.status).toBe("installed");
+  });
+});
+
 describe("server", () => {
   let server: DashboardServer | null = null;
   afterEach(async () => {
@@ -190,7 +294,7 @@ describe("server", () => {
   test("listens on loopback, serves the app on every path and the API under /api", async () => {
     const env = await createTestEnv();
     const ctx = await setupProject(env, []);
-    server = startServer(ctx, { page });
+    server = startServer(ctx, { page, system: SYSTEM });
     const url = new URL(server.url);
     expect(url.hostname).toBe("127.0.0.1");
     const token = url.searchParams.get("token") ?? "";

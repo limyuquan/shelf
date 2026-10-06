@@ -1,4 +1,4 @@
-import type { Context } from "@shelf/core";
+import type { Context, SystemOptions } from "@shelf/core";
 import { Hono } from "hono";
 import { TOKEN_HEADER } from "./contract.ts";
 import type { AppEnv } from "./env.ts";
@@ -7,6 +7,7 @@ import { activityRoutes, maintenanceRoutes } from "./routes/activity.ts";
 import { attentionRoutes } from "./routes/attention.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { skillRoutes } from "./routes/skills.ts";
+import { systemRoutes } from "./routes/system.ts";
 
 export interface Guard {
   readonly token: string;
@@ -18,7 +19,7 @@ export interface Guard {
  * The JSON API. Every route is a thin call into @shelf/core, so the dashboard
  * can never behave differently from the CLI.
  */
-export function createApi(ctx: Context, guard: Guard) {
+export function createApi(ctx: Context, guard: Guard, system: SystemOptions) {
   return new Hono<AppEnv>()
     .basePath("/api")
     .use(async (c, next) => {
@@ -31,12 +32,14 @@ export function createApi(ctx: Context, guard: Guard) {
         return c.json(errorBody("UNAUTHORIZED", "Missing or wrong dashboard token"), 401);
       }
       c.set("ctx", ctx);
+      c.set("system", system);
       await next();
     })
     .route("/attention", attentionRoutes)
     .route("/projects", projectRoutes)
     .route("/skills", skillRoutes)
     .route("/activity", activityRoutes)
+    .route("/system", systemRoutes)
     .route("/", maintenanceRoutes)
     .notFound((c) => c.json(errorBody("NOT_FOUND", `No route ${c.req.method} ${c.req.path}`), 404))
     .onError(handleError);
