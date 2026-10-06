@@ -44,6 +44,9 @@ export function startServer(ctx: Context, options: ServeOptions): DashboardServe
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: options.port ?? 0,
+    // Never share a port with another process: a second `shelf ui` on the same
+    // port must fail rather than silently answer half of the requests.
+    reusePort: false,
     routes: {
       "/api/*": (request) => api.fetch(request),
       // The live-update stream is quiet between changes and heartbeats; don't let

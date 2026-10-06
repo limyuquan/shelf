@@ -302,6 +302,28 @@ describe("harness hooks", () => {
 });
 
 describe("shelf ui", () => {
+  test("refuses a port another shelf ui is already serving", async () => {
+    const port = String(41_000 + Math.floor(Math.random() * 1000));
+    const start = () =>
+      Bun.spawn([...COMMAND, "ui", "--no-open", "--port", port], {
+        cwd: project,
+        env: isolatedEnv(),
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+    const first = start();
+    try {
+      await first.stdout.getReader().read(); // printed its URL: it is listening
+      const second = start();
+      const code = await Promise.race([second.exited, Bun.sleep(15_000).then(() => null)]);
+      second.kill();
+      expect(code).not.toBeNull();
+      expect(code).not.toBe(0);
+    } finally {
+      first.kill();
+    }
+  });
+
   test("serves the embedded dashboard and its API", async () => {
     const proc = Bun.spawn([...COMMAND, "ui", "--no-open", "--json"], {
       cwd: project,
