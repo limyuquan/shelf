@@ -1,6 +1,6 @@
 # Dashboard
 
-`shelf ui` opens a local dashboard for everything shelf manages: loans that need you, projects, the library editor, revisions, activity, insights and settings. This page covers every page, the keyboard shortcuts, live updates, the token and security model, and phones.
+The local dashboard that `shelf ui` opens shows everything shelf manages: loans that need you, projects, the library editor, revisions, activity, insights and settings. This page covers every page, the keyboard shortcuts, live updates, the token and security model, and phones.
 
 ![The shelf dashboard](../assets/media/dashboard.png)
 

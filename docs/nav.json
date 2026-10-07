@@ -1,0 +1,85 @@
+[
+  {
+    "group": "Getting started",
+    "pages": ["introduction", "installation", "quickstart", "concepts"]
+  },
+  {
+    "group": "Guides",
+    "pages": [
+      "borrowing",
+      "keeping-skills-current",
+      "writing-skills",
+      "importing-skills",
+      "migrating",
+      "sets",
+      "context-budget",
+      "hooks",
+      "harnesses",
+      "dashboard",
+      "agents",
+      "automation"
+    ]
+  },
+  {
+    "group": "Reference",
+    "pages": [
+      "cli/index",
+      "configuration",
+      "errors",
+      "lockfile",
+      "files",
+      "environment",
+      "troubleshooting"
+    ]
+  },
+  {
+    "group": "Commands",
+    "pages": [
+      "cli/setup",
+      "cli/init",
+      "cli/status",
+      "cli/guide",
+      "cli/new",
+      "cli/catalog",
+      "cli/search",
+      "cli/show",
+      "cli/log",
+      "cli/diff",
+      "cli/propagate",
+      "cli/restore",
+      "cli/loan-days",
+      "cli/set",
+      "cli/rename",
+      "cli/duplicate",
+      "cli/archive",
+      "cli/lint",
+      "cli/insights",
+      "cli/suggest",
+      "cli/borrow",
+      "cli/renew",
+      "cli/used",
+      "cli/due",
+      "cli/keep",
+      "cli/return",
+      "cli/update",
+      "cli/promote",
+      "cli/detach",
+      "cli/sync",
+      "cli/targets",
+      "cli/scan",
+      "cli/adopt",
+      "cli/add",
+      "cli/pull",
+      "cli/audit",
+      "cli/projects",
+      "cli/sweep",
+      "cli/doctor",
+      "cli/ui",
+      "cli/hook"
+    ]
+  },
+  {
+    "group": "Project",
+    "pages": ["architecture", "contributing", "faq", "changelog"]
+  }
+]
