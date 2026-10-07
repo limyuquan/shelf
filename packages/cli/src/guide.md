@@ -63,6 +63,13 @@ loans (`kept: true`) are always `active`: they never expire.
 - `shelf due <name> <+14d|-7d|+2w|2026-12-01>` moves a due date either way.
 - Loans cannot extend past the configured limit (90 days by default).
 
+## Context budget
+
+`shelf insights --json` (inside a project: `data.currentProject`) shows how many
+tokens of skill descriptions load at every session start and which skills
+agents actually used in the last 30 days. Check it before borrowing or keeping
+several skills, and suggest returning skills that show `neverUsed`.
+
 ## Kept skills
 
 `shelf keep <name> --reason "<why>"` makes a loan never expire. It is recorded

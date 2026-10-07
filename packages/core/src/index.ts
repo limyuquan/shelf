@@ -51,7 +51,9 @@ export {
 export {
   type GlobalSkill,
   type Insights,
+  type InsightsHere,
   insights,
+  insightsHere,
   type ProjectInsight,
   type SkillInsight,
 } from "./services/insights.ts";

@@ -221,6 +221,7 @@ boundary.
 | `shelf pull <name> [--yes]` | Update an imported skill from its source |
 | `shelf audit [name…]` | Scan library skills for risky content |
 | **This project** | |
+| `shelf insights [--all]` | Tokens each project loads at session start, and which skills agents actually use (30 days) |
 | `shelf suggest [--limit N]` | Library skills matching the project's dependencies and files (e.g. `convex/`, `playwright.config.ts`) |
 | `shelf borrow <name…\|@set> [--days N] [--keep] [--follow] [--link]` | Borrow skills (or every skill in a set) into this project |
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |

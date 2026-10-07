@@ -112,6 +112,17 @@ describe("shelf CLI", () => {
     ]);
   });
 
+  test("insights shows the current project's session cost, and everything with --all", async () => {
+    await shelf("init");
+    await shelf("new", "convex", "-d", "Convex backend");
+    await shelf("borrow", "convex");
+
+    const { json } = await shelf("insights");
+    const current = json.data?.currentProject as { name: string; skills: unknown[] } | null;
+    expect(current).toMatchObject({ name: "project", skills: [{ skill: "convex" }] });
+    expect(json.data?.skills).toMatchObject([{ name: "convex", borrowers: 1, neverUsed: true }]);
+  });
+
   test("a set borrows its skills in one step, as ordinary loans", async () => {
     await shelf("init");
     await shelf("new", "react", "-d", "React");

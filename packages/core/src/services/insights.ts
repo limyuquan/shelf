@@ -5,12 +5,14 @@ import { pathExists } from "../library/fs.ts";
 import { librarySkillPath, revisionPath } from "../library/library.ts";
 import { parseSkillMetadata, SKILL_FILE } from "../library/skill-file.ts";
 import { HARNESSES } from "../projection/harnesses.ts";
+import { readLockfile } from "../projection/lockfile.ts";
 import { listUseDays } from "../store/events.ts";
 import { listActiveLoans, listSkillLoanStats } from "../store/loans.ts";
 import { listProjects } from "../store/projects.ts";
 import { listSkills } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import { refreshLibrary } from "./library.ts";
+import { findProjectRoot } from "./project.ts";
 import { bundledSkillFiles } from "./setup.ts";
 
 /**
@@ -262,3 +264,16 @@ async function scanGlobalSkills(ctx: Context): Promise<{ skills: GlobalSkill[]; 
 }
 
 const sum = (values: readonly number[]) => values.reduce((total, value) => total + value, 0);
+
+export interface InsightsHere extends Insights {
+  /** The registered project containing the working directory, if any. */
+  readonly currentProject: ProjectInsight | null;
+}
+
+/** `insights` plus the project the caller is in (for `shelf insights` inside a project). */
+export async function insightsHere(ctx: Context): Promise<InsightsHere> {
+  const report = await insights(ctx);
+  const lockfile = await readLockfile(await findProjectRoot(ctx.cwd));
+  const currentProject = report.projects.find((project) => project.id === lockfile?.project);
+  return { ...report, currentProject: currentProject ?? null };
+}

@@ -9,6 +9,7 @@ import {
 } from "./commands/authoring.ts";
 import { guideCommand } from "./commands/guide.ts";
 import { hookCommand, usedCommand } from "./commands/hooks.ts";
+import { insightsCommand } from "./commands/insights.ts";
 import {
   catalogCommand,
   diffCommand,
@@ -70,6 +71,7 @@ const main = defineCommand({
     archive: archiveCommand,
     lint: lintCommand,
     // Loans in the current project
+    insights: insightsCommand,
     suggest: suggestCommand,
     borrow: borrowCommand,
     renew: renewCommand,
