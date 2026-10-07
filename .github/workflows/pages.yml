@@ -1,0 +1,48 @@
+name: Pages
+
+# Publishes the website and docs (`bun run site` → dist/site) to GitHub Pages at
+# https://limyuquan.github.io/shelf/. Generated docs blocks come from the code,
+# so changes under packages/ redeploy too.
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - docs/**
+      - assets/**
+      - schema/**
+      - scripts/site/**
+      - packages/**
+      - package.json
+      - bun.lock
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run site
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/site
+      - id: deployment
+        uses: actions/deploy-pages@v5

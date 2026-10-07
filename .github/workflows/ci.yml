@@ -17,6 +17,8 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun test
+      # The website and docs (dist/site): fails on a broken build, not on content warnings.
+      - run: bun run site
 
   binary:
     # The compiled binary is what users run; smoke-test it on each OS.
