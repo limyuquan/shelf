@@ -14,7 +14,7 @@ shelf renew <skill> [options]
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `--days <days>` | string | the skill's loan length, else config loanDays | Days to extend by |
+| `--days <days>` | string | the skill's loan length, else config loanDays | Days from today |
 | `--reason <reason>` | string |  | Why, recorded in the activity log |
 
 Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).

@@ -127,7 +127,7 @@ Text output is for people and may change between versions. Scripts and agents sh
 | [`shelf insights`](insights.md) | Context each project loads at session start, and which skills agents actually use (30 days) |
 | [`shelf suggest`](suggest.md) | Suggest library skills that match what this project uses (its dependencies, files) |
 | [`shelf borrow`](borrow.md) | Copy library skills into this project with a due date |
-| [`shelf renew`](renew.md) | Extend a loan (from its due date, or from today if overdue) |
+| [`shelf renew`](renew.md) | Renew a loan: due the loan length (or --days) from today, unless already due later |
 | [`shelf used`](used.md) | Record that borrowed skills were used, which renews them (hooks do this for you) |
 | [`shelf due`](due.md) | Move a loan's due date: +14d, -7d, +2w or 2026-12-01 |
 | [`shelf keep`](keep.md) | Keep borrowed skills: they never expire (--off to stop keeping) |
