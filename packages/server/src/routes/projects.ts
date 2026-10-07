@@ -67,7 +67,11 @@ export const projectRoutes = new Hono<AppEnv>()
     validate("json", keepBody),
     async (c) => {
       const { id, skill } = c.req.valid("param");
-      const [result] = await keep(inProject(c.get("ctx"), id).ctx, [skill], c.req.valid("json"));
+      const [result] = await keep(
+        inProject(c.get("ctx"), id).ctx,
+        [skill],
+        defined(c.req.valid("json")) as { keep: boolean; reason?: string },
+      );
       return c.json(result);
     },
   )

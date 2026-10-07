@@ -21,7 +21,7 @@ export const borrowBody = z.object({
   keep: z.boolean().optional(),
 });
 
-export const keepBody = z.object({ keep: z.boolean() });
+export const keepBody = z.object({ keep: z.boolean(), reason: z.string().optional() });
 /** `null` uses the config's loanDays again. */
 export const loanDaysBody = z.object({ days: days.nullable() });
 

@@ -89,9 +89,11 @@ export function describeGroup(group: EventGroup): {
         detail:
           detail.source === "lockfile"
             ? "from the lockfile"
-            : detail.keep === false
-              ? null
-              : "never expires",
+            : typeof detail.reason === "string"
+              ? detail.reason
+              : detail.keep === false
+                ? null
+                : "never expires",
       };
     case "loan.due-changed":
       return { ...base, verb: reason ? "renewed" : "moved the due date of", preposition: "in" };

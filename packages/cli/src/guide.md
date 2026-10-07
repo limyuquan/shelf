@@ -65,14 +65,17 @@ loans (`kept: true`) are always `active`: they never expire.
 
 ## Kept skills
 
-`shelf keep <name>` makes a loan never expire, for skills the project always
-needs (e.g. the framework it is built on). It is recorded in the lockfile, so
-every clone keeps the same skills. Keeping is the user's decision: don't keep
-skills on your own (shelf refuses agents). If a skill looks essential to the
-project, ask the user whether to keep it and give them the command
-(`shelf keep <name>`, or `shelf borrow <name> --keep`). You may run
-`shelf keep <name> --off` when the user asks; the loan then comes due again if
-unused. `shelf loan-days <name> [days]` shows or sets a skill's loan length in
+`shelf keep <name> --reason "<why>"` makes a loan never expire. It is recorded
+in the lockfile, so every clone keeps the same skills.
+
+Keep a skill only when it covers a direct dependency of the project: the
+framework, database or platform the code is built on (e.g. Convex skills in a
+project whose `package.json` depends on `convex`). Kept skills never expire, so
+their descriptions load into every session from then on; keeping skills the
+project merely touched, or "just in case", is how context starts to bloat. Most
+skills should stay ordinary loans that renew when used. Say which dependency in
+`--reason`. `shelf keep <name> --off` stops keeping; the loan then comes due
+again if unused. `shelf loan-days <name> [days]` shows or sets a skill's loan length in
 the library; change it only when asked.
 
 ## Changing skills everywhere

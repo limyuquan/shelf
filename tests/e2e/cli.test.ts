@@ -89,18 +89,22 @@ describe("shelf CLI", () => {
     ]);
   });
 
-  test("keep makes a loan never expire; only the user may keep", async () => {
+  test("keep makes a loan never expire; agents may keep, with a reason", async () => {
     await shelf("init");
     await shelf("new", "convex", "-d", "Convex backend");
     await shelf("loan-days", "convex", "14");
     await shelf("borrow", "convex");
 
-    const refused = await shelf("keep", "convex", "--actor", "agent:codex");
-    expect(refused.exitCode).toBe(8);
-    expect(refused.json.error).toMatchObject({ code: "NOT_ALLOWED" });
-    expect((await shelf("keep", "convex")).json.data?.skills).toMatchObject([
-      { skill: "convex", kept: true, changed: true },
-    ]);
+    const kept = await shelf(
+      "keep",
+      "convex",
+      "--reason",
+      "package.json depends on convex",
+      "--actor",
+      "agent:codex",
+    );
+    expect(kept.exitCode).toBe(0);
+    expect(kept.json.data?.skills).toMatchObject([{ skill: "convex", kept: true, changed: true }]);
 
     const { json } = await shelf("status");
     expect(json.data?.loans).toMatchObject([

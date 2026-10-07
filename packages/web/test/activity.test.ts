@@ -98,6 +98,10 @@ describe("activity grouping", () => {
       detail: "never expires",
     });
     expect(kept({ keep: false })).toMatchObject({ verb: "stopped keeping", detail: null });
+    expect(kept({ keep: true, reason: "package.json depends on convex" })).toMatchObject({
+      verb: "kept",
+      detail: "package.json depends on convex",
+    });
     expect(kept({ keep: true, source: "lockfile" })).toMatchObject({
       verb: "kept",
       detail: "from the lockfile",

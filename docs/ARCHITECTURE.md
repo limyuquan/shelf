@@ -172,8 +172,8 @@ always `active`, so nothing expires it and Attention never lists it for its
 due date (content states still apply), while uses are still recorded. Keeping
 is a project decision, so it is written to the lockfile (`keep: true`) and
 taken from it when a project is opened, which carries it to clones on other
-machines. Only the user may keep a loan: services refuse actors starting with
-`agent:`. A loan that stops being kept gets at least a fresh loan period, so it
+machines. Agents may keep loans too; the guide limits it to skills covering a
+direct dependency of the project, and `--reason` records why. A loan that stops being kept gets at least a fresh loan period, so it
 doesn't expire the moment it stops being kept.
 
 Uses come from harness hooks that `shelf setup` installs (`services/hooks.ts`)

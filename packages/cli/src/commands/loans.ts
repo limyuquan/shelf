@@ -100,9 +100,16 @@ export const keepCommand = shelfCommand({
   args: {
     skill: { type: "positional", required: true, description: "One or more skill names" },
     off: { type: "boolean", description: "Stop keeping: the loan comes due again if unused" },
+    reason: {
+      type: "string",
+      description: "Why (recorded in the activity log), e.g. the dependency it covers",
+    },
   },
   async run(ctx, args) {
-    const results = await keep(ctx, positionals(args), { keep: !args.off });
+    const results = await keep(ctx, positionals(args), {
+      keep: !args.off,
+      ...(args.reason ? { reason: args.reason } : {}),
+    });
     return {
       data: { skills: results },
       text: lines(

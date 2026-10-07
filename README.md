@@ -51,8 +51,10 @@ borrow only from it.
   comes due after going unused (see [Hooks](#hooks)).
 - **Keep**: `shelf keep <name>` for skills a project always needs (say, Convex
   skills in a Convex app): kept loans never expire. It's recorded in the
-  lockfile, so clones keep them too. Only you can keep a skill; agents are
-  told to ask.
+  lockfile, so clones keep them too. Agents may keep skills as well; the guide
+  tells them to keep only skills for a direct dependency of the project (kept
+  skills load in every session, so keeping freely bloats context) and to give a
+  `--reason`.
 - **Sets**: `shelf set save frontend react-best-practices playwright-testing`
   groups skills you often borrow together; `shelf borrow @frontend` borrows
   them all. Sets live in your library (per machine); each skill still gets its
@@ -224,7 +226,7 @@ boundary.
 | `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
 | `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
-| `shelf keep <name…> [--off]` | Keep loans: they never expire (only you, not agents) |
+| `shelf keep <name…> [--off] [--reason …]` | Keep loans: they never expire (for the project's direct dependencies) |
 | `shelf return <name> [--force]` | Remove a borrowed skill |
 | `shelf update [name…] [--force]` | Update borrowed skills to the library's latest revision |
 | `shelf promote <name> [--force] [--propagate]` | Publish a project's edits back to the library (and to other borrowers) |

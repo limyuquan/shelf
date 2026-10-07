@@ -56,7 +56,6 @@ export async function borrow(
   options: { days?: number; policy?: LoanPolicy; mode?: LoanMode; keep?: boolean } = {},
 ): Promise<BorrowResult[]> {
   if (refs.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
-  if (options.keep) assertMayKeep(ctx, refs);
   const { project } = await requireProject(ctx);
   if (options.days !== undefined) assertWithinLoanLimit(ctx, options.days);
   const targets = await projectTargets(ctx, project);
@@ -138,16 +137,17 @@ export interface KeepResult {
 
 /**
  * Keeps loans in the current project (they never come due) or stops keeping them.
- * Keeping is the user's decision, recorded in the lockfile so every clone of the
- * project keeps the same skills; agents may only stop keeping. Accepts `@set` refs.
+ * Recorded in the lockfile so every clone of the project keeps the same skills.
+ * Agents may keep too; the guide asks them to keep only skills for a direct
+ * dependency of the project, since kept skills load in every session forever.
+ * Accepts `@set` refs. `reason` is recorded in the activity log.
  */
 export async function keep(
   ctx: Context,
   names: readonly string[],
-  options: { keep: boolean },
+  options: { keep: boolean; reason?: string },
 ): Promise<KeepResult[]> {
   if (names.length === 0) throw new ShelfError("INVALID_ARGUMENT", "Name at least one skill");
-  if (options.keep) assertMayKeep(ctx, names);
   const { project } = await requireProject(ctx);
   const loans = resolveSkillRefs(ctx, names).map((name) => {
     const loan = findActiveLoan(ctx.db, project.id, name);
@@ -162,22 +162,13 @@ export async function keep(
   });
   return loans.map((loan) => {
     const changed = loan.keep !== options.keep;
-    const after = changed ? setKeep(ctx, project, loan, options.keep) : loan;
+    const after = changed ? setKeep(ctx, project, loan, options.keep, options.reason) : loan;
     return { skill: loan.skillName, kept: after.keep, changed, dueAt: after.dueAt };
   });
 }
 
-function assertMayKeep(ctx: Context, names: readonly string[]): void {
-  if (!ctx.actor.startsWith("agent:")) return;
-  throw new ShelfError(
-    "NOT_ALLOWED",
-    "Only the user can keep a skill (a kept loan never expires)",
-    `Ask the user whether this project should always have it; they can run \`shelf keep ${names.join(" ")}\``,
-  );
-}
-
 /** Turns keep on or off, records it, and writes it to the lockfile. */
-function setKeep(ctx: Context, project: Project, loan: Loan, on: boolean): Loan {
+function setKeep(ctx: Context, project: Project, loan: Loan, on: boolean, reason?: string): Loan {
   const now = ctx.clock.now();
   const dueAt = dueAfterKeepChange(ctx, loan, on);
   writeTransaction(ctx.db, () => {
@@ -188,7 +179,7 @@ function setKeep(ctx: Context, project: Project, loan: Loan, on: boolean): Loan 
       at: now,
       projectId: project.id,
       skillId: loan.skillId,
-      detail: { keep: on },
+      detail: { keep: on, ...(reason ? { reason } : {}) },
     });
     syncLockfile(ctx.db, project);
   });

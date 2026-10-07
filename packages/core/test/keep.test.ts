@@ -97,20 +97,13 @@ describe("kept loans", () => {
     ]);
   });
 
-  test("keeping is idempotent and recorded; agents may only stop keeping", async () => {
+  test("keeping is idempotent and recorded with its reason; agents may keep", async () => {
     const env = await createTestEnv();
     const ctx = await setupProject(env, ["convex"]);
     await borrow(ctx, ["convex"]);
     const agent = { ...ctx, actor: "agent:claude-code" };
 
-    await expect(keep(agent, ["convex"], { keep: true })).rejects.toMatchObject({
-      code: "NOT_ALLOWED",
-      hint: expect.stringContaining("shelf keep convex"),
-    });
-    await expect(borrow(agent, ["convex"], { keep: true })).rejects.toMatchObject({
-      code: "NOT_ALLOWED",
-    });
-    await keep(ctx, ["convex"], { keep: true });
+    await keep(agent, ["convex"], { keep: true, reason: "package.json depends on convex" });
     expect((await keep(ctx, ["convex"], { keep: true }))[0]?.changed).toBe(false);
     expect((await keep(agent, ["convex"], { keep: false }))[0]).toMatchObject({
       kept: false,
@@ -123,7 +116,7 @@ describe("kept loans", () => {
     const kept = activity(ctx).filter((event) => event.type === "loan.kept");
     expect(kept.map((event) => [event.actor, event.detail])).toEqual([
       ["agent:claude-code", { keep: false }],
-      ["test", { keep: true }],
+      ["agent:claude-code", { keep: true, reason: "package.json depends on convex" }],
     ]);
   });
 
