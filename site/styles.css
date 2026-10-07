@@ -2092,6 +2092,27 @@ h3 {
   }
 }
 
+/* Install cards are padded, so their commands get less room than the hero's. */
+@media (max-width: 560px) {
+  .install-card {
+    padding: 20px 16px;
+  }
+
+  /* Wrap rather than hide the end of the command; Copy still copies it whole. */
+  .cmd-block {
+    height: auto;
+    min-height: 48px;
+  }
+
+  .cmd-block code {
+    flex-wrap: wrap;
+    gap: 0 8px;
+    padding: 12px 4px 12px 12px;
+    font-size: 13px;
+    white-space: normal;
+  }
+}
+
 @media (max-width: 380px) {
   .cmd-copy code {
     padding-left: 12px;
