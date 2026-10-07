@@ -1,0 +1,137 @@
+/*
+ * Shared design tokens for the website and the docs. Pages use these names,
+ * never raw colours. The palette comes from the logo (assets/brand/logo.svg):
+ * warm "library at night" surfaces, a wood accent, and the four book spines.
+ *
+ * Dark is the default. The docs also honour light (prefers-color-scheme, or
+ * data-theme="light" on <html>); the landing page is dark only.
+ */
+
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("fonts/newsreader.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("fonts/newsreader-italic.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/jetbrains-mono.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* A pixel monospace that echoes the logo's grid. Small labels only, never body text. */
+@font-face {
+  font-family: "Departure Mono";
+  src: url("fonts/departure-mono.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Type */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-pixel: "Departure Mono", var(--font-mono);
+
+  /* The logo's own colours, identical in both themes. */
+  --wood: #a8743f;
+  --wood-dark: #7a5128;
+  --wood-back: #3a2614;
+  --book-violet: #7b7ef0;
+  --book-teal: #3fb7a0;
+  --book-amber: #f2b84b;
+  --book-coral: #ec6a5e;
+  --paper: #efe6d2;
+
+  /* Layout */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --content-width: 1180px;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces, from the page up to floating popups. */
+  --bg: #0d0b09;
+  --surface: #13110e;
+  --surface-raised: #1a1713;
+  --surface-hover: #221e19;
+  --surface-overlay: #1e1a16;
+
+  --border: #2a251f;
+  --border-subtle: #1f1b17;
+  --border-strong: #3a332b;
+
+  --fg: #f1eadb;
+  --fg-muted: #b5ab98;
+  --fg-subtle: #7f7566;
+
+  /* Links and focus. Violet ties the site to the dashboard's accent. */
+  --accent: #a3a5ff;
+  --accent-strong: #7b7ef0;
+  --accent-soft: rgb(123 126 240 / 0.14);
+
+  /* Primary buttons are paper on ink. */
+  --button-bg: #f1eadb;
+  --button-fg: #15120f;
+
+  --code-bg: #110f0c;
+  --selection: rgb(242 184 75 / 0.28);
+  --shadow-popup: 0 12px 40px rgb(0 0 0 / 0.55), 0 0 0 1px var(--border-strong);
+  --shadow-window: 0 30px 80px rgb(0 0 0 / 0.55), 0 0 0 1px var(--border);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f7f3ea;
+  --surface: #fffdf8;
+  --surface-raised: #fbf8f1;
+  --surface-hover: #f1ece1;
+  --surface-overlay: #fffdf8;
+
+  --border: #e5ddcd;
+  --border-subtle: #eee7da;
+  --border-strong: #d6ccb8;
+
+  --fg: #1d1813;
+  --fg-muted: #5e554a;
+  --fg-subtle: #8f8576;
+
+  --accent: #4f52c9;
+  --accent-strong: #5e61d6;
+  --accent-soft: rgb(94 97 214 / 0.1);
+
+  --button-bg: #1d1813;
+  --button-fg: #f7f3ea;
+
+  --code-bg: #f3eee3;
+  --selection: rgb(242 184 75 / 0.35);
+  --shadow-popup: 0 12px 40px rgb(60 40 20 / 0.14), 0 0 0 1px var(--border);
+  --shadow-window: 0 30px 80px rgb(60 40 20 / 0.16), 0 0 0 1px var(--border);
+}
