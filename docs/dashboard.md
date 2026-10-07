@@ -69,7 +69,7 @@ Each loan's **…** menu:
 | Extend by a week | `shelf due <name> +7d`. |
 | Keep — never expires / Stop keeping | `shelf keep` / `shelf keep --off`. |
 | Update to latest | `shelf update`. |
-| Return / Return and delete edits | `shelf return` / `shelf return --force`. Runs at once, with no confirmation. |
+| Return / Return and delete edits | `shelf return` / `shelf return --force`. Return runs at once; Return and delete edits asks for confirmation first, like bulk return (tick **Also delete local edits**). |
 
 **Borrow skills** (or `b`) opens the borrow dialog: filter the library, toggle whole sets with their chips, see suggested skills first with their session cost, tick **Keep (never expires)** if wanted, and borrow. The dialog has no options for loan days, `--follow` or `--link`; use the CLI for those.
 

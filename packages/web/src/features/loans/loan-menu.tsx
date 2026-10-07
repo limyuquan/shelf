@@ -14,6 +14,7 @@ import { IconButton } from "../../components/ui/button.tsx";
 import { Menu, MenuItem, MenuSeparator } from "../../components/ui/menu.tsx";
 import { ChangesDialog } from "./changes-dialog.tsx";
 import { useLoanAction } from "./mutations.ts";
+import { ReturnDialog } from "./return-dialog.tsx";
 
 /** Every action on one loan, behind a "…" button. */
 export function LoanMenu({
@@ -35,6 +36,8 @@ export function LoanMenu({
 }) {
   const action = useLoanAction();
   const [reviewing, setReviewing] = useState(false);
+  // Returning an edited loan deletes the edits, so it is confirmed like a bulk return.
+  const [returning, setReturning] = useState(false);
   const target = { projectId, skill };
   const edited = content === "modified" || content === "diverged";
   return (
@@ -86,9 +89,13 @@ export function LoanMenu({
         <MenuItem
           icon={<Undo2 />}
           danger
-          onClick={() => action.mutate({ target, action: { kind: "return", force: edited } })}
+          onClick={() =>
+            edited
+              ? setReturning(true)
+              : action.mutate({ target, action: { kind: "return", force: false } })
+          }
         >
-          {edited ? "Return and delete edits" : "Return"}
+          {edited ? "Return and delete edits…" : "Return"}
         </MenuItem>
       </Menu>
       <ChangesDialog
@@ -99,6 +106,21 @@ export function LoanMenu({
         skill={skill}
         content={content}
       />
+      {returning && (
+        <ReturnDialog
+          loans={[{ skill, content, kept }]}
+          where={projectName}
+          label={(loan) => loan.skill}
+          pending={action.isPending}
+          onOpenChange={setReturning}
+          onConfirm={() =>
+            action.mutate(
+              { target, action: { kind: "return", force: true } },
+              { onSuccess: () => setReturning(false) },
+            )
+          }
+        />
+      )}
     </>
   );
 }
