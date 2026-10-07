@@ -287,7 +287,7 @@ lines; the details live in `shelf guide`.
 
 Set `SHELF_HOME` to keep shelf's state elsewhere.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
+See [docs/architecture.md](docs/architecture.md) for the design.
 
 ## License
 

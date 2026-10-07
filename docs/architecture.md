@@ -1,5 +1,7 @@
 # Architecture
 
+How shelf's code is laid out and why: the packages, the dashboard's contract with the core, who owns which data, content states, renew on use, invariants, concurrency, importing and distribution. Read it before changing shelf itself.
+
 ## Layout
 
 ```
@@ -269,7 +271,7 @@ exit code and prints either text or a one-line JSON envelope with
 ## Extending
 
 - **A harness**: add an entry to `packages/core/src/projection/harnesses.ts`
-  and a row to [harnesses.md](harnesses.md).
+  and a row to the matrix in [Harnesses](harnesses.md).
 - **A command**: add a service in `core/src/services/`, export it from
   `core/src/index.ts`, and add a `shelfCommand` in `cli/src/commands/`.
 - **A schema change**: append a migration to `core/src/store/migrations.ts`.

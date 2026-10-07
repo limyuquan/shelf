@@ -26,7 +26,7 @@ SHELF_BIN=dist/shelf bun test tests/e2e   # e2e against the binary
 
 ## Conventions
 
-- Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first. Keep logic in
+- Read [docs/architecture.md](docs/architecture.md) first. Keep logic in
   `packages/core`; CLI commands only map arguments to a service and render it.
 - Services take a `Context` and never read globals (env, cwd, clock). Tests
   build contexts with `createTestEnv()` and a `FakeClock`.
