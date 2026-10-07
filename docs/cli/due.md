@@ -3,6 +3,22 @@
 Moves a loan's due date, later or earlier: by a relative shift such as `+14d`, `-7d` or `+2w`, or to a date such as `2026-12-01`.
 
 <!-- generated:cli due -->
+
+```text
+shelf due <skill> <when> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>` | Skill name |
+| `<when>` | Shift or absolute date |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--reason <reason>` | string |  | Why, recorded in the activity log |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

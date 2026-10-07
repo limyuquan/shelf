@@ -3,6 +3,21 @@
 Imports existing skill directories into the library and manages their projects' copies as loans. It never overwrites a library skill: copies that differ become loans with local edits, unless they match an earlier revision or you pass `--unedited`.
 
 <!-- generated:cli adopt -->
+
+```text
+shelf adopt <path>... [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<path>...` | One or more skill directories |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--unedited` | boolean |  | The copies have no local edits: treat differing ones as older versions (list the newest first) |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

@@ -3,6 +3,18 @@
 Makes an earlier revision of a skill the library's latest again, by copying its snapshot back over the library copy. Nothing is deleted, and projects keep the revision they have until they update.
 
 <!-- generated:cli restore -->
+
+```text
+shelf restore <name> <revision>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+| `<revision>` | Revision hash or unique prefix (see `shelf log`) |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

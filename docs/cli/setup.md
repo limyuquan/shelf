@@ -3,6 +3,17 @@
 Creates the shelf home, installs the bundled `shelf` skill for your agents, and installs the hooks that renew skills when they are used. Safe to re-run; run it again after every upgrade.
 
 <!-- generated:cli setup -->
+
+```text
+shelf setup [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--hooks`, `--no-hooks` | boolean | `true` | Install Claude Code / Codex hooks; --no-hooks removes them |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

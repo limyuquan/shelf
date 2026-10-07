@@ -3,6 +3,18 @@
 Renames a library skill: its directory and the `name:` in its SKILL.md frontmatter, keeping its revisions, settings and activity. Refused while any project borrows the skill.
 
 <!-- generated:cli rename -->
+
+```text
+shelf rename <from> <to>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<from>` | Current name |
+| `<to>` | New name |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

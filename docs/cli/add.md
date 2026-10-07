@@ -3,6 +3,26 @@
 Imports skills from a git repository or a local directory into your library, after a local audit. The first run only reviews; nothing is imported until you pass `--yes`. On a skill the library already has, `--yes` links it to the source instead, so `shelf pull` can fetch its updates.
 
 <!-- generated:cli add -->
+
+```text
+shelf add <source> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<source>` | gh:owner/repo[/path][@ref], a git URL, or a local directory |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--ref <ref>` | string |  | Branch, tag or commit |
+| `--path <path>` | string |  | Skill directory inside the source |
+| `--skill <skill>` | string |  | Skills to take when the source has several (comma-separated) |
+| `--all` | boolean |  | Take every skill in the source |
+| `--yes` | boolean |  | Import after review |
+| `--force` | boolean |  | Import despite high-severity findings |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## Sources

@@ -3,6 +3,17 @@
 Groups library skills into named sets that you borrow together with `shelf borrow @<set>`. The subcommands list, save (create or replace) and delete sets.
 
 <!-- generated:cli set -->
+
+```text
+shelf set <command>
+```
+
+| Command | Description |
+| --- | --- |
+| `shelf set list` | List your skill sets |
+| `shelf set save` | Create a set, or replace its skills (accepts @set to extend another set) |
+| `shelf set delete` | Delete a set (borrowed skills and loans are unaffected) |
+
 <!-- /generated -->
 
 Sets are stored in your database, per machine. Borrowing a set creates an ordinary loan for each of its skills; nothing about the set reaches a project or its lockfile. See [Sets](../sets.md).
@@ -12,6 +23,13 @@ Sets are stored in your database, per machine. Borrowing a set creates an ordina
 Lists your sets with their skills and descriptions.
 
 <!-- generated:cli set list -->
+
+```text
+shelf set list
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ```console
@@ -32,6 +50,22 @@ With no sets: ``No sets yet. Create one with `shelf set save <name> <skill…>`.
 Creates a set, or replaces the skills of an existing one.
 
 <!-- generated:cli set save -->
+
+```text
+shelf set save <name> <skill>... [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Set name, e.g. frontend |
+| `<skill>...` | One or more skill names |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--description <description>`, `-d` | string |  | What the set is for |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 - The name follows the skill-name rules (lowercase letters, digits, single hyphens). A leading `@` is ignored.
@@ -58,6 +92,17 @@ Borrow it with `shelf borrow @web`
 Deletes a set. Borrowed skills and loans are not affected.
 
 <!-- generated:cli set delete -->
+
+```text
+shelf set delete <name>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Set name |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ```console

@@ -225,7 +225,8 @@ export function highlightBlock(code: string, info: string | undefined): CodeBloc
 
   const resolved = PLAIN_LANGS.has(lang) ? null : resolveLang(lang);
   const body = resolved ? tokensHtml(text, resolved) : lines.map((line) => escapeHtml(line));
-  const label = resolved === "shellscript" ? "terminal" : lang || "";
+  // Plain text (a usage line, a directory tree) gets no header bar.
+  const label = resolved === "shellscript" ? "terminal" : PLAIN_LANGS.has(lang) ? "" : lang;
   return {
     html: figure(
       label,

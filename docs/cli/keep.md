@@ -3,6 +3,22 @@
 Keeps borrowed skills so their loans never expire, or stops keeping them with `--off`. Keeping is written to the lockfile, so every clone of the project keeps the same skills. Keep only skills the project is built on.
 
 <!-- generated:cli keep -->
+
+```text
+shelf keep <skill>... [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>...` | One or more skill names |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--off` | boolean |  | Stop keeping: the loan comes due again if unused |
+| `--reason <reason>` | string |  | Why (recorded in the activity log), e.g. the dependency it covers |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

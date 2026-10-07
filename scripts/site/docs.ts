@@ -223,7 +223,13 @@ export type ResolvedLink =
       readonly hash: string;
     }
   /** A file the site publishes elsewhere: assets/media → /media, assets/brand → /brand. */
-  | { readonly kind: "site"; readonly siteRel: string; readonly hash: string }
+  | {
+      readonly kind: "site";
+      readonly siteRel: string;
+      readonly hash: string;
+      /** False until the file lands (media are made separately): a warning, not an error. */
+      readonly exists: boolean;
+    }
   | {
       readonly kind: "repo";
       readonly repoPath: string;
@@ -269,7 +275,12 @@ export function resolveLink(docs: Docs, from: string, href: string): ResolvedLin
   }
   for (const [prefix, siteDir] of SITE_DIRS) {
     if (repoPath.startsWith(prefix)) {
-      return { kind: "site", siteRel: siteDir + repoPath.slice(prefix.length), hash };
+      return {
+        kind: "site",
+        siteRel: siteDir + repoPath.slice(prefix.length),
+        hash,
+        exists: existsSync(join(ROOT, repoPath)),
+      };
     }
   }
   const onDisk = join(ROOT, repoPath);

@@ -3,6 +3,19 @@
 Runs a harness hook. `shelf setup` installs it in Claude Code and Codex, and the harness calls it with a JSON payload on stdin. It is hidden from `shelf --help` because people and agents never need to run it.
 
 <!-- generated:cli hook -->
+
+```text
+shelf hook <event> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<event>` | session-start \| skill-use |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--harness <harness>` | string |  | Which harness runs the hook, e.g. claude-code |
+
 <!-- /generated -->
 
 ## Events

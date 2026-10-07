@@ -3,6 +3,17 @@
 Lists a skill's revisions, most recent first, with their date and source, and which projects hold each one. It shows at a glance who is behind.
 
 <!-- generated:cli log -->
+
+```text
+shelf log <name>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

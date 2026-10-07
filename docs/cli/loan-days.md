@@ -3,6 +3,22 @@
 Shows or sets a skill's loan length: how long new loans of it last, and how far a use or renewal moves its due date. Without a number it shows the current length; `--reset` goes back to the config's `loanDays`.
 
 <!-- generated:cli loan-days -->
+
+```text
+shelf loan-days <skill> [<days>] [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>` | Skill name |
+| `<days>` (optional) | New loan length in days |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--reset` | boolean |  | Use the config's loanDays again |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

@@ -23,6 +23,21 @@ With `--json`, one line on stdout:
 ## Codes
 
 <!-- generated:errors -->
+
+| Code | Exit code | Meaning |
+| --- | --- | --- |
+| `INTERNAL` | 1 | Anything that is not a ShelfError: a bug or an unexpected I/O error. The message says what failed. |
+| `INVALID_ARGUMENT` | 2 | A missing or malformed argument, option or config value, or a request that does not apply (for example promoting a copy with no local edits). |
+| `INVALID_SKILL` | 2 | A SKILL.md is missing, has no or invalid YAML frontmatter, or breaks a rule of the Agent Skills spec (name, description). |
+| `NOT_INITIALIZED` | 3 | The current directory is not in a shelf project. Run `shelf init` in the project root. |
+| `SKILL_NOT_FOUND` | 4 | No skill, set or source entry by that name. |
+| `NOT_BORROWED` | 4 | The skill is in the library, but this project has not borrowed it. |
+| `SKILL_EXISTS` | 5 | A skill or set with that name already exists. |
+| `CONFLICT` | 5 | The operation would overwrite or orphan something: files shelf does not manage, a newer library revision, copies edited differently, or loans in other projects. |
+| `LOCAL_CHANGES` | 6 | The project copy has local edits that the operation would discard. Promote or detach them first, or pass `--force`. |
+| `LOAN_LIMIT` | 7 | The requested loan length or due date is beyond `maxLoanDays`. |
+| `NOT_ALLOWED` | 8 | The actor may not do this, for example an agent importing from a remote source while `allowAgentImports` is off. |
+
 <!-- /generated -->
 
 `INTERNAL` (exit 1) is not a shelf error code but what the CLI reports for anything unexpected: a bug, a full disk, a port in use. The message is the underlying error; text output adds a stack trace. Please report reproducible ones.

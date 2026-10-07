@@ -3,6 +3,13 @@
 Registers the current project with shelf by creating `.agents/shelf.lock.json`, so skills can be borrowed into it. Running it again in a project that already uses shelf changes nothing.
 
 <!-- generated:cli init -->
+
+```text
+shelf init
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

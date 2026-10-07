@@ -3,6 +3,17 @@
 Checks library skills' SKILL.md files against the Agent Skills format and shelf's conventions, and estimates their description and body tokens. Exits with code 1 when any skill has an error.
 
 <!-- generated:cli lint -->
+
+```text
+shelf lint [<name>...]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>...` (optional) | Skill names. Default: all |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

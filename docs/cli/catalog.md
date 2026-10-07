@@ -3,6 +3,17 @@
 Lists the skills in your library with their size in tokens and their description, optionally filtered by terms that must all appear in the name or description.
 
 <!-- generated:cli catalog -->
+
+```text
+shelf catalog [<query>...]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<query>...` (optional) | Search terms (all must match) |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

@@ -3,6 +3,15 @@
 Prints the full guide for agents: how shelf works, loan states, choosing skills, due dates, keeping, changing skills everywhere, existing skills, imports and the rules agents follow.
 
 <!-- generated:cli guide -->
+
+```text
+shelf guide [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--json` | boolean |  | Print as a JSON envelope |
+
 <!-- /generated -->
 
 ## What it does

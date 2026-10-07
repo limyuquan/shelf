@@ -3,6 +3,17 @@
 Checks shelf's state for problems: invalid library skills, a missing or outdated bundled skill, missing or outdated hooks, projects that no longer exist, leftovers from interrupted writes, and the object store. `--fix` repairs what it safely can.
 
 <!-- generated:cli doctor -->
+
+```text
+shelf doctor [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--fix` | boolean |  | Repair fixable problems |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## Checks

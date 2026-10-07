@@ -3,6 +3,13 @@
 Reconciles this project with its loans: returns overdue skills that have no local edits, restores missing copies, and applies library updates to loans borrowed with `--follow`. The session-start hook runs the same sync.
 
 <!-- generated:cli sync -->
+
+```text
+shelf sync
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

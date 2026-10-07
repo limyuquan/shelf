@@ -3,6 +3,17 @@
 Records that borrowed skills were used in this project, which renews their loans. The hooks do this automatically in Claude Code and Codex; in other harnesses, agents run it after using a skill.
 
 <!-- generated:cli used -->
+
+```text
+shelf used <name>...
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>...` | Skill names |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

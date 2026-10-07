@@ -3,6 +3,21 @@
 Prints a library skill's SKILL.md with its revision, size and file list, or, with `--revision`, any recorded revision of it. Use it to read a skill before borrowing it.
 
 <!-- generated:cli show -->
+
+```text
+shelf show <name> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--revision <revision>` | string |  | Print this revision instead (hash, unique prefix, or latest; see `shelf log`) |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

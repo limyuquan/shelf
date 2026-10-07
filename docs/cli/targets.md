@@ -3,6 +3,20 @@
 Shows or changes which harness skill directories this project writes borrowed skills to. Without options it lists every known harness, marks the ones it detects in the project, and suggests adding those that don't read `.agents/skills`.
 
 <!-- generated:cli targets -->
+
+```text
+shelf targets [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--add <add>` | string |  | Harness ids or directories to add (comma-separated) |
+| `--remove <remove>` | string |  | Harness ids or directories to remove |
+| `--reset` | boolean |  | Use your default targets (config) again |
+| `--force` | boolean |  | Remove copies even if they have local edits |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

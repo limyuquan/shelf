@@ -3,6 +3,22 @@
 Updates a skill from the source it was imported from (or linked to) with `shelf add`. It shows the diff and a fresh audit, and changes the library only with `--yes`. Then `shelf propagate` updates borrowing projects.
 
 <!-- generated:cli pull -->
+
+```text
+shelf pull <name> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--yes` | boolean |  | Apply after review |
+| `--force` | boolean |  | Apply despite high-severity findings or library edits since import |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

@@ -3,6 +3,21 @@
 Finds skill copies under a directory and groups them by name and content, showing duplicates, drifted versions, which versions the library already knows, and which copies shelf already manages. It changes nothing.
 
 <!-- generated:cli scan -->
+
+```text
+shelf scan [<dir>] [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<dir>` (optional) | Directory to scan. Default: `.` |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--depth <depth>` | string | `6` | How many directory levels to descend |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

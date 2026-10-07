@@ -774,6 +774,8 @@ kbd {
 }
 
 .prose a:not(.anchor) {
+  /* Bare URLs as link text must not widen the page on phones. */
+  overflow-wrap: anywhere;
   color: var(--accent);
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);

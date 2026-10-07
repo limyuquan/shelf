@@ -3,6 +3,22 @@
 Publishes this project's edits to a borrowed skill back to the library as a new revision. With `--propagate`, it then updates every other project that borrows the skill, skipping copies with their own edits.
 
 <!-- generated:cli promote -->
+
+```text
+shelf promote <skill> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>` | Skill name |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--force` | boolean |  | Replace the library revision even if it changed since borrowing |
+| `--propagate` | boolean |  | Then update every other project borrowing it (skips local edits) |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

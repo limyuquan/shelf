@@ -3,6 +3,22 @@
 Pushes the library's latest revision of a skill to every project that borrows it, or only the projects you name. Copies with local edits are never touched. Run it from anywhere.
 
 <!-- generated:cli propagate -->
+
+```text
+shelf propagate <name> [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--project <project>` | string |  | Limit to these projects (comma-separated names) |
+| `--dry-run` | boolean |  | Show what would change without changing it |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

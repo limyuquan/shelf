@@ -3,6 +3,13 @@
 Lists every project registered with shelf on this machine, with its number of loans, how many are due soon or overdue, and its path. It reads the database only and changes nothing.
 
 <!-- generated:cli projects -->
+
+```text
+shelf projects
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

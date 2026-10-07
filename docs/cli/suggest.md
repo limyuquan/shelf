@@ -3,6 +3,17 @@
 Suggests library skills that match what this project is built with: its dependencies and well-known files, such as `package.json` depending on `@playwright/test`, or a `convex/` folder. It lists the reason and the session cost of each.
 
 <!-- generated:cli suggest -->
+
+```text
+shelf suggest [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--limit <limit>` | string | `8` | Most suggestions to show |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

@@ -3,6 +3,18 @@
 Copies a library skill to a new name, as a new skill with its own history. Use it to start a variant of a skill without touching the original.
 
 <!-- generated:cli duplicate -->
+
+```text
+shelf duplicate <from> <to>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<from>` | Skill to copy |
+| `<to>` | Name of the copy |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

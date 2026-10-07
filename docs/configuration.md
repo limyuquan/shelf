@@ -28,6 +28,17 @@ Edit it with any editor; there is no `shelf config` command. Every command reads
 ## Keys
 
 <!-- generated:config -->
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `loanDays` | integer | `30` | Loan length in days for `borrow`, and the default extension for `renew`. |
+| `maxLoanDays` | integer | `90` | Upper bound on how far in the future a due date may be set, in days. |
+| `dueSoonDays` | integer | `7` | Loans due within this many days are reported as `due-soon`. |
+| `allowAgentImports` | boolean | `false` | Lets agents run `shelf add` / `shelf pull` from remote sources. Off by default: the library is the trust boundary, and only the user should widen it. |
+| `hooks` | boolean | `true` | Install harness hooks (Claude Code, Codex) that renew loans when a skill is used and report loans needing attention at session start. Set by `shelf setup`. |
+| `mode` | `"copy"` \| `"link"` | `"copy"` | `copy`: a copy per target. `link`: one copy, other targets symlink to it. |
+| `targets` | string[] | `[".agents/skills",".claude/skills"]` | Project-relative directories that borrowed skills are written into. |
+
 <!-- /generated -->
 
 ### loanDays

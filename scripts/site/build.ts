@@ -105,6 +105,11 @@ export async function buildSite(options: BuildOptions): Promise<BuildResult> {
     const body = renderMarkdown(docs, page.path, page.body);
     const lede = renderMarkdown(docs, page.path, page.description);
     for (const asset of [...body.assets, ...lede.assets]) copied.add(asset);
+    for (const target of body.links) {
+      if (target.kind === "site" && !target.exists) {
+        warnings.push(`${page.path}.md: ${target.siteRel} is not in assets/ yet`);
+      }
+    }
     write(
       `${pageDir(page.path)}index.html`,
       renderDocPage(docs, assets, {
@@ -273,9 +278,9 @@ function llmsTxt(docs: Docs): string {
       return items.length > 0 ? `## ${group}\n\n${items.join("\n")}` : "";
     })
     .filter(Boolean);
-  const architecture = docs.pages.has("ARCHITECTURE")
-    ? absoluteUrl(pageMarkdown("ARCHITECTURE"))
-    : `${REPO_URL}/blob/main/docs/ARCHITECTURE.md`;
+  const architecture = docs.pages.has("architecture")
+    ? absoluteUrl(pageMarkdown("architecture"))
+    : `${REPO_URL}/blob/main/docs/architecture.md`;
   const optional = [
     "## Optional",
     "",

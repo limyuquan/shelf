@@ -3,6 +3,21 @@
 Updates borrowed skills in this project to the library's latest revision: the named ones, or every loan when none are named. Copies with local edits are skipped, or refused when named, unless `--force`.
 
 <!-- generated:cli update -->
+
+```text
+shelf update [<skill>...] [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>...` (optional) | Skill names. Default: all |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--force` | boolean |  | Discard local edits to the project copies |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

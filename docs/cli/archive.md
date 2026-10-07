@@ -3,6 +3,17 @@
 Moves a library skill out of the library into `~/.shelf/archive/`, without deleting anything. Its revisions stay recorded, and moving the directory back restores it. Refused while any project borrows the skill.
 
 <!-- generated:cli archive -->
+
+```text
+shelf archive <name>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>` | Skill name |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

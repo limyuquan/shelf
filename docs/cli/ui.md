@@ -3,6 +3,18 @@
 Opens the local dashboard: loans that need attention across every project, projects, the library editor, revisions, activity, insights and settings. It serves on 127.0.0.1 until you stop it with Ctrl-C.
 
 <!-- generated:cli ui -->
+
+```text
+shelf ui [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--port <port>` | string | a free port | Port to listen on |
+| `--open`, `--no-open` | boolean | `true` | Open a browser (--no-open to skip) |
+| `--rotate-token` | boolean |  | Replace the access token (signs out every browser) |
+| `--json` | boolean |  | Print the URL as a JSON envelope |
+
 <!-- /generated -->
 
 ## What it does

@@ -3,6 +3,17 @@
 Scans library skills, all of them or the named ones, for risky content: pipe-to-shell, prompt-injection phrasing, hidden Unicode, file uploads, credential access, binaries, scripts and more. It is local and offline, and it changes nothing.
 
 <!-- generated:cli audit -->
+
+```text
+shelf audit [<name>...]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<name>...` (optional) | Skill names |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

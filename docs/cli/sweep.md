@@ -3,6 +3,13 @@
 Runs `shelf sync` in every registered project: returns overdue loans without local edits, restores missing copies and updates `--follow` loans everywhere, without visiting each project. Run it daily from cron, a systemd timer or launchd.
 
 <!-- generated:cli sweep -->
+
+```text
+shelf sweep
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

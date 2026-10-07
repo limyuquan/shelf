@@ -3,6 +3,13 @@
 Shows this project's loans, their content and due states, and the next steps to take. It also returns overdue loans that have no local edits, so it is the one call an agent needs at the start of a task.
 
 <!-- generated:cli status -->
+
+```text
+shelf status
+```
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

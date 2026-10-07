@@ -3,21 +3,20 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkDocs, checkSchema } from "./check.ts";
-import { loadDocs, resolveLink, rewriteMarkdownLinks, SITE_URL, splitPage } from "./docs.ts";
+import { loadDocs, ROOT, resolveLink, rewriteMarkdownLinks, SITE_URL, splitPage } from "./docs.ts";
 import { FIXTURES_DIR } from "./gen.ts";
 import { fillGenerated } from "./generate.ts";
 import { createSlugger } from "./markdown.ts";
 
-/**
- * The docs the site is built from. Fixtures until the real pages land in docs/;
- * then point this at join(ROOT, "docs") so stale blocks, missing command pages
- * and broken links in the real docs fail the build.
- */
-const DOCS_DIR = FIXTURES_DIR;
-
 describe("docs", () => {
-  test("generated blocks are fresh, every command has a page, links and anchors resolve", () => {
-    expect(checkDocs(DOCS_DIR)).toEqual([]);
+  // Fails when a generated block is stale (`bun run docs:gen`), a command has no
+  // page, a page has no title or description, or a link or anchor is broken.
+  test("docs/ is complete, fresh and has no broken links", () => {
+    expect(checkDocs(join(ROOT, "docs"))).toEqual([]);
+  });
+
+  test("the site fixtures pass the same checks", () => {
+    expect(checkDocs(FIXTURES_DIR)).toEqual([]);
   });
 
   test("schema/config.schema.json matches ConfigSchema", () => {

@@ -3,6 +3,24 @@
 Copies library skills into this project and records a loan for each, with a due date. Accepts several skill names, and `@<set>` for every skill in a set. Borrowing a skill that is already borrowed changes nothing.
 
 <!-- generated:cli borrow -->
+
+```text
+shelf borrow <skill>... [options]
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>...` | One or more skill names, or @&lt;set&gt; for every skill in a set |
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--days <days>` | string | the skill's loan length, else config loanDays | Loan length in days |
+| `--keep` | boolean |  | Never expire: for skills covering a direct dependency of the project (kept skills load in every session) |
+| `--follow` | boolean |  | Let `shelf sync` apply library updates automatically |
+| `--link` | boolean |  | One copy per project; other harness directories symlink to it |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

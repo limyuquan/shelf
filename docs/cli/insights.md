@@ -3,6 +3,17 @@
 Shows how many tokens of skill descriptions each project loads at every session start, and which skills agents actually used in the last 30 days. Inside a project it shows that project; outside, or with `--all`, every project and library skill.
 
 <!-- generated:cli insights -->
+
+```text
+shelf insights [options]
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--all` | boolean |  | Every project and skill, even inside a project |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does

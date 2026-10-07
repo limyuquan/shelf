@@ -3,6 +3,17 @@
 Stops managing a borrowed skill in this project but leaves its files where they are. The copies become ordinary project files that shelf no longer tracks, renews or returns.
 
 <!-- generated:cli detach -->
+
+```text
+shelf detach <skill>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<skill>` | Skill name |
+
+Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
+
 <!-- /generated -->
 
 ## What it does
