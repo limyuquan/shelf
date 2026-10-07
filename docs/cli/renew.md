@@ -1,6 +1,6 @@
 # shelf renew
 
-Extends a loan from its current due date, or from today if it is overdue, by the skill's loan length or `--days`. Give a `--reason`: it is recorded in the activity log.
+Renews a loan: the new due date is the skill's loan length (or `--days`) from today, unless the loan is already due later. Give a `--reason`: it is recorded in the activity log.
 
 <!-- generated:cli renew -->
 
@@ -23,7 +23,7 @@ Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
 
 ## What it does
 
-New due date = the later of the current due date and now, plus `--days` (default: the skill's loan length, else `loanDays`). The result can't be more than `maxLoanDays` from now.
+New due date = the later of the current due date and now plus `--days` (default: the skill's loan length, else `loanDays`), the same rule as a use. Renewing never moves a due date earlier, and renewing twice doesn't add up: it counts from today, not from the due date. The result can't be more than `maxLoanDays` from now.
 
 With [hooks](../hooks.md) installed, loans renew themselves when used, so `renew` is for skills the project still needs but hasn't used lately: when `shelf status` lists a loan as `due-soon`, renew it or return it. Renewing a kept loan changes its stored due date, which only matters if it stops being kept.
 
@@ -31,7 +31,7 @@ With [hooks](../hooks.md) installed, loans renew themselves when used, so `renew
 
 ```console
 $ shelf renew api-design --reason "still designing the orders API"
-api-design is now due 2026-12-06
+api-design is now due 2026-11-06
 ```
 
 ```console
@@ -43,7 +43,7 @@ hint: The latest allowed due date is 2027-01-05
 ## JSON output
 
 ```json
-{"schemaVersion":1,"ok":true,"data":{"skill":"release-notes","previousDueAt":"2026-11-06T05:51:38.699Z","dueAt":"2026-12-06T05:51:38.699Z"}}
+{"schemaVersion":1,"ok":true,"data":{"skill":"release-notes","previousDueAt":"2026-10-17T06:29:25.107Z","dueAt":"2026-11-06T06:29:25.455Z"}}
 ```
 
 ## Errors

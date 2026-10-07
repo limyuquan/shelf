@@ -86,10 +86,10 @@ pdf-tools: in use, due 2026-11-06
 
 ```console
 $ shelf renew api-design --reason "still designing the orders API"
-api-design is now due 2026-12-06
+api-design is now due 2026-11-06
 ```
 
-`renew` extends the loan from its current due date (or from today, if it is overdue) by `--days` or the skill's loan length. The reason goes into the activity log. The result can't be more than `maxLoanDays` from today:
+`renew` sets the due date to `--days` or the skill's loan length from today, like a use does, unless the loan is already due later. The reason goes into the activity log. The result can't be more than `maxLoanDays` from today:
 
 ```console
 $ shelf renew api-design --days 200

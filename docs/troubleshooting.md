@@ -53,7 +53,7 @@ Adopt it instead, which turns it into a loan without losing anything: `shelf ado
 
 ### renew fails with LOAN_LIMIT
 
-`renew` extends from the current due date, not from today, and no due date can be more than `maxLoanDays` (90) from now. Renew by fewer days (`--days 14`), set a date with `shelf due`, or `shelf keep` a skill the project always needs.
+`renew` counts from today, and no due date can be more than `maxLoanDays` (90) from now, so `--days` above the limit fails. Renew by fewer days (`--days 14`), set a date with `shelf due`, or `shelf keep` a skill the project always needs.
 
 ## Projects and the lockfile
 

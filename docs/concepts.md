@@ -74,7 +74,7 @@ Every loan that isn't kept has a due date. A skill's **loan length** decides how
 |---|---|
 | `shelf borrow` | Now plus `--days`, or the loan length. |
 | An agent uses the skill | Now plus the loan length, if that is later than the current due date. |
-| `shelf renew` | The current due date (or now, if overdue) plus `--days`, or the loan length. |
+| `shelf renew` | Now plus `--days`, or the loan length, if that is later than the current due date. |
 | `shelf due <name> +14d` | The current due date shifted by the amount. |
 | `shelf due <name> 2026-12-01` | The end of that day, UTC. |
 

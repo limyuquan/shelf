@@ -77,12 +77,12 @@ export const borrowCommand = shelfCommand({
 
 export const renewCommand = shelfCommand({
   name: "renew",
-  description: "Extend a loan (from its due date, or from today if overdue)",
+  description: "Renew a loan: due the loan length (or --days) from today, unless already due later",
   args: {
     skill: { type: "positional", required: true, description: "Skill name" },
     days: {
       type: "string",
-      description: "Days to extend by (default: the skill's loan length, else config loanDays)",
+      description: "Days from today (default: the skill's loan length, else config loanDays)",
     },
     reason: reasonArg,
   },

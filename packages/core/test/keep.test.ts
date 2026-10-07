@@ -8,7 +8,7 @@ import { activity } from "../src/services/activity.ts";
 import { listAttention } from "../src/services/attention.ts";
 import { createContext } from "../src/services/context.ts";
 import { catalog, setSkillLoanDays, showSkill, skillLoanDays } from "../src/services/library.ts";
-import { borrow, keep, renew } from "../src/services/loans.ts";
+import { borrow, keep, renew, setDue } from "../src/services/loans.ts";
 import { listProjectOverviews } from "../src/services/overview.ts";
 import { sessionNotice } from "../src/services/session.ts";
 import { status, sweep } from "../src/services/status.ts";
@@ -143,8 +143,8 @@ describe("per-skill loan length", () => {
     const [convex, pdf] = await borrow(ctx, ["convex", "pdf"]);
     expect(convex?.dueAt.getTime()).toBe(start + 14 * DAY);
     expect(pdf?.dueAt.getTime()).toBe(start + 30 * DAY);
-    expect((await renew(ctx, "convex")).dueAt.getTime()).toBe(start + 28 * DAY);
-    expect((await renew(ctx, "convex", { days: 2 })).dueAt.getTime()).toBe(start + 30 * DAY);
+    await setDue(ctx, "convex", "-10d");
+    expect((await renew(ctx, "convex")).dueAt.getTime()).toBe(start + 14 * DAY);
 
     env.clock.advanceDays(20);
     await setSkillLoanDays(ctx, "pdf", 60);

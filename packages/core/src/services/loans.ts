@@ -216,8 +216,9 @@ export interface DueChange {
 }
 
 /**
- * Extends a loan by `days` from its due date (or from now, if already overdue).
- * The default is the skill's loan length.
+ * Renews a loan to `days` from now (default: the skill's loan length), like a
+ * use does, never moving the due date earlier. Counting from now rather than
+ * from the due date means renewing twice doesn't stack towards the loan limit.
  */
 export async function renew(
   ctx: Context,
@@ -225,9 +226,8 @@ export async function renew(
   options: { days?: number; reason?: string } = {},
 ): Promise<DueChange> {
   return changeDue(ctx, name, options.reason, (loan, skill) => {
-    const days = options.days ?? effectiveLoanDays(skill, ctx.config);
-    const from = Math.max(loan.dueAt.getTime(), ctx.clock.now().getTime());
-    return addDays(new Date(from), days);
+    const renewed = addDays(ctx.clock.now(), options.days ?? effectiveLoanDays(skill, ctx.config));
+    return renewed > loan.dueAt ? renewed : loan.dueAt;
   });
 }
 

@@ -10,7 +10,7 @@ import { borrow, promote, renew, returnSkill, setDue, update } from "../src/serv
 import { listProjectOverviews } from "../src/services/overview.ts";
 import { initProject } from "../src/services/project.ts";
 import { status, sync } from "../src/services/status.ts";
-import { appendToFile, createTestEnv, setupProject } from "./helpers.ts";
+import { appendToFile, createTestEnv, DAY, setupProject } from "./helpers.ts";
 
 const copies = (projectDir: string, skill: string) => [
   join(projectDir, ".agents/skills", skill),
@@ -101,14 +101,26 @@ describe("expiry", () => {
     });
   });
 
-  test("renewal extends from the due date and respects the loan limit", async () => {
+  test("renewal counts from today, never moves the due date earlier, and respects the loan limit", async () => {
     const env = await createTestEnv();
     const ctx = await setupProject(env, ["pdf"]);
-    const [loan] = await borrow(ctx, ["pdf"], { days: 10 });
+    const start = env.clock.now().getTime();
+    await borrow(ctx, ["pdf"], { days: 10 });
+    const dueIn = async (days?: number) =>
+      ((
+        await renew(ctx, "pdf", { ...(days ? { days } : {}), reason: "still in use" })
+      ).dueAt.getTime() -
+        start) /
+      DAY;
 
-    const renewed = await renew(ctx, "pdf", { days: 20, reason: "still in use" });
-
-    expect(renewed.dueAt.getTime() - (loan?.dueAt.getTime() ?? 0)).toBe(20 * 24 * 60 * 60 * 1000);
+    expect(await dueIn(20)).toBe(20);
+    expect(await dueIn(5)).toBe(20);
+    // Renewing again doesn't stack towards the limit, the way extending from the due date did.
+    expect(await dueIn(90)).toBe(90);
+    expect(await dueIn(90)).toBe(90);
+    env.clock.advanceDays(100); // overdue
+    expect(await dueIn()).toBe(130);
+    await expect(renew(ctx, "pdf", { days: 91 })).rejects.toMatchObject({ code: "LOAN_LIMIT" });
     await expect(setDue(ctx, "pdf", "+200d")).rejects.toMatchObject({ code: "LOAN_LIMIT" });
   });
 });
