@@ -22,7 +22,8 @@ export function DiffView({ files }: { files: readonly FileDiff[] }) {
             <span className="font-medium text-fg">{file.path}</span>
             <span className="text-fg-subtle">{file.status}</span>
           </div>
-          <pre className="overflow-x-auto py-1.5 font-mono text-[12px] leading-[1.6]">
+          {/* Wrapped: skills are mostly prose, whose long lines would otherwise hide off to the right. */}
+          <pre className="whitespace-pre-wrap break-words py-1.5 font-mono text-[12px] leading-[1.6]">
             {file.patch
               .split("\n")
               .filter((line) => !line.startsWith("---") && !line.startsWith("+++"))
