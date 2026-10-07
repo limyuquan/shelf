@@ -19,6 +19,8 @@ export function App() {
         toastOptions={{
           className:
             "!bg-surface-overlay !text-fg !border-border-strong !shadow-popup !font-sans !text-[13px]",
+          // sonner colours descriptions for its own light theme; follow ours instead.
+          classNames: { description: "!text-fg-muted" },
         }}
       />
     </QueryClientProvider>
