@@ -56,9 +56,9 @@ fresh demo shelf (`scripts/demo/seed.ts`), serves the dashboard on port 4201
 and drives Chromium through `scripts/media/capture.ts`. It needs ffmpeg (with
 libx264 and libwebp) and `bunx playwright install chromium`. Pass
 `--only dashboard,hero` to redo some shots (the names are the keys of `SHOTS`
-in the script), `--port` to use another port. Change the seed rather than
-editing images, look at every output before committing, and keep each clip
-under the size limit the script prints.
+in the script), `--port` to use another port. A full run takes several
+minutes: videos are filmed frame by frame. Change the seed rather than editing
+images, and look at every output before committing.
 
 ## Releasing
 

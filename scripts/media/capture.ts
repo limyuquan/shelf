@@ -125,7 +125,7 @@ async function openPage(path: string, ready: string, options: PageOptions = {}) 
   }
   const tab = await context.newPage();
   tab.setDefaultTimeout(90_000);
-  await tab.goto(dashboard.origin + path, { waitUntil: "load" });
+  await tab.goto(dashboard.origin + path, { waitUntil: "domcontentloaded" });
   await settle(tab, ready);
   return tab;
 }
@@ -261,17 +261,19 @@ class Film {
   }
 
   /** Films until `done()` is true (checked before each frame), for at most `ms`. */
-  async until(done: () => Promise<boolean>, ms = 15_000) {
+  async until(done: () => Promise<boolean>, what: string, ms = 15_000) {
     for (let t = 0; t < ms; t += 1000 / FPS) {
       if (await done()) return;
       await this.frame();
     }
-    throw new Error("Timed out while filming");
+    const last = join(WORK, "timed-out.jpg");
+    await writeFile(last, this.frames.at(-1) ?? Buffer.alloc(0));
+    throw new Error(`Timed out while filming: ${what} (last frame: ${last})`);
   }
 
   /** Films until `target` is visible. */
   async waitFor(target: Locator) {
-    await this.until(() => target.first().isVisible());
+    await this.until(() => target.first().isVisible(), `waiting for ${target}`);
   }
 
   private async point(target: Locator, at?: { x?: number; y?: number }) {
@@ -293,7 +295,7 @@ class Film {
       },
       { x, y },
     );
-    await this.until(() => this.tab.evaluate(() => window.__done === true), 3000);
+    await this.until(() => this.tab.evaluate(() => window.__done === true), "cursor", 3000);
     await this.tab.mouse.move(x, y);
   }
 
@@ -349,7 +351,7 @@ class Film {
       },
       { top, ms },
     );
-    await this.until(() => this.tab.evaluate(() => window.__done === true), ms + 2000);
+    await this.until(() => this.tab.evaluate(() => window.__done === true), "scroll", ms + 2000);
   }
 }
 
@@ -398,7 +400,7 @@ async function encodeVideo(name: string, film: Film, options: VideoOptions) {
   if (!poster) return;
   const raw = join(dir, "poster.jpg");
   await writeFile(raw, poster);
-  await $`ffmpeg -y -loglevel error -i ${raw} -q:v 3 ${join(OUT, `${name}.jpg`)}`;
+  await $`ffmpeg -y -loglevel error -i ${raw} -vf scale=${DESKTOP.width}:${DESKTOP.height}:flags=lanczos -q:v 3 ${join(OUT, `${name}.jpg`)}`;
   console.log(`  ${name}.jpg  ${kb((await stat(join(OUT, `${name}.jpg`))).size)}`);
 }
 
@@ -440,7 +442,10 @@ const row = (tab: Page, skill: string, project: string) =>
     .filter({ has: tab.getByRole("link", { name: project }) });
 
 const sidebar = (tab: Page, name: string) =>
-  tab.locator("aside, nav").first().getByRole("link", { name, exact: true }).first();
+  tab
+    .locator("aside")
+    .getByRole("link", { name: new RegExp(`\\b${name}\\b`) })
+    .first();
 
 const projectId = async (tab: Page, name: string) => {
   const href = await tab
@@ -521,13 +526,13 @@ const SHOTS: Record<string, () => Promise<void>> = {
     await film.hold(1300);
 
     // Update every loan that is behind the library at once.
-    const group = film.tab.getByRole("checkbox", { name: /Updates available/ });
+    const group = film.tab.getByRole("checkbox", { name: /Select every updates available/ });
     await film.click(group);
     await film.hold(700);
-    await film.click(film.tab.getByRole("button", { name: /^Update/ }).last());
+    await film.click(film.tab.getByRole("button", { name: "Update", exact: true }));
     await film.hold(2000);
 
-    await encodeVideo("attention", film, { maxBytes: 2.5 * MB, poster: 4.2, loopFade: 0.6 });
+    await encodeVideo("attention", film, { maxBytes: 2.5 * MB, poster: 4.6, loopFade: 0.6 });
     await closePage(film.tab);
   },
 
@@ -583,12 +588,20 @@ const SHOTS: Record<string, () => Promise<void>> = {
     });
     await film.hold(2200);
 
-    // Then jump to a project.
+    // Then jump to a project. The menu keeps the last query: replace it.
     await film.shortcut("ControlOrMeta+k", ["⌘", "K"]);
-    await film.hold(600);
+    await film.hold(500);
+    const input = tab.getByPlaceholder("Search projects, skills, pages…");
+    await input.focus();
+    await input.selectText();
+    await film.hold(250);
     await film.type("billing");
     await film.hold(900);
-    await film.shortcut("Enter", ["↵"]);
+    const project = tab
+      .getByRole("option")
+      .filter({ hasText: /billing-api$/ })
+      .filter({ hasNotText: "Borrow" });
+    await film.click(project, { x: 70 });
     await film.hold(2400);
 
     await encodeVideo("search", film, { maxBytes: 2.5 * MB, poster: 3.4, loopFade: 0.6 });
@@ -614,11 +627,7 @@ const SHOTS: Record<string, () => Promise<void>> = {
     await film.click(sidebar(tab, "billing-api"));
     await film.waitFor(tab.getByText("Suggested for this project"));
     await film.hold(900);
-    const suggestion = tab
-      .locator("div")
-      .filter({ hasText: /^pdf-tools/ })
-      .last();
-    await film.click(suggestion.getByRole("button", { name: "Borrow" }));
+    await film.click(tab.getByRole("button", { name: "Borrow pdf-tools" }));
     await film.hold(1300);
 
     // The library and a skill with its history.
@@ -643,15 +652,18 @@ const SHOTS: Record<string, () => Promise<void>> = {
     await film.scroll((heading?.y ?? 225) - 84, 1400);
     await film.hold(1600);
 
-    await encodeVideo("hero", film, { maxBytes: 4 * MB, poster: 3, loopFade: 0.7 });
+    await encodeVideo("hero", film, { maxBytes: 4 * MB, poster: 9, loopFade: 0.7 });
     await closePage(tab);
   },
 };
 
-/** Resets the demo, opens `path` with the fake cursor, and starts filming. */
+/**
+ * Resets the demo, opens `path` with the fake cursor, and starts filming. Frames
+ * are taken at twice the size and scaled down, which keeps text crisp.
+ */
 async function startFilm(path: string, ready: string) {
   await resetDemo();
-  const tab = await openPage(path, ready, { cursor: true });
+  const tab = await openPage(path, ready, { cursor: true, scale: 2 });
   const film = new Film(tab);
   await film.start();
   return film;
