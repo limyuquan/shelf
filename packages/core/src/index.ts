@@ -109,10 +109,13 @@ export {
 } from "./services/scan.ts";
 export {
   type MatchRange,
+  type SearchableSkill,
   type SearchMatch,
   type SearchOptions,
   type SearchResult,
+  searchableSkills,
   searchLibrary,
+  searchSkills,
 } from "./services/search.ts";
 export { sessionNotice } from "./services/session.ts";
 export {
