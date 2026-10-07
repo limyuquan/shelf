@@ -14,6 +14,8 @@ export interface SystemReport {
   readonly version: string;
   readonly home: string;
   readonly library: string;
+  /** The user's home directory, so paths can be shown as `~/…`. */
+  readonly userHome: string;
   readonly config: Config;
   readonly hooks: HookStatus[];
   readonly checks: DoctorCheck[];
@@ -29,6 +31,7 @@ export async function systemReport(ctx: Context, options: SystemOptions): Promis
     version: options.version,
     home: ctx.paths.home,
     library: ctx.paths.library,
+    userHome: ctx.paths.userHome,
     config: ctx.config,
     hooks,
     checks,

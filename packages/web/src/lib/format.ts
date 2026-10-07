@@ -44,7 +44,8 @@ export function shortHash(hash: string, length = 8): string {
 
 /** Replaces the home directory with `~` and keeps the last segments of long paths. */
 export function shortPath(path: string, home?: string): string {
-  const tilde = home && path.startsWith(home) ? `~${path.slice(home.length)}` : path;
+  const underHome = home && (path === home || path.startsWith(`${home}/`));
+  const tilde = underHome ? `~${path.slice(home.length)}` : path;
   const parts = tilde.split("/");
   return parts.length > 5 ? `${parts.slice(0, 2).join("/")}/…/${parts.slice(-2).join("/")}` : tilde;
 }

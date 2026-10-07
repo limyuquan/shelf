@@ -7,8 +7,9 @@ import { ProjectAvatar } from "../components/project-avatar.tsx";
 import { EmptyState } from "../components/ui/empty-state.tsx";
 import { StatusPill } from "../components/ui/status.tsx";
 import { projectsQuery } from "../features/projects/queries.ts";
+import { useShortPath } from "../features/system/short-path.ts";
 import { cn } from "../lib/cn.ts";
-import { shortPath, timeAgo } from "../lib/format.ts";
+import { timeAgo } from "../lib/format.ts";
 import { navigableRow, useListNavigation } from "../lib/hotkeys.ts";
 
 export const projectsRoute = createRoute({
@@ -20,6 +21,7 @@ export const projectsRoute = createRoute({
 
 function ProjectsPage() {
   const { data: projects } = useSuspenseQuery(projectsQuery());
+  const shortPath = useShortPath();
   const navigate = useNavigate();
   const { rowProps } = useListNavigation(projects, {
     onOpen: (project) =>

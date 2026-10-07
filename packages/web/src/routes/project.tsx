@@ -24,8 +24,9 @@ import { CONTENT, DUE } from "../features/loans/states.ts";
 import { useSelection } from "../features/loans/use-selection.ts";
 import { projectQuery } from "../features/projects/queries.ts";
 import { ProjectSuggestions } from "../features/projects/suggestions.tsx";
+import { useShortPath } from "../features/system/short-path.ts";
 import { cn } from "../lib/cn.ts";
-import { dueLabel, shortDate, shortPath, timeAgo } from "../lib/format.ts";
+import { dueLabel, shortDate, timeAgo } from "../lib/format.ts";
 import { navigableRow, useHotkeys, useListNavigation } from "../lib/hotkeys.ts";
 
 export const projectRoute = createRoute({
@@ -47,6 +48,7 @@ function ProjectPage() {
   const navigate = useNavigate({ from: projectRoute.fullPath });
   const { data } = useSuspenseQuery(projectQuery(projectId));
   const { project, loans } = data.report;
+  const shortPath = useShortPath();
   const action = useLoanAction();
   const [reviewing, setReviewing] = useState<Loan | null>(null);
   const setBorrowing = (open: boolean) =>

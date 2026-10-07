@@ -211,7 +211,7 @@ function AttentionRow({
             {item.project.name}
           </Link>
         </div>
-        <p className="mt-0.5 truncate text-[12.5px] text-fg-muted md:mt-0 md:flex-1 md:text-[13px]">
+        <p className="mt-0.5 text-[12.5px] text-fg-muted max-md:line-clamp-2 md:mt-0 md:flex-1 md:truncate md:text-[13px]">
           <span className="text-fg md:hidden">{item.project.name} · </span>
           {describeAttention(item)}
         </p>

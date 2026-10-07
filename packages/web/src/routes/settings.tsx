@@ -50,10 +50,10 @@ function SettingsPage() {
         <div className="mx-auto flex max-w-[760px] flex-col gap-10 px-4 py-6 md:px-8 md:py-8">
           <Group title="shelf" description={`Version ${system.version}`}>
             <Row label="Home">
-              <Mono>{shortPath(system.home)}</Mono>
+              <Mono>{shortPath(system.home, system.userHome)}</Mono>
             </Row>
             <Row label="Library">
-              <Mono>{shortPath(system.library)}</Mono>
+              <Mono>{shortPath(system.library, system.userHome)}</Mono>
             </Row>
           </Group>
 
@@ -125,7 +125,8 @@ function SettingsPage() {
             title="Configuration"
             description={
               <>
-                Edit <Mono>{shortPath(`${system.home}/config.json`)}</Mono> to change these.
+                Edit <Mono>{shortPath(`${system.home}/config.json`, system.userHome)}</Mono> to
+                change these.
               </>
             }
           >

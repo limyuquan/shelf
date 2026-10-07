@@ -8,7 +8,7 @@ import { ProjectAvatar } from "../../components/project-avatar.tsx";
 import { Button, IconButton } from "../../components/ui/button.tsx";
 import { Dialog, DialogLayout } from "../../components/ui/dialog.tsx";
 import { Menu, MenuItem, MenuSeparator } from "../../components/ui/menu.tsx";
-import { shortPath } from "../../lib/format.ts";
+import { useShortPath } from "../system/short-path.ts";
 import { useArchiveSkill, useDuplicateSkill, useRenameSkill } from "./authoring.ts";
 import { CallError, NameField } from "./fields.tsx";
 import { skillNameProblem } from "./names.ts";
@@ -171,6 +171,7 @@ function NameDialog({
 function ArchiveDialog({ page, open, onOpenChange }: ActionDialogProps) {
   const name = page.detail.name;
   const archive = useArchiveSkill(name);
+  const shortPath = useShortPath();
   const close = (next: boolean) => {
     onOpenChange(next);
     if (!next) archive.reset();

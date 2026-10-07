@@ -27,8 +27,9 @@ import { RevisionHistory } from "../features/skills/revision-history.tsx";
 import { SkillActionsMenu } from "../features/skills/skill-actions-menu.tsx";
 import { languageFor, SkillEditor } from "../features/skills/skill-editor.tsx";
 import { systemQuery } from "../features/system/queries.ts";
+import { useShortPath } from "../features/system/short-path.ts";
 import { cn } from "../lib/cn.ts";
-import { shortHash, shortPath, sourceLabel } from "../lib/format.ts";
+import { shortHash, sourceLabel } from "../lib/format.ts";
 
 const SKILL_FILE = "SKILL.md";
 
@@ -232,6 +233,7 @@ function FileEditor({ skill, path, content }: { skill: string; path: string; con
 
 function SkillProperties({ page }: { page: SkillPageData }) {
   const { detail, history } = page;
+  const shortPath = useShortPath();
   return (
     <PropertiesPanel>
       <PropertyGroup title="Details">
@@ -247,7 +249,12 @@ function SkillProperties({ page }: { page: SkillPageData }) {
           {detail.source ? (
             <span className="flex items-center gap-1.5" title={detail.source}>
               <Link2 className="size-3.5 shrink-0 text-fg-muted" />
-              <span className="truncate">{sourceLabel(detail.source)}</span>
+              <span className="truncate">
+                {/* A local folder, or a repository URL. */}
+                {detail.source.startsWith("/")
+                  ? shortPath(detail.source)
+                  : sourceLabel(detail.source)}
+              </span>
             </span>
           ) : (
             <span className="text-fg-muted">Your library</span>

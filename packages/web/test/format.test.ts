@@ -35,6 +35,7 @@ describe("format", () => {
     expect(shortDate("2026-03-04T00:00:00Z", new Date(NOW))).toBe("Mar 4");
     expect(shortDate("2025-03-04T00:00:00Z", new Date(NOW))).toBe("Mar 4, 2025");
     expect(shortPath("/home/me/code/app", "/home/me")).toBe("~/code/app");
+    expect(shortPath("/home/me2/app", "/home/me")).toBe("/home/me2/app");
     expect(shortPath("/a/b/c/d/e/f/g")).toBe("/a/…/f/g");
     expect(sourceLabel("https://github.com/get-convex/agent-skills.git")).toBe(
       "github.com/get-convex/agent-skills",
