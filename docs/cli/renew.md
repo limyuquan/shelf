@@ -1,0 +1,45 @@
+# shelf renew
+
+Extends a loan from its current due date, or from today if it is overdue, by the skill's loan length or `--days`. Give a `--reason`: it is recorded in the activity log.
+
+<!-- generated:cli renew -->
+<!-- /generated -->
+
+## What it does
+
+New due date = the later of the current due date and now, plus `--days` (default: the skill's loan length, else `loanDays`). The result can't be more than `maxLoanDays` from now.
+
+With [hooks](../hooks.md) installed, loans renew themselves when used, so `renew` is for skills the project still needs but hasn't used lately: when `shelf status` lists a loan as `due-soon`, renew it or return it. Renewing a kept loan changes its stored due date, which only matters if it stops being kept.
+
+## Examples
+
+```console
+$ shelf renew api-design --reason "still designing the orders API"
+api-design is now due 2026-12-06
+```
+
+```console
+$ shelf renew api-design --days 200
+error: Due date 2027-06-24T05:34:17.582Z is beyond the 90-day loan limit
+hint: The latest allowed due date is 2027-01-05
+```
+
+## JSON output
+
+```json
+{"schemaVersion":1,"ok":true,"data":{"skill":"release-notes","previousDueAt":"2026-11-06T05:51:38.699Z","dueAt":"2026-12-06T05:51:38.699Z"}}
+```
+
+## Errors
+
+| Code | When |
+|---|---|
+| `NOT_INITIALIZED` | Not inside a shelf project. |
+| `NOT_BORROWED` | The project doesn't borrow the skill. |
+| `INVALID_ARGUMENT` | `--days` isn't a positive integer. |
+| `LOAN_LIMIT` | The new due date would be more than `maxLoanDays` from now. |
+
+## Related
+
+- [`shelf due`](due.md) moves a due date either way; [`shelf used`](used.md) records a use; [`shelf keep`](keep.md)
+- [Borrowing](../borrowing.md#renew)
