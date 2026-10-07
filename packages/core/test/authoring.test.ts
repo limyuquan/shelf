@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ShelfError } from "../src/errors.ts";
 import { pathExists } from "../src/library/fs.ts";
@@ -28,6 +28,32 @@ async function rejection(promise: Promise<unknown>): Promise<ShelfError> {
   expect(error).toBeInstanceOf(ShelfError);
   return error as ShelfError;
 }
+
+describe("new", () => {
+  test("refuses an overlong description without writing anything", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+
+    const error = await rejection(createSkill(ctx, "pdf", `Use when ${"x".repeat(1100)}`));
+    expect(error.code).toBe("INVALID_ARGUMENT");
+    expect(error.message).toBe("The description is 1109 characters; the limit is 1024");
+    expect(await pathExists(join(env.shelfHome, "library/pdf"))).toBe(false);
+    expect((await createSkill(ctx, "pdf", "Use when reading PDFs")).name).toBe("pdf");
+  });
+
+  test("refuses an archived skill's name, like rename and duplicate", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    await createSkill(ctx, "pdf", "Use when reading PDFs");
+    await archiveLibrarySkill(ctx, "pdf");
+
+    const error = await rejection(createSkill(ctx, "pdf", "Use when reading PDFs again"));
+    expect(error.code).toBe("SKILL_EXISTS");
+    expect(error.message).toBe('An archived skill was named "pdf"');
+    expect(await pathExists(join(env.shelfHome, "library/pdf"))).toBe(false);
+    expect((await rejection(createSkill(ctx, "pdf-", "x"))).code).toBe("INVALID_ARGUMENT");
+  });
+});
 
 describe("rename", () => {
   test("moves the directory, rewrites only the name and keeps history", async () => {
@@ -141,7 +167,8 @@ describe("archive", () => {
     const ctx = await env.context();
     await createSkill(ctx, "pdf", "Use when reading PDFs");
     const first = await archiveLibrarySkill(ctx, "pdf");
-    await createSkill(ctx, "pdf", "Use when reading PDFs again");
+    // Restored from a copy, so the first archive is still there.
+    await cp(first.path, join(env.shelfHome, "library/pdf"), { recursive: true });
     const second = await archiveLibrarySkill(ctx, "pdf");
     expect(second.path).toBe(`${first.path}-2`);
   });

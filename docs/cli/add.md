@@ -108,7 +108,7 @@ When the source differs, the review says `already in the library; the source dif
 |---|---|
 | `INVALID_ARGUMENT` | No SKILL.md in the source; several skills and no `--skill` or `--all`; the directory doesn't exist; the clone failed; `git` isn't installed. |
 | `SKILL_NOT_FOUND` | A `--skill` name isn't in the source (the hint lists what is). |
-| `SKILL_EXISTS` | The library's skill is already linked to a source (use `shelf pull`), or the library has an invalid directory with that name. |
+| `SKILL_EXISTS` | The library's skill is already linked to a source (use `shelf pull`), the library has an invalid directory with that name, or an archived skill had that name (restore it, then `add` links it, or restore and `shelf rename` it to free the name). Nothing is written. |
 | `INVALID_SKILL` | A skill in the source has invalid frontmatter. |
 | `NOT_ALLOWED` | An agent tried to import a new skill from a git source with `--yes`. |
 

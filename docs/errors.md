@@ -60,6 +60,7 @@ An argument, option or file shelf reads is not acceptable. Read the message; it 
 | `shelf add`: no SKILL.md, several skills without `--skill`/`--all`, a failed clone | Follow the hint |
 | `shelf targets`: a path outside the project, or no targets left | Use a harness id or a project-relative directory |
 | `shelf adopt` on a path inside the shelf home | It is already managed |
+| `shelf new` with a description over 1024 characters | Shorten it; nothing was created |
 | An invalid `config.json` | Fix the file; the message names the key |
 
 ### INVALID_SKILL
@@ -80,7 +81,7 @@ The project doesn't borrow that skill. `shelf status` lists its loans; `shelf bo
 
 ### SKILL_EXISTS
 
-The name is taken: a library directory with that name exists (`new`, `rename`, `duplicate`), an archived skill had that name (`rename`, `duplicate`), or the skill is already linked to a source (`add`; use `shelf pull`). Choose another name, or restore the archived skill by moving it back from `~/.shelf/archive/`.
+The name is taken: a library directory with that name exists (`new`, `rename`, `duplicate`), an archived skill had that name (`new`, `rename`, `duplicate`, `add`), or the skill is already linked to a source (`add`; use `shelf pull`). Choose another name, or restore the archived skill by moving it back from `~/.shelf/archive/`.
 
 ### CONFLICT
 

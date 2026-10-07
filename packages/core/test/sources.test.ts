@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { ShelfError } from "../src/errors.ts";
+import { pathExists } from "../src/library/fs.ts";
 import { auditText } from "../src/security/audit.ts";
+import { archiveLibrarySkill } from "../src/services/authoring.ts";
 import { createContext } from "../src/services/context.ts";
 import { skillHistory } from "../src/services/history.ts";
 import { addSkill, pullSkill } from "../src/services/import.ts";
-import { createSkill } from "../src/services/library.ts";
+import { catalog, createSkill } from "../src/services/library.ts";
 import { createTestEnv, type TestEnv } from "./helpers.ts";
 
 async function writeSkill(dir: string, name: string, body: string): Promise<string> {
@@ -152,6 +155,21 @@ describe("shelf add", () => {
     });
     expect((await pullSkill(ctx, "review", { yes: true })).status).toBe("imported");
     await expect(addSkill(ctx, `file://${repo}`)).rejects.toMatchObject({ code: "SKILL_EXISTS" });
+  });
+
+  test("refuses an archived skill's name before writing anything", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    await createSkill(ctx, "review", "review");
+    await archiveLibrarySkill(ctx, "review");
+    const dir = await writeSkill(join(env.root, "downloads"), "review", "Unrelated guidance.");
+
+    const error = await addSkill(ctx, dir, { yes: true }).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ code: "SKILL_EXISTS" });
+    expect((error as ShelfError).hint).toContain("shelf rename");
+    expect(await pathExists(join(env.shelfHome, "library/review"))).toBe(false);
+    // The next command doesn't bring the archived skill back with the new content.
+    expect(await catalog(ctx)).toEqual([]);
   });
 });
 

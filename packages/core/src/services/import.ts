@@ -138,6 +138,14 @@ interface ImportPlan {
 async function planImport(ctx: Context, dir: string): Promise<ImportPlan> {
   const { name } = await readSkillMetadata(dir);
   const existing = findSkillByName(ctx.db, name);
+  // Importing would continue the archived skill's history with unrelated content.
+  if (existing?.archivedAt) {
+    throw new ShelfError(
+      "SKILL_EXISTS",
+      `An archived skill was named "${name}"`,
+      `Restore it by moving it from ${ctx.paths.archive} back into the library (\`shelf add\` then links it to this source), or restore it and \`shelf rename\` it to free the name`,
+    );
+  }
   if (existing && findSkillSource(ctx.db, existing.id)) {
     throw new ShelfError(
       "SKILL_EXISTS",
@@ -152,7 +160,7 @@ async function planImport(ctx: Context, dir: string): Promise<ImportPlan> {
       "Fix or remove it first (see `shelf doctor`)",
     );
   }
-  return { dir, name, existing: existing && !existing.archivedAt ? existing : null };
+  return { dir, name, existing };
 }
 
 async function importOne(

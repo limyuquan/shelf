@@ -141,7 +141,7 @@ Its revisions are kept. To restore it, move that directory back into the library
 
 Archiving moves the directory to `~/.shelf/archive/<name>-<timestamp>/`. Nothing is deleted: its revisions stay in the object store, and moving the directory back to `~/.shelf/library/<name>` restores the skill with its history. Like rename, it is refused while the skill is borrowed.
 
-An archived skill keeps its name. `rename` and `duplicate` refuse to use it (`SKILL_EXISTS`). `shelf new` with that name, or a new directory with that name in the library, brings the archived skill back and continues its history with the new content.
+An archived skill keeps its name. `new`, `rename`, `duplicate` and `add` refuse to use it (`SKILL_EXISTS`). A new directory with that name made by hand in the library brings the archived skill back and continues its history with the new content.
 
 Deleting a skill's directory from the library is treated like archiving, except the files are gone. Archive instead, so you can restore it.
 

@@ -1,6 +1,5 @@
 import { mkdir, readFile, rename } from "node:fs/promises";
 import { join } from "node:path";
-import { assertSkillName } from "../domain/skill-name.ts";
 import type { Skill } from "../domain/types.ts";
 import { ShelfError } from "../errors.ts";
 import {
@@ -17,9 +16,10 @@ import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { listActiveLoansForSkill } from "../store/loans.ts";
 import { findProjectById } from "../store/projects.ts";
-import { archiveSkill, findSkillByName, renameSkillRow } from "../store/skills.ts";
+import { archiveSkill, renameSkillRow } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import {
+  assertNameFree,
   recordRevision,
   refreshLibrary,
   requireSkill,
@@ -165,25 +165,6 @@ async function renamedContent(file: string, from: string, to: string): Promise<s
   const content = setFrontmatterName(await readFile(file, "utf8"), from, to, file);
   parseSkillMetadata(content, to, file);
   return content;
-}
-
-/**
- * The name must be valid, free in the library, and not held by an archived skill
- * (whose history would otherwise be merged into this one).
- */
-async function assertNameFree(ctx: Context, name: string): Promise<void> {
-  assertSkillName(name);
-  const dir = librarySkillPath(ctx.paths, name);
-  if (await pathExists(dir)) {
-    throw new ShelfError("SKILL_EXISTS", `Skill "${name}" already exists at ${dir}`);
-  }
-  if (findSkillByName(ctx.db, name)) {
-    throw new ShelfError(
-      "SKILL_EXISTS",
-      `An archived skill was named "${name}"`,
-      `Choose another name, or restore it by moving it from ${ctx.paths.archive} back into the library`,
-    );
-  }
 }
 
 function assertNotBorrowed(ctx: Context, skill: Skill, action: string): void {

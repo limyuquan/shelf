@@ -126,7 +126,7 @@ brand-voice (1 file): linked to this source (library unchanged). `shelf pull` no
 
 When the library already has a skill with the same name, `add --yes` records the source without changing the library. If the source differs, the review says in how many files. The library's current revision counts as the last import, so the next `shelf pull` offers the upstream version as a reviewed update.
 
-A skill can be linked to one source. Adding again fails with `SKILL_EXISTS`; use `shelf pull`.
+A skill can be linked to one source. Adding again fails with `SKILL_EXISTS`; use `shelf pull`. So does adding a skill with an archived skill's name: restore the archived skill by moving it back from `~/.shelf/archive/` (`add --yes` then links it), or restore it and `shelf rename` it to free the name.
 
 ## What agents may do
 

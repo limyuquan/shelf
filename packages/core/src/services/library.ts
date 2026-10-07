@@ -8,6 +8,7 @@ import { pathExists, writeFileAtomic } from "../library/fs.ts";
 import { hashDirectory } from "../library/hash.ts";
 import { librarySkillPath, listLibrarySkills, snapshotSkill } from "../library/library.ts";
 import {
+  MAX_DESCRIPTION,
   parseSkillMetadata,
   readSkillMetadata,
   renderSkillTemplate,
@@ -114,16 +115,43 @@ export function recordRevision(
   });
 }
 
+/** Creates a library skill from the template. Everything is validated before anything is written. */
 export async function createSkill(ctx: Context, name: string, description: string): Promise<Skill> {
+  await refreshLibrary(ctx);
+  await assertNameFree(ctx, name);
+  if (description.length > MAX_DESCRIPTION) {
+    throw new ShelfError(
+      "INVALID_ARGUMENT",
+      `The description is ${description.length} characters; the limit is ${MAX_DESCRIPTION}`,
+      "Shorten it: every session loads it, so aim for under 300 characters",
+    );
+  }
+  const dir = librarySkillPath(ctx.paths, name);
+  const content = renderSkillTemplate(name, description);
+  parseSkillMetadata(content, name, join(dir, SKILL_FILE));
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, SKILL_FILE), content);
+  await refreshLibrary(ctx);
+  return requireSkill(ctx, name);
+}
+
+/**
+ * The name must be valid, free in the library, and not held by an archived skill
+ * (whose history would otherwise be merged into this one).
+ */
+export async function assertNameFree(ctx: Context, name: string): Promise<void> {
   assertSkillName(name);
   const dir = librarySkillPath(ctx.paths, name);
   if (await pathExists(dir)) {
     throw new ShelfError("SKILL_EXISTS", `Skill "${name}" already exists at ${dir}`);
   }
-  await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, SKILL_FILE), renderSkillTemplate(name, description));
-  await refreshLibrary(ctx);
-  return requireSkill(ctx, name);
+  if (findSkillByName(ctx.db, name)) {
+    throw new ShelfError(
+      "SKILL_EXISTS",
+      `An archived skill was named "${name}"`,
+      `Choose another name, or restore it by moving it from ${ctx.paths.archive} back into the library`,
+    );
+  }
 }
 
 /**

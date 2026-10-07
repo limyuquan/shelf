@@ -37,7 +37,7 @@ Describe when and how an agent should apply this skill.
 
 Then edit the files with any editor. shelf records each change as a new revision the next time a command reads the library. The description should say what the skill does and when to use it ("Use when …"), in under 300 characters; see [Writing skills](../writing-skills.md).
 
-If the name belongs to an archived skill, the new skill continues that skill's history.
+The name can't be an archived skill's: like `rename` and `duplicate`, `new` refuses it, so the archived skill's history isn't continued by unrelated content. The name and description are checked before anything is written.
 
 ## Examples
 
@@ -57,9 +57,8 @@ Edit its files with any editor; shelf records each change as a new revision.
 
 | Code | When |
 |---|---|
-| `INVALID_ARGUMENT` | The name isn't 1 to 64 lowercase letters, digits and single hyphens; or `-d` is missing. |
-| `SKILL_EXISTS` | The library already has a directory with that name. |
-| `SKILL_NOT_FOUND` | The description is longer than 1024 characters. The directory is still created, as an invalid skill that `shelf doctor` reports; shorten the description in its SKILL.md (or delete the directory). |
+| `INVALID_ARGUMENT` | The name isn't 1 to 64 lowercase letters, digits and single hyphens; `-d` is missing; or the description is longer than 1024 characters. Nothing is created. |
+| `SKILL_EXISTS` | The library already has a directory with that name, or an archived skill had it. |
 
 ```console
 $ shelf new PDF -d x

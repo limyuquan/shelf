@@ -22,7 +22,7 @@ Moves `~/.shelf/library/<name>` to `~/.shelf/archive/<name>-<timestamp>/` (UTC, 
 
 To restore, move the directory back to `~/.shelf/library/<name>`. The next command picks it up with its history.
 
-The archived skill keeps its name: `rename` and `duplicate` refuse to use it, while `shelf new` with that name brings the archived skill back with new content.
+The archived skill keeps its name: `new`, `rename`, `duplicate` and `add` refuse to use it.
 
 Project copies and lockfiles carry the skill's name, so archiving a borrowed skill is refused. Return it from every project first. Agents archive skills only when you ask.
 
