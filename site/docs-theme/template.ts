@@ -297,10 +297,9 @@ function copyMenu(page: DocPage, dir: string): string {
   const md = relativeUrl(dir, pageMarkdown(page.path));
   const llmsFull = relativeUrl(dir, "llms-full.txt");
   return `<div class="copy-page" data-markdown="${esc(md)}">
-  <button type="button" class="copy-page-main" data-copy-page>${icons.copy}<span>Copy page</span></button>
+  <button type="button" class="copy-page-main" data-copy-page>${icons.copy}<span>Copy Markdown</span></button>
   <button type="button" class="copy-page-toggle" aria-label="More ways to use this page" aria-haspopup="menu" aria-expanded="false" data-copy-menu-toggle>${icons.chevronDown}</button>
   <div class="copy-menu" role="menu" hidden>
-    <button type="button" role="menuitem" data-copy-page>${icons.copy}<span><strong>Copy Markdown</strong><small>Copy this page for an LLM</small></span></button>
     <a role="menuitem" href="${esc(md)}" target="_blank" rel="noopener">${icons.markdown}<span><strong>View as Markdown</strong><small>Open the plain-text page</small></span></a>
     <a role="menuitem" href="https://chatgpt.com/?hints=search&amp;q=${encodeURIComponent(prompt)}" target="_blank" rel="noopener">${icons.chat}<span><strong>Open in ChatGPT</strong><small>Ask questions about this page</small></span></a>
     <a role="menuitem" href="https://claude.ai/new?q=${encodeURIComponent(prompt)}" target="_blank" rel="noopener">${icons.chat}<span><strong>Open in Claude</strong><small>Ask questions about this page</small></span></a>

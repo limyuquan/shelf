@@ -1,6 +1,6 @@
 /**
  * The docs' only client script (bundled to docs/assets/docs.js by the site build):
- * theme toggle, search, copy buttons, the Copy page menu, the mobile sidebar and
+ * theme toggle, search, copy buttons, the Copy Markdown menu, the mobile sidebar and
  * the "On this page" scrollspy. No framework; everything works without it except
  * search and copying.
  */
@@ -103,7 +103,7 @@ function initCodeCopy(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Copy page: copies the page's Markdown; the menu has the other options.
+// Copy Markdown: copies the page's Markdown; the menu has the other options.
 
 function initCopyPage(): void {
   const root = $(".copy-page");

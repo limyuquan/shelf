@@ -526,7 +526,7 @@ kbd {
   text-underline-offset: 3px;
 }
 
-/* Copy page split button */
+/* Copy Markdown split button */
 
 .copy-page {
   position: relative;
@@ -1911,7 +1911,7 @@ figure.code:hover .copy-code,
     height: 32px;
   }
 
-  /* Title, lede, then Copy page. */
+  /* Title, lede, then Copy Markdown. */
   .page-header {
     display: flex;
     flex-direction: column;
