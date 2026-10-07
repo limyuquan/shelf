@@ -167,7 +167,7 @@ export function checkRoutes(declared: readonly string[]): void {
 export async function recordSnapshot(): Promise<Snapshot> {
   const dir = await mkdtemp(join(tmpdir(), "shelf-site-demo-"));
   try {
-    const demo = await seedDemo(join(dir, "home"));
+    const demo = await seedDemo(join(dir, "home"), { hooks: true });
     const ctx = await createContext({
       actor: "user:dashboard",
       env: { ...process.env, ...demo.env },
