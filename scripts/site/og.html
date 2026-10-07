@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>shelf social card</title>
+    <!-- Rendered to site/og.png (1280×640) by scripts/site/og.ts. -->
+    <link rel="stylesheet" href="../../site/tokens.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        position: relative;
+        isolation: isolate;
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        image-rendering: pixelated;
+      }
+
+      .copy {
+        position: absolute;
+        left: 80px;
+        top: 80px;
+        width: 500px;
+      }
+
+      .logo {
+        display: block;
+        width: 96px;
+        height: 96px;
+        image-rendering: pixelated;
+      }
+
+      h1 {
+        margin: 36px 0 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 136px;
+        line-height: 0.9;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        margin: 26px 0 0;
+        font-size: 32px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+        color: var(--fg);
+        text-shadow: 0 2px 16px var(--bg);
+      }
+
+      .url {
+        position: absolute;
+        left: 80px;
+        bottom: 64px;
+        font-family: var(--font-pixel);
+        font-size: 22px;
+        letter-spacing: 0.04em;
+        color: var(--fg);
+      }
+
+      .window {
+        position: absolute;
+        left: 660px;
+        top: 112px;
+        width: 860px;
+        overflow: hidden;
+        border-radius: var(--radius) 0 0 0;
+        background: var(--surface);
+        box-shadow: var(--shadow-window);
+      }
+
+      .bar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        height: 34px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--surface-raised);
+      }
+
+      .bar i {
+        width: 8px;
+        height: 8px;
+        background: var(--border-strong);
+      }
+
+      .window img {
+        display: block;
+        width: 860px;
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        object-position: left top;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <canvas class="scene" data-scene="dusk-low" aria-hidden="true"></canvas>
+      <div class="copy">
+        <img class="logo" src="../../assets/brand/logo.svg" alt="" width="96" height="96" />
+        <h1>shelf</h1>
+        <p>A personal skill library<br />for coding agents.</p>
+      </div>
+      <div class="url">limyuquan.github.io/shelf</div>
+      <div class="window">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img id="shot" src="../../assets/media/dashboard.png" alt="" />
+      </div>
+    </div>
+    <script>
+      // og.ts may point the screenshot elsewhere: og.html?shot=<url>
+      const shot = new URLSearchParams(location.search).get("shot");
+      if (shot) document.getElementById("shot").src = shot;
+    </script>
+    <script src="../../site/main.js"></script>
+  </body>
+</html>
