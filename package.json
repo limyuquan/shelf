@@ -22,7 +22,9 @@
     "demo:site:verify": "bun scripts/site/demo/verify.ts --build",
     "site": "bun scripts/site/build.ts",
     "site:serve": "bun scripts/site/serve.ts",
-    "docs:gen": "bun scripts/site/gen.ts"
+    "docs:gen": "bun scripts/site/gen.ts",
+    "media": "bun scripts/media/capture.ts",
+    "og": "bun scripts/site/og.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

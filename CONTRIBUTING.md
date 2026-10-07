@@ -48,6 +48,18 @@ SHELF_BIN=dist/shelf bun test tests/e2e   # e2e against the binary
   alone: touch screens can't hover.
 - Pure helpers go in `lib/` or a feature's `describe.ts` and get unit tests.
 
+### Screenshots and videos
+
+The README, website and docs use the screenshots and clips in `assets/media/`.
+After a visible UI change, regenerate them with `bun run media`: it seeds a
+fresh demo shelf (`scripts/demo/seed.ts`), serves the dashboard on port 4201
+and drives Chromium through `scripts/media/capture.ts`. It needs ffmpeg (with
+libx264 and libwebp) and `bunx playwright install chromium`. Pass
+`--only dashboard,hero` to redo some shots (the names are the keys of `SHOTS`
+in the script), `--port` to use another port. Change the seed rather than
+editing images, look at every output before committing, and keep each clip
+under the size limit the script prints.
+
 ## Releasing
 
 1. Bump `version` in every `packages/*/package.json` (the CLI reports
