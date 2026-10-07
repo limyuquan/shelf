@@ -35,8 +35,25 @@ describe("attention descriptions", () => {
   });
 
   test("the most urgent reason wins", () => {
-    expect(describeAttention(item({ reasons: ["overdue", "modified"], daysLeft: -3 }), NOW)).toBe(
-      "Overdue by 3 days, not returned because it has local edits",
-    );
+    expect(
+      describeAttention(
+        item({ reasons: ["overdue", "modified"], content: "modified", daysLeft: -3 }),
+        NOW,
+      ),
+    ).toBe("Overdue by 3 days, not returned because it has local edits");
+  });
+
+  test("an overdue loan without edits is only waiting for the next sync", () => {
+    for (const content of ["current", "behind", "missing"] as const) {
+      expect(describeAttention(item({ reasons: ["overdue"], content, daysLeft: -1 }), NOW)).toBe(
+        "Overdue by 1 day, returned the next time shelf syncs the project",
+      );
+    }
+    expect(
+      describeAttention(
+        item({ reasons: ["overdue", "diverged"], content: "diverged", daysLeft: -2 }),
+        NOW,
+      ),
+    ).toBe("Overdue by 2 days, not returned because it has local edits");
   });
 });

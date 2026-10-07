@@ -33,7 +33,7 @@ The home page (`/`) lists every loan, across all your projects, that needs a dec
 
 | Section | Loans |
 |---|---|
-| Overdue | Past their due date (and not yet returned, usually because of local edits). |
+| Overdue | Past their due date, not yet returned: either the copy has local edits, which expiry never discards, or shelf hasn't synced the project since (the next session start, `shelf status` or `shelf sync` there returns it). The row says which. |
 | Diverged | Edited in the project and in the library. |
 | Edited in a project | The project copy has local edits. |
 | Missing copies | Copies were deleted. |
