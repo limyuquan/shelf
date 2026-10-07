@@ -1,258 +1,154 @@
-# shelf
+<p align="center">
+  <img src="assets/brand/logo.svg" width="64" height="64" alt="">
+</p>
 
-A personal skill library for coding agents. Keep your [Agent Skills](https://agentskills.io)
-in one library, **borrow** them into the projects that need them, and let loans
-**expire** so stale skills don't pile up. Using a skill renews it; skills nobody
-uses are returned.
+<h1 align="center">shelf</h1>
+
+<p align="center">
+  A personal skill library for coding agents.<br>
+  <a href="https://limyuquan.github.io/shelf/"><b>Website</b></a> ·
+  <a href="https://limyuquan.github.io/shelf/docs/"><b>Docs</b></a> ·
+  <a href="https://limyuquan.github.io/shelf/demo/">Live demo</a> ·
+  <a href="#install">Install</a> ·
+  <a href="https://limyuquan.github.io/shelf/llms.txt">llms.txt</a>
+</p>
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="assets/media/dashboard-light.png">
+  <img src="assets/media/dashboard.png" alt="The shelf dashboard: loans across four projects that need attention, grouped by overdue, edited, due soon and behind the library">
+</picture>
+
+Keep your [Agent Skills](https://agentskills.io) in one library, **borrow** them
+into the projects that need them, and let loans **expire** so stale skills don't
+pile up. Using a skill renews its loan; skills nobody uses go back on the shelf.
+It works with Claude Code, Codex, Cursor, Gemini CLI, Copilot, OpenCode and any
+other agent that reads `SKILL.md` folders.
 
 ```console
-$ shelf borrow pdf-tools git-hygiene
-Borrowed pdf-tools (due 2026-11-05) → .agents/skills, .claude/skills
-Borrowed git-hygiene (due 2026-11-05) → .agents/skills, .claude/skills
+$ shelf borrow api-design commit-messages
+Borrowed api-design (due 2026-11-06) → .agents/skills, .claude/skills
+Borrowed commit-messages (due 2026-11-06) → .agents/skills, .claude/skills
 
 $ shelf status
-my-app  /home/me/code/my-app
+storefront  ~/code/storefront
 
-SKILL        CONTENT  DUE                   USED     POLICY  REVISION
-git-hygiene  current  2026-11-05  30d left  today    pinned  cc0ff536b8
-pdf-tools    behind   2026-10-09   3d left  27d ago  pinned  ae40770b0e
+SKILL                 CONTENT  DUE                   USED     POLICY  REVISION
+api-design            current  2026-11-06  30d left  today    pinned  528c1a7b60
+commit-messages       current  2026-11-06  30d left  never    pinned  b1c1c83212
+git-hygiene           current  2026-10-13  6d left   never    pinned  098f8b659c
+react-best-practices  current  2026-11-06  30d left  today    pinned  2bf910a993
 
 Next steps:
-  shelf update pdf-tools
-      The library has a newer revision of pdf-tools
-  shelf renew pdf-tools --reason "<why>"
-      pdf-tools has gone unused and is due in 3 day(s). Renew it if the project still needs it, otherwise `shelf return pdf-tools`
+  shelf renew git-hygiene --reason "<why>"
+      git-hygiene has gone unused and is due in 6 day(s). Renew it if the project still needs it, otherwise `shelf return git-hygiene`
 ```
 
-## Why
+- **One library, the source of truth.** No more copies of the same skill
+  drifting apart across repos. Edits flow back with `shelf promote` and out with
+  `shelf update`, and every change is a revision you can compare and restore.
+- **Skills come and go on their own.** Hooks in Claude Code and Codex renew a
+  loan each time an agent uses the skill; loans that go unused are returned. Keep
+  the few a project always needs with `shelf keep`.
+- **Less context.** A project carries only the skills it uses, instead of every
+  global skill loading into every session. `shelf insights` shows what each
+  project loads.
+- **Built for agents.** Every command takes `--json` and never prompts, and
+  agents get a one-line note at session start only when something needs them.
+- **Your library is the trust boundary.** Skills from elsewhere are audited
+  locally before they come in, and agents can't import remote skills unless you
+  allow it.
+- **Local-first.** One binary, no account, no Node. The dashboard runs on
+  127.0.0.1 and works offline.
 
-- **Copy-pasted skills drift.** The same skill lives in ten repos at ten
-  different versions, and nobody knows which is current.
-- **Global skill folders are harness-specific and load everywhere.** A skill in
-  `~/.claude/skills` is invisible to Codex or Cursor, and is loaded into every
-  project whether it is relevant or not.
-- **Skill registries are a supply-chain risk** and treat your own skills as
-  second-class.
+## Why I built this
 
-shelf makes your own library the source of truth and the trust boundary. Agents
-borrow only from it.
+<!-- DRAFT: user to review (kept in sync with the website) -->
 
-## How it works
+I use coding agents every day, and I write my own skills for them. The same
+skills, my Convex skills for one, got copied into several projects, and the
+copies drifted apart until no one knew which was current. Global skill folders
+didn't help: each harness has its own, and everything in them loads into every
+session whether it's relevant or not, which costs context. Public skill
+registries are a supply-chain risk, and they treat your own skills as
+second-class.
 
-- **Library**: `~/.shelf/library/<skill>/`. Edit skills with any editor; shelf
-  records each change as an immutable, content-addressed revision.
-- **Loan**: a project borrows one revision of a skill until a due date. The
-  skill is copied into `.agents/skills/` (read by Codex, Cursor, Gemini CLI,
-  Copilot, OpenCode, Amp, Goose, Cline, …) and `.claude/skills/` (Claude Code).
-- **Lockfile**: `.agents/shelf.lock.json` records which skills shelf manages and
-  at which revision. It has no timestamps, so commit it without merge churn.
-- **Renew on use**: each time an agent uses a borrowed skill, its due date moves
-  to 30 days out (or the skill's own loan length, `shelf loan-days`). A loan only
-  comes due after going unused (see [Hooks](#hooks)).
-- **Keep**: `shelf keep <name>` for skills a project always needs (say, Convex
-  skills in a Convex app): kept loans never expire. It's recorded in the
-  lockfile, so clones keep them too. Agents may keep skills as well; the guide
-  tells them to keep only skills for a direct dependency of the project (kept
-  skills load in every session, so keeping freely bloats context) and to give a
-  `--reason`.
-- **Sets**: `shelf set save frontend react-best-practices playwright-testing`
-  groups skills you often borrow together; `shelf borrow @frontend` borrows
-  them all. Sets live in your library (per machine); each skill still gets its
-  own loan, due date and lockfile entry.
-- **Expiry**: overdue loans are returned automatically at the next session
-  start, `shelf status` or `shelf sync` — unless the project copy has local
-  edits, which shelf never deletes.
-- **Propagation is explicit**: edits flow from project to library with
-  `shelf promote` and from library to projects with `shelf update` (or
-  automatically for loans borrowed with `--follow`).
+I wanted skills to come into a project when it needs them and leave on their own
+once they're no longer used, with my own library as the source of truth and the
+trust boundary. That's shelf. I use it every day on my own projects.
 
-Each loan has a **content** state — `current`, `behind`, `modified`, `diverged`
-or `missing` — computed from three hashes: the revision borrowed, the library's
-latest, and the files on disk.
-
-## Migrating existing skills
-
-```sh
-shelf scan ~/code          # every skill copy, grouped by name and content
-shelf adopt ~/code/app/.claude/skills/review ~/code/api/.claude/skills/review
-```
-
-The first copy adopted becomes the library version. Copies that differ are
-adopted as loans with local edits (`modified`), so nothing is overwritten:
-`shelf diff`, then `shelf promote --propagate` the best one or
-`shelf update --force` to take the library's. If the copies were never edited
-and only differ because they were installed at different times, adopt the
-newest first with `--unedited`: the others become `behind` and a plain
-`shelf update` brings them up to date.
-
-In the dashboard, **Library → Find existing skills** (or ⌘K) does the same: it
-scans the folder that holds your projects, groups the copies it finds by name
-and version, and adopts the ones you tick. It adopts each skill's library or
-most common version first.
-
-Skills that came from a public repository can then be linked to it, so you can
-pull their updates later: `shelf add gh:owner/repo --skill <name> --yes` on a
-skill the library already has records the source without changing it.
-
-To return overdue loans everywhere without visiting each project, run
-`shelf sweep` daily (cron, systemd timer, launchd).
-
-## Hooks
-
-`shelf setup` installs hooks in Claude Code (`~/.claude/settings.json`) and
-Codex (`~/.codex/hooks.json`), next to your existing settings:
-
-- **Session start**: syncs the project (returns overdue skills, restores
-  missing copies) and adds one `shelf: …` line to the agent's context *only*
-  when something needs attention — a skill due soon, local edits, library
-  updates. A healthy project costs no tokens.
-- **Skill use**: after tool calls and prompts, recognises a borrowed skill
-  being used (the Skill tool, reading its files, `/skill-name`) and renews it.
-  It prints nothing, and exits before opening any state for ordinary tool calls.
-
-Codex runs new hooks only after you trust them once in its `/hooks` view.
-`shelf setup --no-hooks` removes them; `shelf doctor` reports hooks that are
-missing or point at a moved binary. In harnesses without hooks, loans keep
-their calendar due dates: agents renew with `shelf renew` or `shelf used`.
-
-## Dashboard
-
-`shelf ui` opens a local dashboard that updates live as agents work:
-
-- **Attention**: every loan across your projects that needs you — due soon,
-  edited, behind the library, overdue — with one-click renew, update, and a
-  diff to review edits before promoting or discarding them.
-- **Projects**: borrow skills, see each loan's state and last use. Here and on
-  Attention, select several loans to renew, update, keep or return them together.
-- **Suggestions**: each project page lists library skills that match what the
-  project uses (its `package.json`, `pyproject.toml`, `Cargo.toml` or `go.mod`
-  dependencies, and files like `convex/` or `playwright.config.ts`), with the
-  reason and session cost, to borrow in one click.
-- **Library**: edit SKILL.md and reference files, see revisions and borrowers,
-  push updates to chosen projects, and pull reviewed updates from a skill's
-  upstream source. The filter searches inside skills too (SKILL.md and reference
-  files) and shows the matching lines; click one to open that file. Group skills into sets
-  and borrow a whole set at once.
-- **Writing skills**: create a skill from the Library page, rename, duplicate
-  or archive it from its page, and see a lint strip above the SKILL.md editor
-  (description and body tokens, format errors, descriptions that are too long
-  or don't say when to use the skill) as you type.
-- **Revisions**: open any revision of a skill to read its files, compare it with
-  another revision or the latest, and restore it.
-- **Find existing skills**: scan for skills copied into projects by hand, see
-  which have drifted, and adopt them into the library in one step.
-- **Activity**: what your agents did, as a timeline ("codex used api-design in
-  billing-api · 2m ago").
-- **Insights**: what skills cost at session start per project (user-level
-  skills plus borrowed ones), which skills agents actually use (active days and
-  a 30-day sparkline each), skills unused for 30 days, and the user-level skills
-  in `~/.claude/skills`, `~/.agents/skills`, … that load in every project.
-  Token counts are estimates (characters / 4): a skill's name and description
-  load at every session start, its full SKILL.md only when it is used.
-- **Settings**: hook status per harness, health checks with one-click repair.
-- ⌘K to jump anywhere (including skills whose content mentions what you
-  type), keyboard navigation (`?` lists shortcuts), dark and light themes.
-
-It listens on 127.0.0.1 only and requires the token in the URL it prints (kept
-in `~/.shelf/ui-token`, so bookmarks survive restarts; `--rotate-token` signs
-every browser out). Everything is built into the binary: no Node, no CDN, works
-offline. The layout adapts to phones and tablets.
+— [@limyuquan](https://github.com/limyuquan)
 
 ## Install
 
-Download a binary from the [releases page](https://github.com/limyuquan/shelf/releases)
-(macOS, Linux, Windows; verify with `SHA256SUMS`), or with npm:
-
 ```sh
 npm install -g @limyuquan/shelf   # installs only your platform's binary; no install scripts
-shelf setup                       # creates ~/.shelf and installs the shelf skill for your agents
+shelf setup                       # creates ~/.shelf, installs the shelf skill and the hooks
 ```
 
-The binaries are not code-signed yet. On macOS, a browser-downloaded binary
-needs `xattr -d com.apple.quarantine shelf` once (npm installs are not affected).
+Or download a binary for macOS, Linux or Windows from the
+[releases page](https://github.com/limyuquan/shelf/releases) and verify it with
+`SHA256SUMS`. See [Installation](https://limyuquan.github.io/shelf/docs/installation/)
+for upgrading, uninstalling and building from source.
 
-To build from source with [Bun](https://bun.com) 1.4: `bun install && bun run build`
-produces `dist/shelf`.
-
-## Importing skills from elsewhere
+## Quick start
 
 ```sh
-shelf add gh:someone/skills/pdf-tools   # fetch and audit — nothing is imported yet
-shelf add gh:someone/skills/pdf-tools --yes
-shelf pull pdf-tools                    # later: diff + fresh audit of upstream changes
-shelf pull pdf-tools --yes && shelf propagate pdf-tools
-shelf audit                             # scan your whole library, including your own skills
+shelf new pdf-tools -d "Fill and merge PDFs. Use when a task involves PDF files."
+cd ~/code/storefront
+shelf borrow pdf-tools     # copied into .agents/skills and .claude/skills, due in 30 days
+shelf status               # loans, their states and what to do next
+shelf ui                   # the dashboard
 ```
 
-`add` accepts `gh:owner/repo[/path][@ref]`, GitHub `/tree/` URLs, any git URL,
-or a local directory. Every import and pull is audited locally (pipe-to-shell,
-prompt-injection phrasing, hidden Unicode, file uploads, credential access,
-binaries, scripts…). High-severity findings block the import unless you add
-`--force`. Agents may run the review step, but cannot import from remote
-sources unless you set `allowAgentImports`: your library stays the trust
-boundary.
+Already have skills copied into projects by hand? `shelf scan ~/code` finds every
+copy, and `shelf adopt` brings them into the library without overwriting
+anything. See the [Quickstart](https://limyuquan.github.io/shelf/docs/quickstart/)
+and [Migrating existing skills](https://limyuquan.github.io/shelf/docs/migrating/).
 
-## Commands
+## How it works
 
-| Command | |
+| | |
 |---|---|
-| `shelf setup [--no-hooks]` | Create `~/.shelf`, install the bundled `shelf` skill and the [hooks](#hooks) |
-| `shelf init` | Register the current project |
-| `shelf status` | Loans, their states and suggested next steps. Returns overdue skills |
-| `shelf guide` | The full guide for agents |
-| **Library** | |
-| `shelf new <name> -d <description>` | Create a library skill |
-| `shelf catalog [terms]` | List library skills with a token estimate (terms match name and description) |
-| `shelf search <terms…> [--limit N]` | Find skills by what they say: matching lines from SKILL.md and reference files (quote a phrase) |
-| `shelf show <name> [--revision X]` | Print a library skill, or one of its revisions |
-| `shelf log <name>` | A skill's revisions and which projects borrow each |
-| `shelf restore <name> <revision>` | Make an earlier revision the library's latest again (borrowers update with `propagate`) |
-| `shelf set list` | Your skill sets and their skills |
-| `shelf set save <name> <skill…> [-d description]` | Create a set, or replace its skills (`@other` includes another set) |
-| `shelf set delete <name>` | Delete a set (loans are unaffected) |
-| `shelf rename <from> <to>` | Rename a skill (directory and frontmatter `name`), keeping its history; refused while borrowed |
-| `shelf duplicate <from> <to>` | Copy a skill to a new name, as a new skill with its own history |
-| `shelf archive <name>` | Move a skill to `~/.shelf/archive/` (revisions are kept; move it back to restore); refused while borrowed |
-| `shelf lint [name…]` | Check SKILL.md files against the Agent Skills format; exits 1 on errors |
-| `shelf loan-days <name> [days] [--reset]` | Show or set a skill's loan length (default: `loanDays`) |
-| `shelf diff <name> [--from X] [--to Y]` | Diff `borrowed`, `library`, `project` or a revision |
-| `shelf propagate <name> [--project a,b] [--dry-run]` | Push the library's latest revision to every clean borrower |
-| `shelf add <source> [--yes] [--force]` | Import skills from git or a directory after a local audit, or link existing ones to it |
-| `shelf pull <name> [--yes]` | Update an imported skill from its source |
-| `shelf audit [name…]` | Scan library skills for risky content |
-| **This project** | |
-| `shelf insights [--all]` | Tokens each project loads at session start, and which skills agents actually use (30 days) |
-| `shelf suggest [--limit N]` | Library skills matching the project's dependencies and files (e.g. `convex/`, `playwright.config.ts`) |
-| `shelf borrow <name…\|@set> [--days N] [--keep] [--follow] [--link]` | Borrow skills (or every skill in a set) into this project |
-| `shelf renew <name> [--days N] [--reason …]` | Renew a loan: due the loan length (or N days) from today |
-| `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
-| `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
-| `shelf keep <name…> [--off] [--reason …]` | Keep loans: they never expire (for the project's direct dependencies) |
-| `shelf return <name> [--force]` | Remove a borrowed skill |
-| `shelf update [name…] [--force]` | Update borrowed skills to the library's latest revision |
-| `shelf promote <name> [--force] [--propagate]` | Publish a project's edits back to the library (and to other borrowers) |
-| `shelf detach <name>` | Stop managing a skill; keep its files |
-| `shelf sync` | Return overdue, restore missing copies, update `--follow` loans |
-| `shelf targets [--add ids] [--remove ids] [--reset]` | Which harness skill directories this project uses |
-| **Everywhere** | |
-| `shelf scan [dir]` | Find skill copies under a directory, grouped by name and version |
-| `shelf adopt <path…> [--unedited]` | Import existing skills into the library and manage their copies as loans |
-| `shelf projects` | Every project using shelf, with loan counts |
-| `shelf sweep` | `sync` every registered project (cron-friendly) |
-| `shelf doctor [--fix]` | Check and repair shelf's state |
-| `shelf ui [--port N] [--no-open]` | Local dashboard: projects, loans, due dates, library editor, activity |
+| **Library** | `~/.shelf/library/<skill>/`. Edit skills with any editor; shelf records each change as an immutable, content-addressed revision. |
+| **Loan** | A project borrows one revision of a skill until a due date. The skill is copied into `.agents/skills/` (Codex, Cursor, Gemini CLI, Copilot, OpenCode, …) and `.claude/skills/` (Claude Code). |
+| **Renew on use** | Each use moves the due date 30 days out (or the skill's own loan length). A loan only comes due after going unused. |
+| **Expiry** | Overdue loans are returned at the next session start, `shelf status` or `shelf sync`. Copies with local edits are never deleted. |
+| **Keep** | `shelf keep <name>` for skills covering a project's direct dependencies, like Convex skills in a Convex app. Kept loans never expire. |
+| **Lockfile** | `.agents/shelf.lock.json` records which skills shelf manages and at which revision. It has no timestamps, so commit it without merge churn. |
 
-### Harnesses and link mode
+Each loan has a content state (`current`, `behind`, `modified`, `diverged` or
+`missing`) computed from the revision borrowed, the library's latest and the
+files on disk. [Concepts](https://limyuquan.github.io/shelf/docs/concepts/)
+defines every term.
 
-Skills go to `.agents/skills` and `.claude/skills` by default. `shelf targets`
-lists every known harness, marks the ones it detects in the project, and
-suggests adding those that don't read `.agents/skills` (e.g.
-`shelf targets --add kiro`). The project's targets are stored in its lockfile.
+## The dashboard
 
-`shelf borrow --link` (or `"mode": "link"` in config) keeps one real copy in the
-first target and makes the others relative symlinks to it (junctions on
-Windows). Copies are the default because symlinked skills are unreliable in some
-harnesses and across the WSL/Windows boundary.
+`shelf ui` opens a local dashboard that updates live as your agents work. Try it
+with sample data in the [live demo](https://limyuquan.github.io/shelf/demo/).
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/media/project.png" alt="A project page: its loans with content state, due date and last use, and library skills suggested from the project's dependencies"></td>
+    <td width="50%"><img src="assets/media/insights.png" alt="Insights: tokens each project loads at session start, and which skills agents used over the last 30 days"></td>
+  </tr>
+  <tr>
+    <td><b>Projects.</b> Each loan's state, due date and last use, with suggestions from the project's dependencies.</td>
+    <td><b>Insights.</b> What each project loads at session start, and which skills agents actually use.</td>
+  </tr>
+  <tr>
+    <td><img src="assets/media/library.jpg" alt="A skill in the library: the SKILL.md editor with a lint strip, and the skill's revisions"></td>
+    <td><img src="assets/media/activity.png" alt="Activity: a timeline of borrows, uses and renewals by Claude Code, Codex, Cursor and the user"></td>
+  </tr>
+  <tr>
+    <td><b>Library.</b> Edit SKILL.md in the browser, compare and restore revisions, push updates to chosen projects.</td>
+    <td><b>Activity.</b> Which agent did what, and when.</td>
+  </tr>
+</table>
+
+It also has an Attention page for every loan that needs you, ⌘K search across
+skill content, keyboard navigation, dark and light themes, and a layout for
+phones. [Dashboard](https://limyuquan.github.io/shelf/docs/dashboard/) covers
+every page.
 
 ## For agents
 
@@ -260,34 +156,38 @@ Every command accepts `--json` and prints exactly one line:
 
 ```json
 { "schemaVersion": 1, "ok": true, "data": { … } }
-{ "schemaVersion": 1, "ok": false, "error": { "code": "SKILL_NOT_FOUND", "message": "…", "hint": "Run `shelf catalog` …" } }
+{ "schemaVersion": 1, "ok": false, "error": { "code": "SKILL_NOT_FOUND", "message": "…", "hint": "Run `shelf catalog` to list available skills" } }
 ```
 
-Commands never prompt, are safe to retry, and exit non-zero with a distinct
-code per error class. The activity log records which agent acted: Claude Code
-and Codex are detected from their environment, other harnesses through the
-`AI_AGENT` variable, and `--actor` or `SHELF_ACTOR` override it. `shelf status --json` returns `data.actions`: runnable
-next steps. With the hooks installed agents don't even need that call: the
-session-start note tells them when to act. The bundled skill is about ten
-lines; the details live in `shelf guide`.
+Commands never prompt, are safe to retry, and exit with a distinct code per
+error class. `shelf status --json` returns `data.actions`: runnable next steps.
+`shelf guide` prints the full guide for agents; the bundled skill that
+`shelf setup` installs is about ten lines.
 
-## Configuration
+The documentation is written for agents as much as for people:
+[llms.txt](https://limyuquan.github.io/shelf/llms.txt) lists every page,
+[llms-full.txt](https://limyuquan.github.io/shelf/llms-full.txt) has all of them
+in one file, and every page is also Markdown at its URL with `.md`. See
+[Working with agents](https://limyuquan.github.io/shelf/docs/agents/).
 
-`~/.shelf/config.json` (created by `shelf setup`):
+## Documentation
 
-| Key | Default | |
+The full docs are at **[limyuquan.github.io/shelf/docs](https://limyuquan.github.io/shelf/docs/)**,
+and in [`docs/`](docs) as Markdown.
+
+| Getting started | Guides | Reference |
 |---|---|---|
-| `loanDays` | `30` | Loan length, and how far a use or renewal moves the due date (a skill can override it with `shelf loan-days`) |
-| `maxLoanDays` | `90` | Due dates can't be set further out than this |
-| `dueSoonDays` | `7` | When a loan counts as `due-soon` |
-| `targets` | `[".agents/skills", ".claude/skills"]` | Where borrowed skills are written (a project can override with `shelf targets`) |
-| `mode` | `"copy"` | `"link"`: one copy per project, other targets symlink to it |
-| `allowAgentImports` | `false` | Let agents run `shelf add` / `shelf pull` from remote sources |
-| `hooks` | `true` | Whether `shelf setup` installs the [hooks](#hooks) (set by `--no-hooks`) |
+| [Introduction](https://limyuquan.github.io/shelf/docs/introduction/) | [Borrowing](https://limyuquan.github.io/shelf/docs/borrowing/) | [CLI reference](https://limyuquan.github.io/shelf/docs/cli/) |
+| [Installation](https://limyuquan.github.io/shelf/docs/installation/) | [Keeping skills current](https://limyuquan.github.io/shelf/docs/keeping-skills-current/) | [Configuration](https://limyuquan.github.io/shelf/docs/configuration/) |
+| [Quickstart](https://limyuquan.github.io/shelf/docs/quickstart/) | [Importing skills](https://limyuquan.github.io/shelf/docs/importing-skills/) | [Errors](https://limyuquan.github.io/shelf/docs/errors/) |
+| [Concepts](https://limyuquan.github.io/shelf/docs/concepts/) | [Hooks](https://limyuquan.github.io/shelf/docs/hooks/) | [Lockfile](https://limyuquan.github.io/shelf/docs/lockfile/) |
+| | [Context budget](https://limyuquan.github.io/shelf/docs/context-budget/) | [Troubleshooting](https://limyuquan.github.io/shelf/docs/troubleshooting/) |
 
-Set `SHELF_HOME` to keep shelf's state elsewhere.
+## Contributing
 
-See [docs/architecture.md](docs/architecture.md) for the design.
+Bug reports and ideas are welcome as [issues](https://github.com/limyuquan/shelf/issues).
+[CONTRIBUTING.md](CONTRIBUTING.md) explains the setup, the checks and the
+conventions, and [Architecture](docs/architecture.md) explains the design.
 
 ## License
 
