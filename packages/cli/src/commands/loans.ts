@@ -41,7 +41,8 @@ export const borrowCommand = shelfCommand({
     },
     keep: {
       type: "boolean",
-      description: "Never expire (the user's decision; agents should ask first)",
+      description:
+        "Never expire: for skills covering a direct dependency of the project (kept skills load in every session)",
     },
     follow: {
       type: "boolean",

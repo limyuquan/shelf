@@ -161,11 +161,25 @@ function ThemeMenu() {
 }
 
 /** Three book spines: the shelf. */
+/** The shelf mark: a bookshelf with one book out on loan. Drawn on a 16px pixel grid. */
 export function Logo() {
   return (
-    <svg viewBox="0 0 32 32" className="size-[22px]" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--accent)" />
-      <path d="M9 9h3v14H9zM14.5 9h3v14h-3zM20.2 9.6l2.9-.8 3.6 13.5-2.9.8z" fill="#fff" />
+    <svg viewBox="0 0 16 16" className="size-4" shapeRendering="crispEdges" aria-hidden="true">
+      <path fill="#a8743f" d="M0 0h16v16H0z" />
+      <path fill="#7a5128" d="M0 0h1v1H0zM15 0h1v1h-1zM0 15h1v1H0zM15 15h1v1h-1z" />
+      <path fill="#3a2614" d="M1 1h14v14H1z" />
+      <path fill="#7b7ef0" d="M2 2h2v12H2z" />
+      <path fill="#3fb7a0" d="M4 4h2v10H4z" />
+      <path fill="#f2b84b" d="M9 3h2v11H9z" />
+      <path fill="#ec6a5e" d="M11 5h2v9h-2z" />
+      <path fill="#5b5ed0" d="M2 14h2v1H2z" />
+      <path fill="#2a8f7c" d="M4 14h2v1H4z" />
+      <path fill="#c98f2a" d="M9 14h2v1H9z" />
+      <path fill="#c24f44" d="M11 14h2v1h-2z" />
+      <path
+        fill="#efe6d2"
+        d="M2 3h2v1H2zM4 5h2v1H4zM9 4h2v1H9zM11 6h2v1h-2zM2 12h4v1H2zM9 12h4v1H9z"
+      />
     </svg>
   );
 }
