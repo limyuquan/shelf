@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ShelfError } from "../src/errors.ts";
 import { pathExists } from "../src/library/fs.ts";
@@ -234,5 +234,44 @@ describe("lint", () => {
     expect((await lintLibrary(ctx, ["pdf"])).map((result) => result.skill)).toEqual(["pdf"]);
     const file = join(env.shelfHome, "library/pdf/SKILL.md");
     expect(await readFile(file, "utf8")).toContain("name: pdf");
+  });
+
+  test("reports skills that fail to load and invalid directory names", async () => {
+    const env = await createTestEnv();
+    const ctx = await env.context();
+    await createSkill(ctx, "pdf", "Use when reading PDFs");
+    const write = async (dir: string, content: string) => {
+      await mkdir(join(env.shelfHome, "library", dir), { recursive: true });
+      await writeFile(join(env.shelfHome, "library", dir, "SKILL.md"), content);
+    };
+    await write("no-frontmatter", "Just a body\n");
+    await write("no-description", md("name: no-description"));
+    await write("mismatch", md("name: other\ndescription: Use when x"));
+    await write("too-long", md(`name: too-long\ndescription: Use when ${"x".repeat(1100)}`));
+    await write("Bad_Name", md("name: Bad_Name\ndescription: Use when x"));
+    // None of them is in the catalog, except Bad_Name, whose name matches its folder.
+    expect((await catalog(ctx)).map((entry) => entry.name)).toEqual(["Bad_Name", "pdf"]);
+
+    const errors = Object.fromEntries(
+      (await lintLibrary(ctx)).map((result) => [
+        result.skill,
+        result.issues.filter((issue) => issue.level === "error").map((issue) => issue.message),
+      ]),
+    );
+    expect(errors).toEqual({
+      Bad_Name: [
+        'directory "Bad_Name" is not a valid skill name: rename it (and name:) to lowercase letters, digits and single hyphens',
+        "name must be lowercase letters, digits and single hyphens, e.g. pdf-tools",
+      ],
+      mismatch: ['name "other" must match the skill\'s directory "mismatch"'],
+      "no-description": ["description is required"],
+      "no-frontmatter": ["SKILL.md must start with YAML frontmatter between --- lines"],
+      pdf: [],
+      "too-long": ["description is 1109 characters; the limit is 1024"],
+    });
+    expect((await lintLibrary(ctx, ["mismatch"])).map((result) => result.skill)).toEqual([
+      "mismatch",
+    ]);
+    expect((await rejection(lintLibrary(ctx, ["../.shelf"]))).code).toBe("SKILL_NOT_FOUND");
   });
 });

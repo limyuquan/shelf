@@ -38,6 +38,12 @@ export function lintSkill(content: string, directory?: string): LintResult {
   const body = match ? content.slice(match[0].length) : content;
   let description = "";
 
+  if (directory !== undefined && !isValidSkillName(directory)) {
+    error(
+      `directory "${directory}" is not a valid skill name: rename it (and name:) to lowercase letters, digits and single hyphens`,
+    );
+  }
+
   if (!match?.[1]) {
     error("SKILL.md must start with YAML frontmatter between --- lines");
   } else {

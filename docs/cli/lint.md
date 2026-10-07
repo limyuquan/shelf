@@ -25,6 +25,7 @@ Lints the named skills, or every skill in the library. For each it prints the es
 | error | SKILL.md must start with YAML frontmatter between `---` lines. |
 | error | The frontmatter must be valid YAML, and `key: value` pairs. |
 | error | `name` is required: a string of at most 64 lowercase letters, digits and single hyphens, matching the directory. |
+| error | The directory name is a valid skill name. |
 | error | `description` is required: a string of at most 1024 characters. |
 | warning | The description is over 300 characters ("every session loads it"). |
 | warning | The description doesn't say when to use the skill (no "when", "whenever", "if you", "if the user", "use for", "use to"). |
@@ -32,7 +33,7 @@ Lints the named skills, or every skill in the library. For each it prints the es
 
 Errors make a skill invalid for some harnesses; warnings make it costly or hard for an agent to pick. Only errors change the exit code.
 
-`lint` sees only skills that load. A library directory without frontmatter, without a description, with a description over 1024 characters, or whose `name` doesn't match its directory isn't loaded at all: `lint` skips it, and `shelf doctor` reports it. The dashboard's lint strip runs the same checks on the unsaved draft as you type.
+`lint` goes by the library's directories, so it also checks skills that don't load. A library directory without frontmatter, without a description, with a description over 1024 characters, or whose `name` doesn't match its directory isn't loaded by other commands (`shelf doctor` reports it under `library`); `lint` reports why, as errors. The dashboard's lint strip runs the same checks on the unsaved draft as you type.
 
 ## Examples
 
@@ -47,6 +48,7 @@ pdf-tools  ~32 description + ~17 body tokens  ok
 ```console
 $ shelf lint
 Bad_Name  ~7 description + ~1 body tokens
+  error: directory "Bad_Name" is not a valid skill name: rename it (and name:) to lowercase letters, digits and single hyphens
   error: name must be lowercase letters, digits and single hyphens, e.g. pdf-tools
 ok-skill  ~7 description + ~0 body tokens
   warning: The body is empty: add the instructions an agent follows
@@ -73,7 +75,7 @@ When `errors` is above 0, the envelope still says `"ok": true` (the command ran)
 
 | Code | When |
 |---|---|
-| `SKILL_NOT_FOUND` | A named skill isn't in the library, or doesn't load (see above). |
+| `SKILL_NOT_FOUND` | No library directory with that name has a SKILL.md. |
 
 ## Related
 

@@ -10,14 +10,14 @@ import {
   stagingPath,
   writeFileAtomic,
 } from "../library/fs.ts";
-import { librarySkillPath, snapshotSkill } from "../library/library.ts";
+import { librarySkillPath, listLibrarySkills, snapshotSkill } from "../library/library.ts";
 import { type LintResult, lintSkill } from "../library/lint.ts";
 import { parseSkillMetadata, SKILL_FILE, setFrontmatterName } from "../library/skill-file.ts";
 import { writeTransaction } from "../store/database.ts";
 import { recordEvent } from "../store/events.ts";
 import { listActiveLoansForSkill } from "../store/loans.ts";
 import { findProjectById } from "../store/projects.ts";
-import { archiveSkill, findSkillByName, listSkills, renameSkillRow } from "../store/skills.ts";
+import { archiveSkill, findSkillByName, renameSkillRow } from "../store/skills.ts";
 import type { Context } from "./context.ts";
 import {
   recordRevision,
@@ -25,6 +25,7 @@ import {
   requireSkill,
   type SkillDetail,
   showSkill,
+  skillNotFound,
 } from "./library.ts";
 
 /**
@@ -139,16 +140,21 @@ export interface SkillLint extends LintResult {
   readonly skill: string;
 }
 
-/** Lints library skills' SKILL.md files (all of them when no names are given). */
+/**
+ * Lints library skills' SKILL.md files (all of them when no names are given).
+ * Goes by the library's directories, not the database, so skills that fail to
+ * load (and so are missing from the catalog) are reported rather than skipped.
+ */
 export async function lintLibrary(
   ctx: Context,
   names: readonly string[] = [],
 ): Promise<SkillLint[]> {
   await refreshLibrary(ctx);
-  const chosen = names.length > 0 ? names : listSkills(ctx.db).map((skill) => skill.name);
+  const library = await listLibrarySkills(ctx.paths);
+  const chosen = names.length > 0 ? names : library;
   return Promise.all(
     chosen.map(async (name) => {
-      requireSkill(ctx, name);
+      if (!library.includes(name)) throw skillNotFound(name);
       const content = await readFile(join(librarySkillPath(ctx.paths, name), SKILL_FILE), "utf8");
       return { skill: name, ...lintSkill(content, name) };
     }),

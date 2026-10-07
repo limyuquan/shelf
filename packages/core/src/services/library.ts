@@ -145,14 +145,16 @@ export async function saveSkillContent(
 
 export function requireSkill(ctx: Context, name: string): Skill {
   const skill = findSkillByName(ctx.db, name);
-  if (!skill || skill.archivedAt) {
-    throw new ShelfError(
-      "SKILL_NOT_FOUND",
-      `No skill named "${name}" in the library`,
-      "Run `shelf catalog` to list available skills",
-    );
-  }
+  if (!skill || skill.archivedAt) throw skillNotFound(name);
   return skill;
+}
+
+export function skillNotFound(name: string): ShelfError {
+  return new ShelfError(
+    "SKILL_NOT_FOUND",
+    `No skill named "${name}" in the library`,
+    "Run `shelf catalog` to list available skills",
+  );
 }
 
 export interface CatalogEntry {

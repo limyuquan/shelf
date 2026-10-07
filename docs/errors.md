@@ -72,7 +72,7 @@ The working directory isn't inside a shelf project, and the command needs one (`
 
 ### SKILL_NOT_FOUND
 
-No skill (or set) by that name. `shelf catalog` lists skills, `shelf set list` lists sets. Archived skills and library directories that aren't valid skills (see `shelf doctor`) count as not found. `shelf add --skill` uses it for a name the source doesn't have; the hint lists what it has.
+No skill (or set) by that name. `shelf catalog` lists skills, `shelf set list` lists sets. Archived skills and library directories that aren't valid skills (see `shelf doctor`) count as not found, except to `shelf lint`, which reports why they don't load. `shelf add --skill` uses it for a name the source doesn't have; the hint lists what it has.
 
 ### NOT_BORROWED
 

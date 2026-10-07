@@ -110,12 +110,11 @@ shelf is a personal tool: the library and loans live on your machine, so CI can'
 export SHELF_HOME="$(mktemp -d)"
 mkdir -p "$SHELF_HOME/library"
 cp -R skills/* "$SHELF_HOME/library/"
-shelf doctor --json | jq -e '.data.checks[] | select(.id == "library") | .status == "ok"'   # every skill loads
 shelf lint                                                                                # exits 1 on lint errors
 shelf audit --json | jq -e '[.data.skills[].findings[] | select(.severity == "high")] | length == 0'
 ```
 
-Skills that fail to load at all (no frontmatter, a missing description, a name that doesn't match the directory) are reported only by the `library` check of `shelf doctor`; `shelf lint` checks the skills that load. `shelf doctor` and `shelf audit` always exit 0, so the checks above read their JSON.
+`shelf lint` also reports skills that fail to load at all (no frontmatter, a missing description, a name that doesn't match the directory) as errors. `shelf audit` always exits 0, so the check above reads its JSON.
 
 **Check the lockfile.** `.agents/shelf.lock.json` is plain JSON with a fixed schema (see [Lockfile](lockfile.md)), so CI can read it, for example to check that every skill it lists is also committed:
 

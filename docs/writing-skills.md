@@ -80,6 +80,7 @@ pdf-tools  ~32 description + ~17 body tokens  ok
 | error | SKILL.md must start with YAML frontmatter between `---` lines. |
 | error | The frontmatter must be valid YAML, as `key: value` pairs. |
 | error | `name` is required, must be a string of at most 64 characters, lowercase letters, digits and single hyphens, and must match the directory. |
+| error | The directory name must be a valid skill name too. |
 | error | `description` is required, must be a string, at most 1024 characters. |
 | warning | The description is longer than 300 characters. |
 | warning | The description doesn't say when to use the skill (no "when", "whenever", "if you", "if the user", "use for", "use to"). |
@@ -87,16 +88,13 @@ pdf-tools  ~32 description + ~17 body tokens  ok
 
 `shelf lint` exits with code 1 when any skill has an error. Warnings don't change the exit code. Name skills to lint only those; with no names it lints the whole library.
 
-A library directory that fails the basic checks shelf needs to load a skill (frontmatter present, `name` matching the directory, a `description` of at most 1024 characters) is not loaded at all. Commands skip it, `shelf lint` doesn't list it (naming it gives `SKILL_NOT_FOUND`), and `shelf doctor` reports it under `library`:
+A library directory that fails the basic checks shelf needs to load a skill (frontmatter present, `name` matching the directory, a `description` of at most 1024 characters) is not loaded at all: other commands skip it, and `shelf doctor` reports it under `library`. `shelf lint` goes by the library's directories, so it still lints such a skill and reports why it doesn't load:
 
 ```console
-$ shelf doctor
-warn  library: 1 problem(s), 0 fixed
-        /home/me/.shelf/library/broken/SKILL.md: description is required
-…
+$ shelf lint broken
+broken  ~0 description + ~17 body tokens
+  error: description is required
 ```
-
-So check both: `shelf doctor` for skills that don't load, `shelf lint` for the rest.
 
 ## What a skill costs
 
