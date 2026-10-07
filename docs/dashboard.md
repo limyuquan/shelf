@@ -180,7 +180,7 @@ Dark, light, or following the system: choose in the sidebar footer's **Theme** m
 - The token lives in `~/.shelf/ui-token` (mode 0600), so bookmarks survive restarts. The app moves it from the URL into the browser's local storage and removes it from the address bar.
 - If the token is missing or wrong, the app shows a **Connect to shelf** screen: open the link printed by `shelf ui`, or paste the token from it.
 - `shelf ui --rotate-token` replaces the token and signs out every browser.
-- A second `shelf ui` on a port that is already in use fails instead of sharing it.
+- A second `shelf ui` on a port that is already in use fails with `CONFLICT` instead of sharing it.
 
 ## Phones and tablets
 

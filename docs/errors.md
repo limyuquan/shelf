@@ -40,7 +40,7 @@ With `--json`, one line on stdout:
 
 <!-- /generated -->
 
-`INTERNAL` (exit 1) is not a shelf error code but what the CLI reports for anything unexpected: a bug, a full disk, a port in use. The message is the underlying error; text output adds a stack trace. Please report reproducible ones.
+`INTERNAL` (exit 1) is not a shelf error code but what the CLI reports for anything unexpected: a bug, a full disk. The message is the underlying error; text output adds a stack trace. Please report reproducible ones.
 
 ## What to do
 
@@ -97,6 +97,7 @@ The operation would clash with state shelf doesn't own or can't reconcile on its
 | `rename`, `archive`: the skill is borrowed | Return it from each borrowing project first |
 | The lockfile isn't valid JSON or doesn't match its schema | Restore it from version control; never edit it by hand. See [Lockfile](lockfile.md) |
 | A revision's snapshot is missing from the object store | `shelf doctor` |
+| `ui --port`: the port is in use | If it is another `shelf ui`, open the URL in the hint; otherwise pick another `--port`, or leave it out for a free one |
 
 ### LOCAL_CHANGES
 

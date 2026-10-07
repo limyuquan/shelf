@@ -366,10 +366,10 @@ describe("harness hooks", () => {
 });
 
 describe("shelf ui", () => {
-  test("refuses a port another shelf ui is already serving", async () => {
+  test("refuses a port another shelf ui is already serving, with a hint", async () => {
     const port = String(41_000 + Math.floor(Math.random() * 1000));
-    const start = () =>
-      Bun.spawn([...COMMAND, "ui", "--no-open", "--port", port], {
+    const start = (...flags: string[]) =>
+      Bun.spawn([...COMMAND, "ui", "--no-open", "--port", port, ...flags], {
         cwd: project,
         env: isolatedEnv(),
         stdout: "pipe",
@@ -378,11 +378,17 @@ describe("shelf ui", () => {
     const first = start();
     try {
       await first.stdout.getReader().read(); // printed its URL: it is listening
-      const second = start();
+      const second = start("--json");
       const code = await Promise.race([second.exited, Bun.sleep(15_000).then(() => null)]);
       second.kill();
-      expect(code).not.toBeNull();
-      expect(code).not.toBe(0);
+      expect(code).toBe(5);
+      const envelope = JSON.parse(await new Response(second.stdout).text()) as Envelope;
+      expect(envelope.error).toMatchObject({
+        code: "CONFLICT",
+        message: `Port ${port} is already in use`,
+      });
+      expect(envelope.error?.hint).toContain(`http://127.0.0.1:${port}/`);
+      expect(envelope.error?.hint).toContain("--port");
     } finally {
       first.kill();
     }

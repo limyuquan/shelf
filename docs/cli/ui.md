@@ -26,7 +26,7 @@ shelf ui [options]
 
 Changes made in the dashboard are recorded as `user:dashboard`. Unlike other commands, `ui` doesn't take `--actor`.
 
-The token survives restarts but a random port doesn't; pass `--port` for a stable bookmark. If the port is in use, `ui` fails rather than sharing it with another server.
+The token survives restarts but a random port doesn't; pass `--port` for a stable bookmark. If the port is in use, `ui` fails with `CONFLICT` rather than sharing it with another server; the hint gives the URL, in case it is a dashboard already running.
 
 See [Dashboard](../dashboard.md) for the pages and the security model.
 
@@ -55,7 +55,7 @@ The envelope is printed once the server is listening; the process keeps running.
 | Code | When |
 |---|---|
 | `INVALID_ARGUMENT` | `--port` isn't a positive integer, or the config is invalid. |
-| `INTERNAL` | The server couldn't start, for example because the port is in use (`Failed to start server. Is port 4221 in use?`). |
+| `CONFLICT` | `--port` is in use (`Port 4221 is already in use`), perhaps by a dashboard already running. |
 
 ## Related
 

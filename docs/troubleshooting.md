@@ -103,9 +103,9 @@ Its settings file (`~/.claude/settings.json` or `~/.codex/hooks.json`) isn't a J
 
 ## Dashboard
 
-### Failed to start server. Is port N in use?
+### Port N is already in use
 
-Another process, maybe another `shelf ui`, has that port. Stop it, or pick another `--port`.
+Another process has that port. If it is another `shelf ui`, the dashboard is already running at the URL in the hint. Otherwise stop that process, pick another `--port`, or leave `--port` out for a free one.
 
 ### A bookmark stopped working
 
