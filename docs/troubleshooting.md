@@ -51,10 +51,6 @@ hint: Move or delete it first, or import it into the library as a new skill
 
 Adopt it instead, which turns it into a loan without losing anything: `shelf adopt .claude/skills/pdf-tools`. See [Migrating](migrating.md).
 
-### Moving a due date back fails with "Missing required positional argument: WHEN"
-
-`-7d` starts with `-`, so it is read as an option. Write `shelf due <name> -- -7d`.
-
 ### renew fails with LOAN_LIMIT
 
 `renew` extends from the current due date, not from today, and no due date can be more than `maxLoanDays` (90) from now. Renew by fewer days (`--days 14`), set a date with `shelf due`, or `shelf keep` a skill the project always needs.

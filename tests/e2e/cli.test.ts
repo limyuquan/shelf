@@ -56,6 +56,24 @@ async function shelf(...args: string[]): Promise<{ exitCode: number; json: Envel
   }
 }
 
+/** Runs shelf without --json, for its human output. */
+async function shelfText(
+  ...args: string[]
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const proc = Bun.spawn([...COMMAND, ...args], {
+    cwd: project,
+    env: isolatedEnv(),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  return { exitCode, stdout, stderr };
+}
+
 beforeEach(async () => {
   home = await mkdtemp(join(tmpdir(), "shelf-e2e-"));
   project = join(home, "project");
@@ -226,7 +244,7 @@ describe("shelf CLI", () => {
   });
 });
 
-describe("usage errors with --json", () => {
+describe("usage errors", () => {
   test("an unknown command returns an INVALID_ARGUMENT envelope", async () => {
     const { exitCode, json } = await shelf("frobnicate");
     expect(exitCode).toBe(2);
@@ -237,6 +255,37 @@ describe("usage errors with --json", () => {
     const { exitCode, json } = await shelf("borrow");
     expect(exitCode).toBe(2);
     expect(json.error?.message).toContain("SKILL");
+  });
+
+  test("without --json they print the command's usage and exit 2 too", async () => {
+    const unknown = await shelfText("frobnicate");
+    expect(unknown.exitCode).toBe(2);
+    expect(unknown.stderr).toContain("Unknown command frobnicate");
+
+    const missing = await shelfText("borrow");
+    expect(missing.exitCode).toBe(2);
+    expect(missing.stdout).toContain("shelf borrow");
+    expect(missing.stderr).toContain("Missing required positional argument: SKILL");
+  });
+});
+
+describe("due", () => {
+  test("takes a negative shift as an argument, without --", async () => {
+    await shelf("init");
+    await shelf("new", "pdf-tools", "-d", "Work with PDFs");
+    await shelf("borrow", "pdf-tools", "--days", "30");
+
+    const earlier = await shelf("due", "pdf-tools", "-7d");
+    expect(earlier.exitCode).toBe(0);
+    expect((await shelf("status")).json.data?.loans).toMatchObject([{ daysLeft: 23 }]);
+
+    // Options around it still parse, and an explicit -- still works.
+    const text = await shelfText("due", "--reason", "release slipped", "pdf-tools", "-14d");
+    expect(text).toMatchObject({ exitCode: 0, stderr: "" });
+    expect((await shelfText("due", "pdf-tools", "--", "-1w")).exitCode).toBe(0);
+    expect((await shelf("due", "pdf-tools", "+14d")).exitCode).toBe(0);
+    expect((await shelf("status")).json.data?.loans).toMatchObject([{ daysLeft: 16 }]);
+    expect((await shelf("due", "pdf-tools", "2099-01-01")).json.error?.code).toBe("LOAN_LIMIT");
   });
 });
 

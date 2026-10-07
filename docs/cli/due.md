@@ -31,11 +31,7 @@ Also takes the global options `--json` and `--actor` ([CLI overview](index.md)).
 
 The new date can't be more than `maxLoanDays` from now, but it can be in the past: the loan is then overdue, and the next `shelf status` or `shelf sync` returns it (unless it has local edits). `--reason` is recorded in the activity log.
 
-**Negative shifts need `--`.** An argument starting with `-` is read as an option, so `shelf due api-design -7d` fails with a missing-argument error. Write:
-
-```sh
-shelf due api-design -- -7d
-```
+Negative shifts such as `-7d` are read as the date argument, not as an option, so they need no `--` (though `shelf due api-design -- -7d` works too).
 
 ## Examples
 
@@ -46,7 +42,7 @@ api-design is now due 2026-12-20
 $ shelf due api-design 2026-12-01
 api-design is now due 2026-12-01
 
-$ shelf due api-design -- -7d
+$ shelf due api-design -7d
 api-design is now due 2026-11-24
 ```
 
@@ -68,7 +64,7 @@ hint: Use a relative shift like +14d, -7d, +2w or a date like 2026-12-01
 |---|---|
 | `NOT_INITIALIZED` | Not inside a shelf project. |
 | `NOT_BORROWED` | The project doesn't borrow the skill. |
-| `INVALID_ARGUMENT` | The expression isn't one of the forms above, or is missing (including an unescaped negative shift). |
+| `INVALID_ARGUMENT` | The expression isn't one of the forms above, or is missing. |
 | `LOAN_LIMIT` | The new date is more than `maxLoanDays` from now. |
 
 ## Related

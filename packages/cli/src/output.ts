@@ -60,18 +60,29 @@ export function printFailure(error: unknown, json: boolean): number {
   return error instanceof ShelfError ? EXIT_CODES[error.code] : INTERNAL_EXIT_CODE;
 }
 
+/** A citty usage error: an unknown command or a missing argument. */
+export function isUsageError(error: unknown): error is Error {
+  return error instanceof Error && error.name === "CLIError";
+}
+
 /**
- * Prints a citty usage error (unknown command, missing argument) as a JSON
- * envelope and returns the exit code. Anything else is an internal error.
+ * Prints a citty usage error (unknown command, missing argument) as an
+ * INVALID_ARGUMENT failure and returns its exit code. Anything else is an
+ * internal error.
  */
-export function printUsageError(error: unknown): number {
-  if (!(error instanceof Error) || error.name !== "CLIError") return printFailure(error, true);
-  const failure = {
-    code: "INVALID_ARGUMENT",
-    message: stripAnsi(error.message),
-    hint: "Run `shelf --help` or `shelf <command> --help` for usage",
-  };
-  console.log(JSON.stringify({ schemaVersion: SCHEMA_VERSION, ok: false, error: failure }));
+export function printUsageError(error: unknown, json: boolean): number {
+  if (!isUsageError(error)) return printFailure(error, json);
+  const message = stripAnsi(error.message);
+  if (json) {
+    const failure = {
+      code: "INVALID_ARGUMENT",
+      message,
+      hint: "Run `shelf --help` or `shelf <command> --help` for usage",
+    };
+    console.log(JSON.stringify({ schemaVersion: SCHEMA_VERSION, ok: false, error: failure }));
+  } else {
+    console.error(message);
+  }
   return EXIT_CODES.INVALID_ARGUMENT;
 }
 

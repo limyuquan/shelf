@@ -50,10 +50,10 @@ An argument, option or file shelf reads is not acceptable. Read the message; it 
 
 | Cause | Fix |
 |---|---|
-| Unknown command, missing argument (with `--json`) | `shelf <command> --help` |
+| Unknown command, missing argument | `shelf <command> --help` |
 | An invalid skill or set name | 1 to 64 lowercase letters, digits and single hyphens |
 | A number option (`--days`, `--limit`, `--depth`, `--port`) that isn't a positive integer | Pass a whole number above 0 |
-| A due expression that isn't `+Nd`, `-Nd`, `+Nw`, `-Nw` or `YYYY-MM-DD` | Use one of those; put `--` before negative shifts |
+| A due expression that isn't `+Nd`, `-Nd`, `+Nw`, `-Nw` or `YYYY-MM-DD` | Use one of those |
 | A revision that is too short, ambiguous or unknown | At least 6 hex characters; `shelf log <name>` lists them |
 | `shelf promote` on a copy without edits | Nothing to promote |
 | `shelf pull` on a skill without a source | Link it first with `shelf add <source> --yes` |
@@ -111,7 +111,7 @@ An agent tried to import a skill from a git source (`shelf add --yes` of a new s
 
 ## Usage errors without --json
 
-Without `--json`, an unknown command or a missing argument prints the command's help followed by the problem, and exits with code 1:
+Without `--json`, an unknown command or a missing argument prints the command's help followed by the problem, and exits with code 2 (as with `--json`):
 
 ```console
 $ shelf new nod

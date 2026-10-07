@@ -16,5 +16,4 @@ What agents most often need:
 - Imports: `shelf add <source>` and `shelf pull <name>` review first. Importing from a git source with `--yes` is refused for agents (`NOT_ALLOWED`) unless the user set `allowAgentImports`; show the user the review and the command. Never pass `--force` on high-severity findings without explicit approval.
 - Only when the user asks: `shelf init`, `adopt`, `restore`, `rename`, `duplicate`, `archive`, `set save`/`delete`, `loan-days`, `targets` changes, and editing files under `~/.shelf`.
 - Never edit `.agents/shelf.lock.json` by hand, and never delete skill copies by hand (deleted copies count as `missing` and come back); use `shelf return`.
-- Negative due shifts need `--`: `shelf due <name> -- -7d`.
 - Exit codes: 0 ok, 1 internal (or `lint` errors), 2 `INVALID_ARGUMENT`/`INVALID_SKILL`, 3 `NOT_INITIALIZED`, 4 `SKILL_NOT_FOUND`/`NOT_BORROWED`, 5 `SKILL_EXISTS`/`CONFLICT`, 6 `LOCAL_CHANGES`, 7 `LOAN_LIMIT`, 8 `NOT_ALLOWED`.

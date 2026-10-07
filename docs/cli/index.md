@@ -64,8 +64,8 @@ Text output is for people and may change between versions. Scripts and agents sh
 | Exit | Meaning |
 |---|---|
 | 0 | Success. |
-| 1 | `INTERNAL` error; `shelf lint` found errors; or a usage error without `--json`. |
-| 2 | `INVALID_ARGUMENT`, `INVALID_SKILL`; or a usage error with `--json`. |
+| 1 | `INTERNAL` error, or `shelf lint` found errors. |
+| 2 | `INVALID_ARGUMENT`, `INVALID_SKILL`, or a usage error (unknown command, missing argument). |
 | 3 | `NOT_INITIALIZED` |
 | 4 | `SKILL_NOT_FOUND`, `NOT_BORROWED` |
 | 5 | `SKILL_EXISTS`, `CONFLICT` |
@@ -82,7 +82,7 @@ Text output is for people and may change between versions. Scripts and agents sh
 - **Refuses to lose work.** Anything that would discard local edits needs `--force`; importing needs `--yes`.
 - **Several names.** `borrow`, `keep`, `used`, `update`, `lint`, `audit` and `adopt` accept several names in one call.
 - **Comma-separated lists.** Options that take lists (`--skill`, `--project`, `--add`, `--remove`) split on commas.
-- **Negative due shifts.** Arguments starting with `-` are read as options. Put `--` before them: `shelf due api-design -- -7d`.
+- **Negative due shifts.** Arguments starting with `-` are read as options, except negative shifts for `shelf due`: `shelf due api-design -7d` needs no `--`.
 - **Concurrency.** Several shelf processes can run at once, in the same project or not. Writes are serialised on the database and the lockfile is rewritten under the same lock.
 
 ## Commands

@@ -109,11 +109,7 @@ $ shelf due api-design 2026-12-01
 api-design is now due 2026-12-01
 ```
 
-Accepted forms: `+Nd`, `-Nd`, `+Nw`, `-Nw` (relative to the current due date) and `YYYY-MM-DD` (the end of that day, UTC). A negative shift starts with `-`, which the argument parser reads as an option, so put `--` before it:
-
-```sh
-shelf due api-design -- -7d
-```
+Accepted forms: `+Nd`, `-Nd`, `+Nw`, `-Nw` (relative to the current due date) and `YYYY-MM-DD` (the end of that day, UTC). A negative shift moves it earlier: `shelf due api-design -7d`.
 
 A date in the past makes the loan overdue: the next `shelf status` or `shelf sync` returns it.
 
