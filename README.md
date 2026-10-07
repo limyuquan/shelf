@@ -263,7 +263,9 @@ Every command accepts `--json` and prints exactly one line:
 ```
 
 Commands never prompt, are safe to retry, and exit non-zero with a distinct
-code per error class. `shelf status --json` returns `data.actions`: runnable
+code per error class. The activity log records which agent acted: Claude Code
+and Codex are detected from their environment, other harnesses through the
+`AI_AGENT` variable, and `--actor` or `SHELF_ACTOR` override it. `shelf status --json` returns `data.actions`: runnable
 next steps. With the hooks installed agents don't even need that call: the
 session-start note tells them when to act. The bundled skill is about ten
 lines; the details live in `shelf guide`.
