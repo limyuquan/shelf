@@ -9,6 +9,7 @@ import { projectsRoute } from "../routes/projects.tsx";
 import { revisionRoute } from "../routes/revision.tsx";
 import { settingsRoute } from "../routes/settings.tsx";
 import { skillRoute } from "../routes/skill.tsx";
+import { history } from "./history.ts";
 import { queryClient } from "./query-client.ts";
 import { rootRoute } from "./root-route.tsx";
 
@@ -28,6 +29,7 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   context: { queryClient },
+  ...(history ? { history } : {}),
   defaultPreload: "intent",
   // Loaders only warm the query cache; components read from it.
   defaultPreloadStaleTime: 0,
