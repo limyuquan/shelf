@@ -17,7 +17,9 @@
     "build:all": "bun scripts/build-all.ts",
     "pack:npm": "bun scripts/pack-npm.ts",
     "dev": "bun scripts/dev.ts",
-    "demo": "bun scripts/demo/seed.ts"
+    "demo": "bun scripts/demo/seed.ts",
+    "demo:site": "bun scripts/site/demo/build.ts",
+    "demo:site:verify": "bun scripts/site/demo/verify.ts --build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -25,6 +27,8 @@
     "@shelf/server": "workspace:*",
     "@types/bun": "1.4.2",
     "bun-plugin-tailwind": "0.1.2",
-    "typescript": "7.0.2"
+    "playwright": "1.63.0",
+    "typescript": "7.0.2",
+    "yaml": "2.9.1"
   }
 }

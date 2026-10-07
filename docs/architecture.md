@@ -83,7 +83,8 @@ packages/web/src/
   files (root, direct subdirectories and workspace packages; bounded, no network) and
   matches the terms against skill names (strong) and description words (weak).
 - **Search.** `services/search.ts` reads every skill's text files on each query
-  (no index: libraries are small and edited with any tool); the Library filter
+  (no index: libraries are small and edited with any tool) and ranks them with the
+  pure `library/text-search.ts`; the Library filter
   and ⌘K call it through `GET /api/search`, debounced, keeping old results while loading.
 - **Keyboard.** `lib/hotkeys.ts` provides single-key shortcuts and list
   navigation; both stand down while typing or while a dialog or menu is open.
@@ -96,6 +97,15 @@ packages/web/src/
   `bun run dev` serves the app on demo data (`scripts/demo/seed.ts`) and rebuilds
   on reload; hot module replacement is off because Bun's HMR runtime breaks on
   TanStack Router's circular imports.
+- **Website demo.** `scripts/site/demo` builds this app as static files for the
+  website (`bun run demo:site`). It records the real API's answer to every GET
+  request the app can make on the seeded demo shelf (every GET route must have a
+  recorder, or the build and its test fail), and a fetch shim answers from that
+  snapshot: search and draft linting run core's pure modules in the browser, and
+  writes get the API's error envelope saying the demo is read-only. The build
+  swaps `app/history.ts` for hash history, since static hosts have no fallback to
+  `index.html`; the binary keeps browser history. `bun run demo:site:verify`
+  opens every page in Playwright and fails on anything the snapshot lacks.
 
 ## Dashboard security
 

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>shelf demo</title>
+    <meta
+      name="description"
+      content="A read-only demo of the shelf dashboard on sample data: attention, projects, the skill library, activity and insights."
+    />
+    <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="../../../packages/web/src/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../../../packages/web/src/assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../../../packages/web/src/styles/global.css" />
+    <style>
+      .demo-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 40px;
+        position: relative;
+        background: var(--accent-soft);
+        border-bottom: 1px solid var(--border);
+        color: var(--fg-muted);
+        font-size: 12.5px;
+        white-space: nowrap;
+      }
+      .demo-banner a {
+        color: var(--accent);
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .demo-banner a:hover {
+        text-decoration: underline;
+      }
+      .demo-banner button {
+        position: absolute;
+        right: 6px;
+        top: 4px;
+        width: 24px;
+        height: 24px;
+        border: 0;
+        border-radius: 6px;
+        background: none;
+        color: var(--fg-subtle);
+        font: inherit;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .demo-banner button:hover {
+        background: var(--surface-hover);
+        color: var(--fg);
+      }
+      .demo-banner-sep {
+        color: var(--fg-subtle);
+      }
+      .has-demo-banner #root {
+        height: calc(100dvh - 32px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./client/main.ts"></script>
+  </body>
+</html>
