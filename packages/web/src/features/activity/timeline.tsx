@@ -39,7 +39,7 @@ const ICONS: Partial<Record<ActivityEvent["type"], ReactNode>> = {
 };
 
 /**
- * The activity log as sentences — "claude-code used convex in nayacalendar" —
+ * The activity log as sentences — "claude-code used api-design in storefront" —
  * under day headings. `compact` is for narrow side panels.
  */
 export function Timeline({

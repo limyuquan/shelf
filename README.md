@@ -62,19 +62,23 @@ Next steps:
 
 ## Why I built this
 
-<!-- DRAFT: user to review (kept in sync with the website) -->
+<!-- Kept in sync with the website (site/index.html, site/index.md). -->
 
-I use coding agents every day, and I write my own skills for them. The same
-skills, my Convex skills for one, got copied into several projects, and the
-copies drifted apart until no one knew which was current. Global skill folders
-didn't help: each harness has its own, and everything in them loads into every
-session whether it's relevant or not, which costs context. Public skill
-registries are a supply-chain risk, and they treat your own skills as
-second-class.
+Skills are how I teach my agents the way I work: how I write commits, how I
+shape an API, what I check before a release. So I write a lot of them, and for a
+while I copied them by hand into whichever repo needed one.
 
-I wanted skills to come into a project when it needs them and leave on their own
-once they're no longer used, with my own library as the source of truth and the
-trust boundary. That's shelf. I use it every day on my own projects.
+That broke down fast. I'd improve a skill in one project and the other copies
+stayed behind, and a few weeks later I couldn't tell which version was the good
+one. A global skills folder wasn't better: only one harness could see it, and
+every skill in it loaded into every session, whether it had anything to do with
+the work or not. Installing skills from public registries meant running
+instructions I hadn't read.
+
+I wanted my skills to work like a library. One place I trust, where I write and
+fix each skill once. Projects borrow what they need, and anything they stop
+using goes back by itself, so there's nothing to clean up. shelf is that
+library. I built it for myself, and I use it every day.
 
 — [@limyuquan](https://github.com/limyuquan)
 
