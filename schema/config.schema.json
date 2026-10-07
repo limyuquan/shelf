@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limyuquan.github.io/shelf/schema/config.schema.json",
+  "title": "shelf config",
+  "type": "object",
+  "properties": {
+    "loanDays": {
+      "default": 30,
+      "description": "Loan length in days for `borrow`, and the default extension for `renew`.",
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "maxLoanDays": {
+      "default": 90,
+      "description": "Upper bound on how far in the future a due date may be set, in days.",
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "dueSoonDays": {
+      "default": 7,
+      "description": "Loans due within this many days are reported as `due-soon`.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "allowAgentImports": {
+      "default": false,
+      "description": "Lets agents run `shelf add` / `shelf pull` from remote sources. Off by default: the library is the trust boundary, and only the user should widen it.",
+      "type": "boolean"
+    },
+    "hooks": {
+      "default": true,
+      "description": "Install harness hooks (Claude Code, Codex) that renew loans when a skill is used and report loans needing attention at session start. Set by `shelf setup`.",
+      "type": "boolean"
+    },
+    "mode": {
+      "default": "copy",
+      "description": "`copy`: a copy per target. `link`: one copy, other targets symlink to it.",
+      "type": "string",
+      "enum": [
+        "copy",
+        "link"
+      ]
+    },
+    "targets": {
+      "default": [
+        ".agents/skills",
+        ".claude/skills"
+      ],
+      "description": "Project-relative directories that borrowed skills are written into.",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "description": "shelf configuration (~/.shelf/config.json). Every key is optional."
+}

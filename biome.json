@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!dist", "!**/*.md"]
+    "includes": ["**", "!dist", "!**/*.md", "!schema"]
   },
   "formatter": {
     "indentStyle": "space",

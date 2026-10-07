@@ -16,6 +16,6 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["packages/*/src", "tests", "packages/*/test", "scripts"],
+  "include": ["packages/*/src", "tests", "packages/*/test", "scripts", "site/docs-theme"],
   "exclude": ["packages/web"]
 }

@@ -1,0 +1,53 @@
+[
+  {
+    "group": "Getting started",
+    "pages": ["introduction", "configuration"]
+  },
+  {
+    "group": "CLI reference",
+    "pages": [
+      "cli/index",
+      "cli/setup",
+      "cli/init",
+      "cli/status",
+      "cli/guide",
+      "cli/new",
+      "cli/catalog",
+      "cli/search",
+      "cli/show",
+      "cli/log",
+      "cli/diff",
+      "cli/propagate",
+      "cli/restore",
+      "cli/loan-days",
+      "cli/set",
+      "cli/rename",
+      "cli/duplicate",
+      "cli/archive",
+      "cli/lint",
+      "cli/insights",
+      "cli/suggest",
+      "cli/borrow",
+      "cli/renew",
+      "cli/used",
+      "cli/due",
+      "cli/keep",
+      "cli/return",
+      "cli/update",
+      "cli/promote",
+      "cli/detach",
+      "cli/sync",
+      "cli/targets",
+      "cli/scan",
+      "cli/adopt",
+      "cli/add",
+      "cli/pull",
+      "cli/audit",
+      "cli/projects",
+      "cli/sweep",
+      "cli/doctor",
+      "cli/ui",
+      "cli/hook"
+    ]
+  }
+]

@@ -19,7 +19,10 @@
     "dev": "bun scripts/dev.ts",
     "demo": "bun scripts/demo/seed.ts",
     "demo:site": "bun scripts/site/demo/build.ts",
-    "demo:site:verify": "bun scripts/site/demo/verify.ts --build"
+    "demo:site:verify": "bun scripts/site/demo/verify.ts --build",
+    "site": "bun scripts/site/build.ts",
+    "site:serve": "bun scripts/site/serve.ts",
+    "docs:gen": "bun scripts/site/gen.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -27,7 +30,9 @@
     "@shelf/server": "workspace:*",
     "@types/bun": "1.4.2",
     "bun-plugin-tailwind": "0.1.2",
+    "marked": "18.1.0",
     "playwright": "1.63.0",
+    "shiki": "4.5.0",
     "typescript": "7.0.2",
     "yaml": "2.9.1"
   }
