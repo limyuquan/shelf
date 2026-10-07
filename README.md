@@ -7,8 +7,8 @@ uses are returned.
 
 ```console
 $ shelf borrow pdf-tools git-hygiene
-Borrowed pdf-tools until 2026-11-05 → .agents/skills, .claude/skills
-Borrowed git-hygiene until 2026-11-05 → .agents/skills, .claude/skills
+Borrowed pdf-tools (due 2026-11-05) → .agents/skills, .claude/skills
+Borrowed git-hygiene (due 2026-11-05) → .agents/skills, .claude/skills
 
 $ shelf status
 my-app  /home/me/code/my-app
@@ -224,7 +224,7 @@ boundary.
 | `shelf insights [--all]` | Tokens each project loads at session start, and which skills agents actually use (30 days) |
 | `shelf suggest [--limit N]` | Library skills matching the project's dependencies and files (e.g. `convex/`, `playwright.config.ts`) |
 | `shelf borrow <name…\|@set> [--days N] [--keep] [--follow] [--link]` | Borrow skills (or every skill in a set) into this project |
-| `shelf renew <name> [--days N] [--reason …]` | Extend a loan |
+| `shelf renew <name> [--days N] [--reason …]` | Renew a loan: due the loan length (or N days) from today |
 | `shelf used <name…>` | Record a use, which renews the loan (the hooks do this for you) |
 | `shelf due <name> <+14d\|-7d\|2026-12-01>` | Move a due date either way |
 | `shelf keep <name…> [--off] [--reason …]` | Keep loans: they never expire (for the project's direct dependencies) |
