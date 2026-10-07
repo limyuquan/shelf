@@ -6,7 +6,7 @@ export { type Clock, systemClock } from "./clock.ts";
 export { type Config, ConfigSchema } from "./config.ts";
 export { parseDays, parsePositiveInt } from "./domain/due.ts";
 export type * from "./domain/types.ts";
-export { type ErrorCode, ShelfError } from "./errors.ts";
+export { ERROR_MEANINGS, type ErrorCode, ShelfError } from "./errors.ts";
 export { shortHash } from "./library/hash.ts";
 export { type LintIssue, type LintResult, lintSkill } from "./library/lint.ts";
 export { findHarness, HARNESSES, type Harness } from "./projection/harnesses.ts";

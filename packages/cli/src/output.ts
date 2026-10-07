@@ -10,7 +10,8 @@ export interface CommandOutput {
   readonly text: string;
 }
 
-const EXIT_CODES: Record<ErrorCode, number> = {
+/** Exported for the error table in the docs (scripts/site/generate.ts). */
+export const EXIT_CODES: Readonly<Record<ErrorCode, number>> = {
   INVALID_ARGUMENT: 2,
   INVALID_SKILL: 2,
   NOT_INITIALIZED: 3,
@@ -22,7 +23,11 @@ const EXIT_CODES: Record<ErrorCode, number> = {
   LOAN_LIMIT: 7,
   NOT_ALLOWED: 8,
 };
-const INTERNAL_EXIT_CODE = 1;
+/** Failures that are not a ShelfError have the code INTERNAL. */
+export const INTERNAL_EXIT_CODE = 1;
+/** For the error table in the docs, next to the ShelfError meanings (ERROR_MEANINGS in core). */
+export const INTERNAL_ERROR_MEANING =
+  "Anything that is not a ShelfError: a bug or an unexpected I/O error. The message says what failed.";
 
 export function printSuccess(output: CommandOutput, json: boolean): void {
   if (json) {
