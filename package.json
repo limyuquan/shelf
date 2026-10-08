@@ -16,6 +16,7 @@
     "check": "bun run lint && bun run typecheck && bun run test",
     "build:all": "bun scripts/build-all.ts",
     "pack:npm": "bun scripts/pack-npm.ts",
+    "npm:trust": "bun scripts/npm-trust.ts",
     "dev": "bun scripts/dev.ts",
     "demo": "bun scripts/demo/seed.ts",
     "demo:site": "bun scripts/site/demo/build.ts",

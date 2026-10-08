@@ -1,20 +1,20 @@
 name: Release
 
 # Push a tag matching the CLI version (e.g. v0.5.0) to publish binaries to a
-# GitHub release and, if the NPM_TOKEN secret is set, the npm packages.
+# GitHub release and the npm packages. npm trusts this workflow (trusted
+# publishing, configured on each package with `npm trust github`), so there is
+# no npm token: the job's OIDC identity is the credential.
 on:
   push:
     tags: ["v*"]
 
 permissions:
   contents: write # create the release
-  id-token: write # npm provenance
+  id-token: write # npm trusted publishing and provenance
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -50,16 +50,14 @@ jobs:
             gh release create "$GITHUB_REF_NAME" release/* --generate-notes --verify-tag
 
       - uses: actions/setup-node@v7
-        if: env.NPM_TOKEN != ''
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
       - name: Publish to npm
-        if: env.NPM_TOKEN != ''
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          # Trusted publishing needs npm 11.5.1 or later.
+          npm install -g npm@11
           bun run pack:npm
           # Platform packages first, so the launcher's optionalDependencies resolve.
           # Versions already on npm are skipped, so a failed run can be re-run.

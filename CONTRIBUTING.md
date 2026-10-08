@@ -66,8 +66,11 @@ images, and look at every output before committing.
    `packages/cli/package.json`).
 2. Commit, then tag and push: `git tag v0.5.0 && git push --tags`.
 3. The release workflow checks the tag matches, builds every platform, attaches
-   archives and `SHA256SUMS` to a GitHub release, and publishes to npm when the
-   `NPM_TOKEN` secret is set (`NPM_SCOPE` changes the package scope).
+   archives and `SHA256SUMS` to a GitHub release, and publishes to npm with
+   provenance. There is no npm token: each package trusts the workflow, set up
+   once with `npm login && bun run npm:trust`. A new package (a new platform)
+   must be published once by hand before it can be trusted. `NPM_SCOPE`
+   changes the package scope.
 
 Locally: `bun run build:all && bun run pack:npm` produces the same artifacts
 in `dist/`.
