@@ -1,10 +1,19 @@
 # Changelog
 
-What has shipped in shelf so far, from the project's history. There has been no public release yet; the current version is 0.4.0.
+What has shipped in shelf, newest first. Releases are on [GitHub](https://github.com/limyuquan/shelf/releases) and npm (`@limyuquan/shelf`).
 
-## Unreleased (0.4.0)
+## 0.5.0
 
-Everything below is in the current version.
+The first public release: binaries for macOS, Linux and Windows, and the npm package. Everything below is in it.
+
+### Fixes
+
+- `shelf due <name> -7d` works without `--`; usage errors exit 2 with or without `--json`.
+- `shelf lint` reports skills that fail to load and invalid directory names, and exits 1.
+- `shelf renew` counts from today, like renew on use, so renewing twice no longer adds up towards `maxLoanDays`.
+- `shelf new` and `shelf add` validate before writing anything, and refuse archived skills' names.
+- `shelf ui` on a port in use is a `CONFLICT` with a hint instead of an internal error.
+- Dashboard: the Overdue row says why a loan is still there; "Return and delete edits" asks first; paths under your home directory show as `~/…`; long diff lines wrap.
 
 ### Since the 0.4 milestone
 

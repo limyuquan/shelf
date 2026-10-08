@@ -19,7 +19,7 @@
     },
     "packages/cli": {
       "name": "@shelf/cli",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "bin": {
         "shelf": "./src/main.ts",
       },
@@ -33,7 +33,7 @@
     },
     "packages/core": {
       "name": "@shelf/core",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "diff": "9.0.0",
         "zod": "4.6.5",
@@ -41,7 +41,7 @@
     },
     "packages/server": {
       "name": "@shelf/server",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@hono/zod-validator": "0.9.1",
         "@shelf/core": "workspace:*",
@@ -51,11 +51,11 @@
     },
     "packages/skill": {
       "name": "@shelf/skill",
-      "version": "0.4.0",
+      "version": "0.5.0",
     },
     "packages/web": {
       "name": "@shelf/web",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@base-ui/react": "1.8.0",
         "@codemirror/lang-markdown": "6.5.2",

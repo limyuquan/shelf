@@ -16,6 +16,8 @@ const common = {
   version,
   license: "MIT",
   repository: { type: "git", url: "git+https://github.com/limyuquan/shelf.git" },
+  homepage: "https://limyuquan.github.io/shelf/",
+  bugs: { url: "https://github.com/limyuquan/shelf/issues" },
 };
 
 await rm(out, { recursive: true, force: true });

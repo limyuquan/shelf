@@ -22,7 +22,7 @@ Every command except `guide`, `ui` and `hook` accepts these:
 | `--actor <name>` | Who is acting, recorded in the activity log. Default: auto-detected (see [Environment](../environment.md#actor-detection)). |
 | `--help`, `-h` | Print the command's usage, arguments and options. |
 
-`shelf --version` prints the version (`0.4.0`). `shelf guide` and `shelf ui` accept `--json` but not `--actor`.
+`shelf --version` prints the version (`0.5.0`). `shelf guide` and `shelf ui` accept `--json` but not `--actor`.
 
 ## The JSON envelope
 
